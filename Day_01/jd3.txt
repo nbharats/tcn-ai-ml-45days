@@ -1,0 +1,7 @@
+ML Engineer - Remote
+
+We need an ML Engineer to productionize NLP models. Strong Python and
+PyTorch experience required. You will serve models with Docker and deploy on
+AWS. We process large text corpora so Spark familiarity is a plus. Solid
+Python fundamentals, testing habits, and SQL for analytics are expected.
+Pandas and numpy for offline analysis.

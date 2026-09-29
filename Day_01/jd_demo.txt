@@ -1,0 +1,1 @@
+We need strong Python and SQL. Experience with PyTorch or TensorFlow, Docker and AWS is a plus. Python, python, python!

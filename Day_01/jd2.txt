@@ -1,0 +1,7 @@
+Data Analyst - Mumbai
+
+Seeking a Data Analyst who is comfortable writing SQL queries and Python
+scripts for reporting and dashboards. You will pull data with SQL, shape it
+with pandas, and build summaries in Python. Any exposure to Spark for large
+datasets is a bonus. AWS or other cloud basics helpful. Clear communication
+matters as much as the Python and SQL work.

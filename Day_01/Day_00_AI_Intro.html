@@ -1,0 +1,680 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Day 1: AI Is the New Future</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#0A0E1A; --bg2:#111729; --panel:#161D33; --line:#243052; --line2:#2E3B62;
+  --ink:#EDF0FA; --ink2:#AEB7D3; --ink3:#7B86A8;
+  --amber:#FFB43A; --cyan:#4FD3F2; --rose:#FF6B8A; --lime:#9BE56B; --violet:#9D8CFF;
+  --glow:rgba(79,211,242,.18);
+  --display:'Syne',ui-sans-serif,system-ui,sans-serif;
+  --body:'Manrope',ui-sans-serif,system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#F3F5FB; --bg2:#FFFFFF; --panel:#FFFFFF; --line:#D7DDEE; --line2:#C3CBE3;
+    --ink:#0F1730; --ink2:#3B4666; --ink3:#6B7694;
+    --amber:#C97A00; --cyan:#0A8FB3; --rose:#D93A5D; --lime:#4E9A1E; --violet:#6A55E8;
+    --glow:rgba(10,143,179,.14);
+  }
+}
+:root[data-theme="light"]{
+  --bg:#F3F5FB; --bg2:#FFFFFF; --panel:#FFFFFF; --line:#D7DDEE; --line2:#C3CBE3;
+  --ink:#0F1730; --ink2:#3B4666; --ink3:#6B7694;
+  --amber:#C97A00; --cyan:#0A8FB3; --rose:#D93A5D; --lime:#4E9A1E; --violet:#6A55E8;
+  --glow:rgba(10,143,179,.14);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;padding-inline:clamp(16px,4vw,48px);padding-block:0 80px}
+a{color:var(--cyan)}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;line-height:1.08;margin:0}
+h2{font-size:clamp(30px,4.2vw,50px);font-weight:800;letter-spacing:-.01em}
+h3{font-size:clamp(20px,2.2vw,26px);font-weight:700}
+p{max-width:68ch;margin:0}
+.wrap{max-width:1180px;margin:0 auto}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)}
+.eyebrow b{color:var(--amber);font-weight:600}
+code,.mono{font-family:var(--mono)}
+
+/* progress bar */
+#bar{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);margin-inline:calc(-1*clamp(16px,4vw,48px));padding-inline:clamp(16px,4vw,48px)}
+#bar .wrap{display:flex;align-items:center;gap:14px;height:56px;overflow-x:auto;scrollbar-width:none}
+#bar .wrap::-webkit-scrollbar{display:none}
+#bar .brand{font-family:var(--display);font-weight:800;font-size:15px;white-space:nowrap}
+#bar .brand span{color:var(--amber)}
+#bar nav{display:flex;gap:4px;flex:1}
+#bar nav a{font-family:var(--mono);font-size:11.5px;text-decoration:none;color:var(--ink3);padding:6px 10px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+#bar nav a.on{color:var(--ink);border-color:var(--line2);background:var(--panel)}
+#bar nav a i{font-style:normal;color:var(--amber);margin-right:5px}
+#bar .clock{font-family:var(--mono);font-size:12px;color:var(--ink2);white-space:nowrap;display:flex;gap:8px;align-items:center}
+#bar .clock button{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line2);border-radius:6px;padding:4px 9px;cursor:pointer}
+#bar .clock button:focus-visible{outline:2px solid var(--cyan)}
+#track{position:absolute;left:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--cyan),var(--amber));width:0}
+
+/* sections */
+section.s{padding-block:88px 40px;border-top:1px solid var(--line);position:relative}
+section.s:first-of-type{border-top:0}
+.head{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end;margin-bottom:38px}
+.time{font-family:var(--mono);font-size:12px;color:var(--ink3);text-align:right;line-height:1.5}
+.time b{display:block;font-size:22px;color:var(--amber);font-weight:600}
+.lead{font-size:clamp(18px,1.6vw,21px);color:var(--ink2);max-width:62ch;margin-top:16px}
+
+/* hero */
+#hero{padding-block:70px 60px;position:relative;overflow:hidden;margin-inline:calc(-1*clamp(16px,4vw,48px));padding-inline:clamp(16px,4vw,48px)}
+#hero canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.55;pointer-events:none}
+#hero .wrap{position:relative}
+#hero h1{font-size:clamp(44px,8vw,108px);font-weight:800;letter-spacing:-.03em;line-height:.98}
+#hero h1 em{font-style:normal;color:var(--amber)}
+#hero h1 .c{color:var(--cyan)}
+.hero-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:40px;align-items:end;margin-top:30px}
+.agenda{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
+.agenda h3{font-size:14px;font-family:var(--mono);font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-bottom:12px}
+.agenda ol{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.agenda li{display:grid;grid-template-columns:52px 1fr;gap:12px;font-size:15px;align-items:baseline}
+.agenda li span{font-family:var(--mono);font-size:12px;color:var(--amber)}
+.agenda li a{color:var(--ink);text-decoration:none}
+.agenda li a:hover{color:var(--cyan)}
+.kbd{font-family:var(--mono);font-size:11px;border:1px solid var(--line2);border-bottom-width:2px;border-radius:5px;padding:1px 6px;color:var(--ink2);background:var(--bg2)}
+
+/* generic blocks */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px}
+.card h3{margin-bottom:8px}
+.card p{font-size:15.5px;color:var(--ink2)}
+.tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid var(--line2);color:var(--ink3);margin-bottom:12px}
+.pill{display:inline-flex;gap:6px;align-items:center;font-family:var(--mono);font-size:12px;padding:5px 11px;border-radius:999px;background:var(--bg2);border:1px solid var(--line);color:var(--ink2);text-decoration:none}
+.pill:hover{border-color:var(--cyan)}
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.note{border-left:3px solid var(--amber);padding:10px 16px;background:color-mix(in srgb,var(--amber) 8%,transparent);border-radius:0 10px 10px 0;font-size:15px;color:var(--ink2);margin-top:22px;max-width:70ch}
+.note b{color:var(--ink)}
+
+/* teacher notes */
+.tn{display:none;margin-top:22px;border:1px dashed var(--line2);border-radius:12px;padding:16px 18px;background:var(--bg2);font-size:14.5px;color:var(--ink2);max-width:80ch}
+.tn::before{content:"Teacher notes";font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--rose);display:block;margin-bottom:6px}
+body.notes .tn{display:block}
+
+/* applications */
+.apps{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.app{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;transition:transform .25s,border-color .25s;position:relative;overflow:hidden}
+.app:hover{transform:translateY(-4px);border-color:var(--cyan)}
+.app .ic{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;margin-bottom:14px;background:var(--glow)}
+.app .ic svg{width:24px;height:24px;stroke:var(--cyan);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.app h3{font-size:17px;margin-bottom:6px}
+.app p{font-size:14px;color:var(--ink2)}
+.app a{font-family:var(--mono);font-size:12px;display:inline-block;margin-top:10px;text-decoration:none}
+.app a:hover{text-decoration:underline}
+
+/* timeline */
+.tl{position:relative;margin-top:10px}
+.tl::before{content:"";position:absolute;left:20px;top:0;bottom:0;width:2px;background:linear-gradient(var(--line2),var(--cyan),var(--amber))}
+.era{position:relative;padding-left:64px;padding-bottom:44px;display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start}
+.era::before{content:"";position:absolute;left:12px;top:6px;width:18px;height:18px;border-radius:50%;background:var(--bg);border:3px solid var(--cyan);box-shadow:0 0 0 6px var(--glow)}
+.era.hot::before{border-color:var(--amber)}
+.era .y{font-family:var(--mono);font-size:12px;color:var(--amber);letter-spacing:.08em}
+.era h3{margin:6px 0 8px;font-size:24px}
+.era p{font-size:15.5px;color:var(--ink2)}
+.era figure{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;overflow:hidden}
+.era figure svg{width:100%;height:auto;display:block}
+.era figcaption{font-family:var(--mono);font-size:11.5px;color:var(--ink3);margin-top:8px}
+.era a{font-size:14px}
+
+/* ladder */
+.ladder{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-top:8px}
+.rung{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 14px;position:relative}
+.rung .n{font-family:var(--mono);font-size:11px;color:var(--ink3)}
+.rung h3{font-size:16px;margin:6px 0 6px}
+.rung p{font-size:13.5px;color:var(--ink2);line-height:1.45}
+.rung.ai{border-color:var(--cyan)} .rung.now{border-color:var(--amber);box-shadow:0 0 0 4px color-mix(in srgb,var(--amber) 14%,transparent)}
+
+/* nested circles */
+.nest{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
+.nest svg{width:100%;max-width:520px;height:auto;margin-inline:auto;display:block}
+.nest .def{display:grid;gap:14px}
+.nest .def>div{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--panel);display:grid;grid-template-columns:14px 1fr;gap:12px;align-items:start;cursor:pointer;transition:border-color .2s}
+.nest .def>div:hover,.nest .def>div.on{border-color:var(--cyan)}
+.nest .def>div>i{width:14px;height:14px;border-radius:50%;margin-top:6px;display:block}
+.nest .def b{display:block;font-family:var(--display);font-size:17px}
+.nest .def span{font-size:14.5px;color:var(--ink2)}
+
+/* paradigm shift */
+.shift{display:grid;grid-template-columns:1fr auto 1fr;gap:20px;align-items:center}
+.shift .box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px}
+.shift .box h3{font-size:18px;margin-bottom:12px}
+.flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-family:var(--mono);font-size:13px}
+.flow span{padding:8px 12px;border-radius:8px;background:var(--bg2);border:1px solid var(--line2)}
+.flow span.o{border-color:var(--amber);color:var(--amber)}
+.flow em{font-style:normal;color:var(--ink3)}
+.shift .arrow{font-size:40px;color:var(--amber);font-family:var(--display)}
+
+/* live demo */
+.demo{display:grid;grid-template-columns:1.2fr 1fr;gap:28px;align-items:start}
+.demo canvas{width:100%;height:auto;background:var(--bg2);border:1px solid var(--line2);border-radius:14px;cursor:crosshair;display:block;touch-action:none}
+.ctl{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.btn{font:600 14px var(--body);color:var(--bg);background:var(--amber);border:0;border-radius:9px;padding:10px 16px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line2)}
+.btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.stats{font-family:var(--mono);font-size:13px;color:var(--ink2);display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin-top:14px;font-variant-numeric:tabular-nums}
+.stats b{color:var(--cyan);font-weight:600}
+.steps{display:grid;gap:10px;counter-reset:st}
+.steps div{display:grid;grid-template-columns:32px 1fr;gap:12px;align-items:start;font-size:15px;color:var(--ink2)}
+.steps div::before{counter-increment:st;content:counter(st);font-family:var(--mono);font-size:12px;color:var(--amber);border:1px solid var(--line2);border-radius:50%;width:26px;height:26px;display:grid;place-items:center}
+.steps b{color:var(--ink)}
+
+/* nn animation */
+.nn{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:26px}
+.nn svg{width:100%;height:auto;display:block}
+
+/* course map */
+.map{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.ph{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;position:relative}
+.ph .w{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--amber)}
+.ph h3{font-size:18px;margin:8px 0 8px}
+.ph ul{margin:0;padding-left:18px;font-size:14px;color:var(--ink2);line-height:1.5}
+.ph.cap{grid-column:1/-1;border-color:var(--violet);display:grid;grid-template-columns:1fr 2fr;gap:20px;align-items:center}
+.ph.cap ul{columns:2;column-gap:28px}
+.rhythm{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:26px}
+.rhythm div{border:1px solid var(--line);border-radius:12px;padding:16px;background:var(--bg2)}
+.rhythm b{font-family:var(--display);display:block;margin-bottom:4px}
+.rhythm span{font-size:14px;color:var(--ink2)}
+
+/* quiz */
+.quiz{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.q{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.q p{font-size:15px;margin-bottom:12px;color:var(--ink)}
+.q .opts{display:flex;gap:8px}
+.q button{font:600 13px var(--body);padding:7px 12px;border-radius:8px;border:1px solid var(--line2);background:var(--bg2);color:var(--ink);cursor:pointer}
+.q button.ok{border-color:var(--lime);color:var(--lime)} .q button.bad{border-color:var(--rose);color:var(--rose)}
+.q .why{font-size:13.5px;color:var(--ink2);margin-top:10px;display:none}
+.q.done .why{display:block}
+
+/* footer */
+.fin{text-align:center;padding-block:60px 20px}
+.fin h2{font-size:clamp(28px,4vw,44px)}
+.fin p{margin:14px auto 0}
+
+/* reveal */
+.rv{opacity:1;transform:none;transition:opacity .6s ease,transform .6s ease}
+.js .rv:not(.in){opacity:.001;transform:translateY(18px)}
+@media (prefers-reduced-motion:reduce){.js .rv:not(.in){opacity:1;transform:none}.rv{transition:none}*{animation:none!important}}
+
+@media (max-width:980px){
+  .apps,.map{grid-template-columns:1fr 1fr}
+  .ladder{grid-template-columns:repeat(3,1fr)}
+  .grid3,.quiz,.rhythm{grid-template-columns:1fr 1fr}
+}
+@media (max-width:720px){
+  .hero-grid,.grid2,.nest,.demo,.era,.ph.cap{grid-template-columns:1fr}
+  .apps,.map,.ladder,.grid3,.quiz,.rhythm{grid-template-columns:1fr}
+  .shift{grid-template-columns:1fr}.shift .arrow{transform:rotate(90deg);text-align:center}
+  .head{grid-template-columns:1fr}.time{text-align:left}
+  .ph.cap ul{columns:1}
+  .era{padding-left:48px}
+}
+</style></head><body>
+
+<div id="bar"><div class="wrap">
+  <div class="brand">AI <span>&amp;</span> ML Engineering · Day 01</div>
+  <nav>
+    <a href="#hero"><i>00</i>Start</a>
+    <a href="#why"><i>05</i>Why now</a>
+    <a href="#apps"><i>12</i>Apps</a>
+    <a href="#history"><i>20</i>History</a>
+    <a href="#ladder"><i>33</i>Ladder</a>
+    <a href="#nest"><i>40</i>AI⊃ML⊃DL</a>
+    <a href="#learn"><i>46</i>Live demo</a>
+    <a href="#course"><i>54</i>Course</a>
+    <a href="#setup"><i>58</i>Setup</a>
+  </nav>
+  <div class="clock"><span id="clk">00:00</span><button id="clkb" type="button">Start timer</button><button id="nb" type="button" title="Toggle teacher notes (N)">Notes</button></div>
+  <div id="track"></div>
+</div></div>
+
+<!-- HERO -->
+<section id="hero">
+  <canvas id="bgc"></canvas>
+  <div class="wrap">
+    <div class="eyebrow"><b>Day 01 of 45</b> · Introduction · No code today, just the big picture</div>
+    <h1 style="margin-top:18px">AI is the <em>new</em><br><span class="c">future.</span></h1>
+    <div class="hero-grid">
+      <div>
+        <p class="lead">Two hundred years ago a machine could only do what a person set it up to do. Today you can hand a machine a goal, walk away, and come back to find it wrote the software. This hour is the story of how we got here, what "AI" actually means when you strip away the hype, and why the next 44 days will put you on the building side of it.</p>
+        <div class="pills">
+          <span class="pill">60 min · 9 stops</span>
+          <span class="pill">press <span class="kbd">N</span> for teacher notes</span>
+          <span class="pill">every stop has a "try this" link</span>
+        </div>
+      </div>
+      <div class="agenda">
+        <h3>Today's route</h3>
+        <ol>
+          <li><span>00–05</span><a href="#hero">The one-line answer: what is AI?</a></li>
+          <li><span>05–12</span><a href="#why">Why this is the moment</a></li>
+          <li><span>12–20</span><a href="#apps">AI you already use, and AI you don't see</a></li>
+          <li><span>20–33</span><a href="#history">The long road: abacus to Turing to now</a></li>
+          <li><span>33–40</span><a href="#ladder">The ladder: program → software → agent</a></li>
+          <li><span>40–46</span><a href="#nest">AI vs ML vs DL vs GenAI vs Agentic</a></li>
+          <li><span>46–54</span><a href="#learn">Live: watch a machine learn</a></li>
+          <li><span>54–58</span><a href="#course">What the 45 days look like</a></li>
+          <li><span>58–60</span><a href="#setup">Setup + homework</a></li>
+        </ol>
+      </div>
+    </div>
+    <div class="note" style="margin-top:34px"><b>The one-line definition to write on the board:</b> Artificial Intelligence is making a machine do something that, if a human did it, we'd say required intelligence: recognising, predicting, deciding, creating. Everything else in this course is "how".</div>
+    <div class="tn">Open with a question, not a definition. Ask: "Who used AI today?" Most will say "no one". Then ask who unlocked their phone with their face, used Google Maps, watched a YouTube recommendation, or typed a message with autocorrect. Every hand goes up. That gap between "I don't use AI" and "I used it 20 times before breakfast" is the hook for the whole hour.</div>
+  </div>
+</section>
+
+<!-- WHY NOW -->
+<section class="s" id="why">
+  <div class="wrap">
+    <div class="head rv">
+      <div><div class="eyebrow">Stop 02</div><h2>Why is everyone talking about this <em style="color:var(--amber);font-style:normal">now</em>?</h2>
+      <p class="lead">AI research is 70 years old. Three things finally lined up in the last decade.</p></div>
+      <div class="time"><b>7 min</b>05 → 12</div>
+    </div>
+    <div class="grid3 rv">
+      <div class="card"><span class="tag">Ingredient 1</span><h3>Data</h3><p>Every photo, click, review, sensor reading and chat message became a training example. The internet accidentally built the world's largest textbook for machines. A modern language model reads more text than a human could in ten thousand lifetimes.</p></div>
+      <div class="card"><span class="tag">Ingredient 2</span><h3>Compute</h3><p>Graphics cards built for video games turned out to be perfect for the maths of learning: billions of tiny multiplications in parallel. A single GPU today does what a room-sized supercomputer did in 2000.</p></div>
+      <div class="card"><span class="tag">Ingredient 3</span><h3>One big idea</h3><p>In 2017 a paper called <a href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener">"Attention Is All You Need"</a> introduced the Transformer. Nearly every headline model since (ChatGPT, Gemini, Claude, Llama) is a descendant of that one architecture. We build one from scratch in Week 5.</p></div>
+    </div>
+    <div class="note rv"><b>Why it matters for you:</b> the people who understand the internals, not just the chat box, are the ones being hired. This course is about internals.</div>
+    <div class="tn">Frame this as "the fuel, the engine, and the blueprint". Data is fuel, GPUs are the engine, Transformers are the blueprint. Mention that all three were individually available for years; the explosion came from combining them at scale around 2012 (AlexNet) and 2017 (Transformer). Don't go deep into what a Transformer is yet, just plant the name.</div>
+  </div>
+</section>
+
+<!-- APPLICATIONS -->
+<section class="s" id="apps">
+  <div class="wrap">
+    <div class="head rv">
+      <div><div class="eyebrow">Stop 03</div><h2>AI you already use. AI you never see.</h2>
+      <p class="lead">Click through these with the class. Each one links to something you can open live on the projector.</p></div>
+      <div class="time"><b>8 min</b>12 → 20</div>
+    </div>
+    <div class="apps rv">
+      <div class="app"><div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="12" cy="12" r="3.5"/><path d="M3 9h3M18 9h3"/></svg></div><h3>Your phone's camera</h3><p>Face unlock, portrait blur, night mode, "search this photo for dogs". All computer vision, all running on-device.</p><a href="https://teachablemachine.withgoogle.com/" target="_blank" rel="noopener">Train your own in 2 min ↗</a></div>
+      <div class="app"><div class="ic"><svg viewBox="0 0 24 24"><path d="M12 22s7-6 7-12a7 7 0 0 0-14 0c0 6 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg></div><h3>Maps &amp; delivery</h3><p>"Arrives in 23 minutes" is a prediction model trained on millions of past trips. Swiggy, Zomato, Uber, Google Maps all run these constantly.</p></div>
+      <div class="app"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></div><h3>Recommendations</h3><p>YouTube, Instagram, Netflix, Spotify. Roughly 70% of what you watch on YouTube was picked by a model, not by you.</p></div>
+      <div class="app"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H8l-4 4z"/><path d="M8 9h8M8 12h5"/></svg></div><h3>Chat &amp; writing</h3><p>ChatGPT, Gemini, Claude, Copilot. Generative AI: the model produces new text, code and images instead of only classifying.</p><a href="https://chatgpt.com" target="_blank" rel="noopener">Open live ↗</a></div>
+      <div class="app"><div class="ic"><svg viewBox="0 0 24 24"><path d="M12 3v18M5 8l7-5 7 5M5 16l7 5 7-5"/></svg></div><h3>Medicine</h3><p>AlphaFold predicted the 3D shape of 200 million proteins, a problem biologists worked on for 50 years. Its creators won the 2024 Nobel Prize in Chemistry.</p><a href="https://alphafold.ebi.ac.uk/" target="_blank" rel="noopener">See a protein ↗</a></div>
+      <div class="app"><div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="10" rx="3"/><circle cx="8" cy="12" r="1.5"/><circle cx="16" cy="12" r="1.5"/></svg></div><h3>Self-driving</h3><p>Waymo runs fully driverless taxis in several US cities today. Cameras + lidar → neural nets → steering. Vision is Week 4.</p><a href="https://www.youtube.com/results?search_query=waymo+ride+pov" target="_blank" rel="noopener">Watch a ride ↗</a></div>
+      <div class="app"><div class="ic"><svg viewBox="0 0 24 24"><path d="M4 20l6-6M14 4l6 6-8 8-6-6z"/></svg></div><h3>Image &amp; video generation</h3><p>Midjourney, Sora, Veo, Stable Diffusion: describe a scene, get a film. Diffusion models learn to "un-noise" pictures.</p><a href="https://www.thisxdoesnotexist.com/" target="_blank" rel="noopener">These people don't exist ↗</a></div>
+      <div class="app"><div class="ic"><svg viewBox="0 0 24 24"><path d="M8 4l-5 8 5 8M16 4l5 8-5 8"/></svg></div><h3>AI that writes software</h3><p>Cursor, Claude Code, Copilot, Devin. Give an agent a ticket, it reads the repo, writes the code, runs the tests, opens the PR. This is where the course ends up.</p></div>
+    </div>
+    <div class="grid2 rv" style="margin-top:28px">
+      <div class="card"><span class="tag">Invisible AI</span><h3>Things you never think of as AI</h3><p>Spam filters (since 1998). Credit card fraud alerts. Google Translate. The weather forecast. Airline ticket prices. Bank loan approvals. Your electricity grid balancing itself. AI stopped being "science fiction" a long time ago; it just became infrastructure.</p></div>
+      <div class="card"><span class="tag">Play with it now</span><h3>Two-minute demos for the projector</h3><p><a href="https://quickdraw.withgoogle.com/" target="_blank" rel="noopener">Quick, Draw!</a> guesses your doodle in 20 seconds. <a href="https://playground.tensorflow.org/" target="_blank" rel="noopener">TensorFlow Playground</a> shows a neural net learning live. <a href="https://huggingface.co/spaces" target="_blank" rel="noopener">Hugging Face Spaces</a> has thousands of models you can try in the browser.</p></div>
+    </div>
+    <div class="tn">Spend real time on Quick, Draw! with the class. Let a student draw. When it guesses right, ask "how does it know?" and let them argue. Someone will say "it was programmed to recognise cats". Hold that thought; the paradigm-shift diagram in the AI⊃ML section is where you answer it.</div>
+  </div>
+</section>
+
+<!-- HISTORY -->
+<section class="s" id="history">
+  <div class="wrap">
+    <div class="head rv">
+      <div><div class="eyebrow">Stop 04</div><h2>The long road: from counting beads to thinking machines</h2>
+      <p class="lead">AI didn't appear in 2022. It's the latest step in a 4,000-year project of making machines do our thinking for us. Each era solved one problem and exposed the next.</p></div>
+      <div class="time"><b>13 min</b>20 → 33</div>
+    </div>
+    <div class="tl">
+
+      <div class="era rv">
+        <div><div class="y">~2500 BCE → 1800s · MECHANICAL</div><h3>Machines that count</h3><p>The abacus, then Pascal's adding machine (1642), then Babbage's Analytical Engine (1837), a steam-powered computer that was designed but never fully built. Ada Lovelace wrote the first "program" for it and famously noted the machine could only do "whatever we know how to order it to perform". Hold onto that sentence; the entire history of AI is the story of proving it wrong.</p><a href="https://en.wikipedia.org/wiki/Analytical_engine" target="_blank" rel="noopener">Babbage's engine ↗</a></div>
+        <figure><svg viewBox="0 0 320 150" role="img" aria-label="Gears turning">
+          <defs><g id="g"><circle r="26" fill="none" stroke="var(--ink3)" stroke-width="3"/><g id="teeth"></g></g></defs>
+          <g class="gear" style="transform-origin:80px 75px"><circle cx="80" cy="75" r="34" fill="none" stroke="var(--ink3)" stroke-width="3" stroke-dasharray="9 6"/><circle cx="80" cy="75" r="22" fill="none" stroke="var(--ink3)" stroke-width="2"/><circle cx="80" cy="75" r="5" fill="var(--amber)"/></g>
+          <g class="gear r" style="transform-origin:160px 75px"><circle cx="160" cy="75" r="44" fill="none" stroke="var(--cyan)" stroke-width="3" stroke-dasharray="11 7"/><circle cx="160" cy="75" r="30" fill="none" stroke="var(--cyan)" stroke-width="2"/><circle cx="160" cy="75" r="5" fill="var(--amber)"/></g>
+          <g class="gear" style="transform-origin:248px 75px"><circle cx="248" cy="75" r="34" fill="none" stroke="var(--ink3)" stroke-width="3" stroke-dasharray="9 6"/><circle cx="248" cy="75" r="22" fill="none" stroke="var(--ink3)" stroke-width="2"/><circle cx="248" cy="75" r="5" fill="var(--amber)"/></g>
+          <style>.gear{animation:spin 9s linear infinite}.gear.r{animation-direction:reverse}@keyframes spin{to{transform:rotate(360deg)}}</style>
+        </svg><figcaption>Input: turn the crank. Output: a number. Nothing in between could change.</figcaption></figure>
+      </div>
+
+      <div class="era rv">
+        <div><div class="y">1936 · THE IDEA OF A COMPUTER</div><h3>Alan Turing's imaginary machine</h3><p>Before any electronic computer existed, a 24-year-old Turing asked: what is the simplest machine that could compute <em>anything</em> computable? His answer was a tape, a read/write head, and a table of rules. That's it. Every computer, phone and GPU you've ever touched is a fast, fancy Turing machine. In 1950 he asked the follow-up: <a href="https://academic.oup.com/mind/article/LIX/236/433/986238" target="_blank" rel="noopener">"Can machines think?"</a>, and proposed the Turing Test.</p></div>
+        <figure><svg viewBox="0 0 320 150" role="img" aria-label="Turing machine tape with a moving head">
+          <g id="tape"></g>
+          <g id="thead"><path d="M0 0l-12 -18h24z" fill="var(--amber)"/><rect x="-30" y="-52" width="60" height="30" rx="6" fill="var(--panel)" stroke="var(--amber)" stroke-width="2"/><text x="0" y="-32" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" fill="var(--ink)">q1</text></g>
+          <text x="160" y="140" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="var(--ink3)">rule: (q1, 0) → write 1, move right, q1</text>
+        </svg><figcaption>Tape + head + rule table = every computer ever built.</figcaption></figure>
+      </div>
+
+      <div class="era rv">
+        <div><div class="y">1945–1970 · THE COMPUTER + THE PROGRAM</div><h3>ENIAC, then software</h3><p>ENIAC (1945) weighed 27 tonnes and was "programmed" by physically rewiring it. Then came stored programs: instructions living in memory as data. Then languages: FORTRAN (1957), C (1972), Python (1991). A program is a list of exact rules a human wrote: <code>if temperature &gt; 30: turn on the fan</code>. The computer never guesses. This is the world Ada described.</p><a href="https://www.youtube.com/watch?v=k4oGI_dNaPc" target="_blank" rel="noopener">ENIAC footage ↗</a></div>
+        <figure><svg viewBox="0 0 320 150" role="img" aria-label="A program as a flowchart">
+          <g font-family="JetBrains Mono,monospace" font-size="11" fill="var(--ink)">
+            <rect x="20" y="20" width="110" height="34" rx="6" fill="var(--bg2)" stroke="var(--line2)"/><text x="75" y="41" text-anchor="middle">read sensor</text>
+            <path d="M160 20l50 17-50 17-50-17z" fill="var(--bg2)" stroke="var(--cyan)"/><text x="160" y="41" text-anchor="middle" font-size="10">&gt; 30°?</text>
+            <rect x="20" y="96" width="110" height="34" rx="6" fill="var(--bg2)" stroke="var(--line2)"/><text x="75" y="117" text-anchor="middle">fan OFF</text>
+            <rect x="190" y="96" width="110" height="34" rx="6" fill="var(--bg2)" stroke="var(--amber)"/><text x="245" y="117" text-anchor="middle">fan ON</text>
+            <path d="M130 37h-10M160 54v20H75v22M160 74h85v22" fill="none" stroke="var(--ink3)" stroke-width="1.5"/>
+            <text x="235" y="70" fill="var(--amber)" font-size="10">yes</text><text x="90" y="70" fill="var(--ink3)" font-size="10">no</text>
+          </g>
+          <circle class="dot" r="4" fill="var(--amber)"><animateMotion dur="3s" repeatCount="indefinite" path="M75 37 H140 L160 54 V74 H245 V96"/></circle>
+        </svg><figcaption>Rules written by a human. Same input, same output, forever.</figcaption></figure>
+      </div>
+
+      <div class="era rv">
+        <div><div class="y">1956–2000 · "AI" IS BORN, THEN STALLS</div><h3>Dartmouth, expert systems, two winters</h3><p>The term "Artificial Intelligence" was coined at a 1956 workshop at Dartmouth. Early optimism was wild ("solved in a summer"). The dominant approach for 40 years was <em>symbolic AI</em>: encode human knowledge as thousands of hand-written rules. It beat Kasparov at chess (Deep Blue, 1997) but couldn't tell a cat from a dog, because nobody can write down the rules for "cat". Funding collapsed twice: the AI winters.</p><a href="https://en.wikipedia.org/wiki/Dartmouth_workshop" target="_blank" rel="noopener">The 1956 proposal ↗</a></div>
+        <figure><svg viewBox="0 0 320 150" role="img" aria-label="Hype curve with two AI winters">
+          <path d="M20 120 C60 30,80 30,100 90 S140 130,160 110 S200 20,240 60 S290 10,310 20" fill="none" stroke="var(--cyan)" stroke-width="3" stroke-linecap="round" pathLength="1" class="hype"/>
+          <g font-family="JetBrains Mono,monospace" font-size="10" fill="var(--ink3)">
+            <text x="42" y="22">1956 hype</text><text x="112" y="118">winter 1</text><text x="182" y="132">winter 2</text><text x="228" y="22" fill="var(--amber)">2012 →</text>
+          </g>
+          <style>.hype{stroke-dasharray:1;stroke-dashoffset:1;animation:draw 3s ease forwards}@keyframes draw{to{stroke-dashoffset:0}}</style>
+        </svg><figcaption>Rules hit a wall: the world has too many exceptions to write down.</figcaption></figure>
+      </div>
+
+      <div class="era rv hot">
+        <div><div class="y">2012 → TODAY · LEARNING REPLACES RULES</div><h3>The deep learning explosion</h3><p>In 2012 a neural network called AlexNet, trained on 1.2 million labelled photos using two gaming GPUs, crushed every hand-written vision system at once. The trick was ancient (neural nets are from the 1950s); the data and compute were new. From there: speech recognition (2014), AlphaGo beating the world Go champion (2016), the Transformer (2017), GPT-3 (2020), ChatGPT (Nov 2022, 100 million users in 2 months), and now models that reason, see, hear and act.</p><a href="https://www.youtube.com/watch?v=WXuK6gekU1Y" target="_blank" rel="noopener">AlphaGo documentary ↗</a></div>
+        <figure><svg viewBox="0 0 320 150" role="img" aria-label="Milestones 2012 to 2026">
+          <line x1="20" y1="110" x2="300" y2="110" stroke="var(--line2)" stroke-width="2"/>
+          <g font-family="JetBrains Mono,monospace" font-size="9.5" fill="var(--ink2)" text-anchor="middle">
+            <circle cx="30" cy="110" r="5" fill="var(--cyan)"/><text x="30" y="128">2012</text><text x="30" y="95" fill="var(--ink)">AlexNet</text>
+            <circle cx="95" cy="110" r="5" fill="var(--cyan)"/><text x="95" y="128">2016</text><text x="95" y="95" fill="var(--ink)">AlphaGo</text>
+            <circle cx="150" cy="110" r="5" fill="var(--cyan)"/><text x="150" y="128">2017</text><text x="150" y="95" fill="var(--ink)">Transformer</text>
+            <circle cx="215" cy="110" r="5" fill="var(--amber)"/><text x="215" y="128">2022</text><text x="215" y="95" fill="var(--ink)">ChatGPT</text>
+            <circle cx="285" cy="110" r="6" fill="var(--amber)"><animate attributeName="r" values="6;9;6" dur="1.6s" repeatCount="indefinite"/></circle><text x="285" y="128">2026</text><text x="285" y="95" fill="var(--amber)">Agents</text>
+          </g>
+          <text x="160" y="40" text-anchor="middle" font-family="Syne,sans-serif" font-weight="700" font-size="16" fill="var(--ink)">14 years. Rules → Learning → Generation → Action.</text>
+        </svg><figcaption>You are joining at the "Agents" dot.</figcaption></figure>
+      </div>
+    </div>
+    <div class="tn">The single most important sentence in this section is Lovelace's: "only whatever we know how to order it to perform". Read it aloud twice. Then say: the moment a machine did something nobody ordered it to do (AlexNet learning what a cat looks like from photos), the definition of programming changed. That's machine learning. If time is short, skip the Dartmouth era and go straight from ENIAC to 2012.</div>
+  </div>
+</section>
+
+<!-- LADDER -->
+<section class="s" id="ladder">
+  <div class="wrap">
+    <div class="head rv">
+      <div><div class="eyebrow">Stop 05</div><h2>The ladder: each rung hands the machine more of the thinking</h2>
+      <p class="lead">Read left to right. At every step, the human writes less and the machine decides more. Notice where "rules" stop being written by people.</p></div>
+      <div class="time"><b>7 min</b>33 → 40</div>
+    </div>
+    <div class="ladder rv">
+      <div class="rung"><div class="n">RUNG 1</div><h3>Machine</h3><p>Turing's tape. Does exactly one fixed thing. Human does 100% of the thinking.</p></div>
+      <div class="rung"><div class="n">RUNG 2</div><h3>Program</h3><p>A list of exact instructions. <code>if x &gt; 30</code>. Human writes every rule.</p></div>
+      <div class="rung"><div class="n">RUNG 3</div><h3>Software</h3><p>Thousands of programs working together: Excel, WhatsApp, a bank. Still all rules, just many.</p></div>
+      <div class="rung"><div class="n">RUNG 4</div><h3>Automation</h3><p>Software that runs without a human clicking: cron jobs, factory robots, auto-emails. Rules on a schedule.</p></div>
+      <div class="rung ai"><div class="n">RUNG 5 · THE JUMP</div><h3>Machine Learning</h3><p>Human gives examples, not rules. The machine writes the rules itself. "Here are 10,000 spam emails, figure out spam."</p></div>
+      <div class="rung ai"><div class="n">RUNG 6</div><h3>Deep Learning</h3><p>ML with big neural networks. Learns from raw pixels, audio, text. No human features. AlexNet, YOLO, speech-to-text.</p></div>
+      <div class="rung ai"><div class="n">RUNG 7</div><h3>Generative AI</h3><p>Deep learning that <em>creates</em>: text, images, code, video. ChatGPT, Midjourney. Trained on the whole internet.</p></div>
+      <div class="rung ai"><div class="n">RUNG 8</div><h3>Agentic AI</h3><p>A GenAI model in a loop with tools: it plans, acts (search, run code, call APIs), observes, and retries until the goal is met.</p></div>
+      <div class="rung now"><div class="n">RUNG 9 · WHERE WE'RE HEADED</div><h3>AI software developer</h3><p>An agent that takes a ticket, reads your codebase, writes code, runs tests, fixes failures, opens the PR. Devin, Claude Code, Cursor agents. The tool <em>and</em> the co-worker.</p></div>
+      <div class="rung" style="border-style:dashed"><div class="n">YOU</div><h3>The builder</h3><p>Someone has to design, train, evaluate, deploy and supervise all of this. By Day 45, that's you.</p></div>
+    </div>
+    <div class="note rv"><b>Watch the pattern:</b> Rungs 1–4 are "human writes rules, machine executes". Rungs 5–9 are "human gives examples and goals, machine figures out rules and actions". That line, between rung 4 and 5, is the most important line in this course.</div>
+    <div class="tn">Physically walk across the room as you go up the ladder; stop at the gap between 4 and 5 and stand there. Ask: "In a spam filter, who wrote the rule 'emails containing FREE MONEY are spam'?" Answer: nobody. The model found it. That's the jump. For rung 9, show a 60-second clip of Claude Code or Cursor agent mode fixing a bug if you have one saved; students who've only seen chatbots find it startling.</div>
+  </div>
+</section>
+
+<!-- NESTED -->
+<section class="s" id="nest">
+  <div class="wrap">
+    <div class="head rv">
+      <div><div class="eyebrow">Stop 06</div><h2>AI ⊃ ML ⊃ DL ⊃ GenAI. And agents sit on top.</h2>
+      <p class="lead">People use these words interchangeably. They are not the same thing. They nest like Russian dolls: each inner ring is a smaller, more specific subset of the outer one.</p></div>
+      <div class="time"><b>6 min</b>40 → 46</div>
+    </div>
+    <div class="nest rv">
+      <svg viewBox="0 0 520 520" role="img" aria-label="Nested circles: AI contains ML contains DL contains Generative AI">
+        <defs>
+          <radialGradient id="rg"><stop offset="0" stop-color="var(--cyan)" stop-opacity=".22"/><stop offset="1" stop-color="var(--cyan)" stop-opacity="0"/></radialGradient>
+        </defs>
+        <circle cx="260" cy="270" r="245" fill="url(#rg)"/>
+        <circle id="r-ai" cx="260" cy="270" r="245" fill="none" stroke="var(--ink3)" stroke-width="2"/>
+        <circle id="r-ml" cx="260" cy="300" r="190" fill="var(--panel)" stroke="var(--cyan)" stroke-width="2"/>
+        <circle id="r-dl" cx="260" cy="335" r="135" fill="var(--bg2)" stroke="var(--violet)" stroke-width="2"/>
+        <circle id="r-gen" cx="260" cy="370" r="80" fill="var(--panel)" stroke="var(--amber)" stroke-width="2.5"/>
+        <g font-family="Syne,sans-serif" font-weight="700" text-anchor="middle">
+          <text x="260" y="60" font-size="22" fill="var(--ink)">Artificial Intelligence</text>
+          <text x="260" y="82" font-size="11" font-family="JetBrains Mono,monospace" font-weight="400" fill="var(--ink3)">any machine that acts "smart" · 1956</text>
+          <text x="260" y="145" font-size="20" fill="var(--cyan)">Machine Learning</text>
+          <text x="260" y="165" font-size="11" font-family="JetBrains Mono,monospace" font-weight="400" fill="var(--ink3)">learns rules from data · 1980s+</text>
+          <text x="260" y="233" font-size="19" fill="var(--violet)">Deep Learning</text>
+          <text x="260" y="253" font-size="11" font-family="JetBrains Mono,monospace" font-weight="400" fill="var(--ink3)">big neural networks · 2012+</text>
+          <text x="260" y="365" font-size="17" fill="var(--amber)">Generative AI</text>
+          <text x="260" y="385" font-size="10.5" font-family="JetBrains Mono,monospace" font-weight="400" fill="var(--ink3)">creates new content · 2020+</text>
+          <text x="260" y="402" font-size="10.5" font-family="JetBrains Mono,monospace" font-weight="400" fill="var(--ink3)">LLMs · diffusion</text>
+        </g>
+        <g id="agent" transform="translate(455,60)">
+          <rect x="-58" y="-22" width="116" height="44" rx="22" fill="var(--bg2)" stroke="var(--rose)" stroke-width="2"/>
+          <text x="0" y="-2" text-anchor="middle" font-family="Syne,sans-serif" font-weight="700" font-size="14" fill="var(--rose)">Agentic AI</text>
+          <text x="0" y="13" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9" fill="var(--ink3)">GenAI + tools + loop</text>
+          <path d="M-20 24 C-60 110,-120 200,-150 280" fill="none" stroke="var(--rose)" stroke-width="1.5" stroke-dasharray="4 4"/>
+        </g>
+      </svg>
+      <div class="def">
+        <div data-r="r-ai"><i style="background:var(--ink3)"></i><div><b>Artificial Intelligence</b><span>The umbrella term. Chess engines with hand-written rules, a thermostat "learning" your schedule, ChatGPT: all AI. Some of it is not machine learning at all.</span></div></div>
+        <div data-r="r-ml"><i style="background:var(--cyan)"></i><div><b>Machine Learning</b><span>A subset of AI where the rules come from data, not programmers. Predict house prices, detect fraud, group customers. Weeks 1–2 of this course. Mostly maths you already half-know: lines, distances, probabilities.</span></div></div>
+        <div data-r="r-dl"><i style="background:var(--violet)"></i><div><b>Deep Learning</b><span>ML using neural networks with many layers. Handles messy raw data: images, sound, language. Needs lots of data and GPUs. Weeks 3–5: we build a neural network from scratch in NumPy before touching PyTorch.</span></div></div>
+        <div data-r="r-gen"><i style="background:var(--amber)"></i><div><b>Generative AI</b><span>Deep learning models trained to <em>produce</em> new things: LLMs write text and code, diffusion models paint images. Week 6: LLMs, fine-tuning, RAG.</span></div></div>
+        <div data-r="agent"><i style="background:var(--rose)"></i><div><b>Agentic AI</b><span>Not a new kind of model. It's a GenAI model wrapped in a loop: think → act with a tool → observe → repeat. Week 7 and the capstones: LangGraph, CrewAI, multi-agent systems.</span></div></div>
+      </div>
+    </div>
+
+    <div class="head rv" style="margin-top:60px;margin-bottom:24px"><div><h3 style="font-size:26px">The one diagram that explains machine learning</h3><p class="lead" style="font-size:17px">This is the answer to "how does Quick, Draw! know it's a cat?"</p></div></div>
+    <div class="shift rv">
+      <div class="box"><h3>Classical programming</h3>
+        <div class="flow"><span>Rules</span><em>+</em><span>Data</span><em>→</em><span class="o">Answers</span></div>
+        <p style="margin-top:14px;font-size:14.5px;color:var(--ink2)">Human writes <code>if has_whiskers and has_tail: cat</code>. Computer applies it. Breaks the moment a cat hides its tail.</p></div>
+      <div class="arrow">⟶</div>
+      <div class="box" style="border-color:var(--cyan)"><h3>Machine learning</h3>
+        <div class="flow"><span>Data</span><em>+</em><span>Answers</span><em>→</em><span class="o">Rules</span></div>
+        <p style="margin-top:14px;font-size:14.5px;color:var(--ink2)">Human shows 10,000 photos labelled "cat" / "not cat". Computer finds the rules itself. The rules it finds are millions of numbers no human ever wrote or can fully read.</p></div>
+    </div>
+    <div class="tn">Click each definition on the left to highlight its ring. Then draw the Rules+Data→Answers vs Data+Answers→Rules diagram on the whiteboard yourself even though it's on screen; students remember what they watch being drawn. Common confusion to pre-empt: "Is ChatGPT AI or ML or DL?" Answer: all of them at once, because the rings nest. It's an AI system, built with ML, specifically DL, specifically a generative model.</div>
+  </div>
+</section>
+
+<!-- LIVE DEMO -->
+<section class="s" id="learn">
+  <div class="wrap">
+    <div class="head rv">
+      <div><div class="eyebrow">Stop 07 · Hands-on</div><h2>Watch a machine learn. Right now. In your browser.</h2>
+      <p class="lead">Click anywhere on the canvas to drop data points. Then press <b>Learn</b>. The red line starts random and wrong. Each step, it measures how wrong it is and nudges itself a little less wrong. That's it. That is the entire secret of machine learning: <em>gradient descent</em>. We derive it properly on Day 3.</p></div>
+      <div class="time"><b>8 min</b>46 → 54</div>
+    </div>
+    <div class="demo rv">
+      <div>
+        <canvas id="fit" width="800" height="500" aria-label="Interactive linear regression canvas"></canvas>
+        <div class="ctl">
+          <button class="btn" id="learnb" type="button">Learn</button>
+          <button class="btn ghost" id="stepb" type="button">One step</button>
+          <button class="btn ghost" id="sampleb" type="button">Drop sample data</button>
+          <button class="btn ghost" id="resetb" type="button">Reset</button>
+        </div>
+        <div class="stats">
+          <div>points: <b id="s-n">0</b></div><div>steps: <b id="s-step">0</b></div>
+          <div>error (MSE): <b id="s-err">–</b></div><div>line: <b id="s-eq">y = ? x + ?</b></div>
+        </div>
+      </div>
+      <div>
+        <h3 style="margin-bottom:14px">What you're actually watching</h3>
+        <div class="steps">
+          <div><span><b>Guess.</b> The model starts with a random line: <code>y = w·x + b</code>. Two numbers, <code>w</code> and <code>b</code>. These are its "parameters". GPT-4 has about a trillion of them; the idea is identical.</span></div>
+          <div><span><b>Measure the mistake.</b> For every point, how far is the line from it? Square that, average it. One number: the <em>loss</em>. Big loss = bad line.</span></div>
+          <div><span><b>Nudge.</b> Calculus tells us which direction to move <code>w</code> and <code>b</code> to make the loss slightly smaller. Move a tiny bit that way.</span></div>
+          <div><span><b>Repeat</b> a few hundred times. The line settles onto the data. Nobody told it the answer. It found the rule from the examples.</span></div>
+        </div>
+        <div class="note" style="margin-top:22px"><b>Every model in this course is this loop, scaled up.</b> A neural network is the same thing with millions of <code>w</code>'s stacked in layers. ChatGPT is the same loop, where "the line" is "the next word" and "the points" are the internet.</div>
+        <p style="margin-top:18px;font-size:14.5px;color:var(--ink2)">Want the full version with real Python? <a href="https://colab.research.google.com/" target="_blank" rel="noopener">Google Colab</a> gives you a free GPU in the browser; that's our lab for all 45 days. Bookmark it today.</p>
+      </div>
+    </div>
+
+    <div class="nn rv">
+      <div class="eyebrow" style="margin-bottom:10px">Preview of Week 3 · <b>what a neural network looks like</b></div>
+      <svg id="nnsvg" viewBox="0 0 800 260" role="img" aria-label="A small neural network with signals flowing through it"></svg>
+      <p style="font-family:var(--mono);font-size:12px;color:var(--ink3);margin-top:8px">Left: inputs (pixels, words, numbers). Middle: layers of tiny "neurons", each doing a weighted sum + a squash. Right: the answer. Every line is one learnable number. Watch the pulses: that's data flowing forward. Learning flows backward (Day 12: backpropagation).</p>
+    </div>
+    <div class="tn">Let a student drive. Drop points in a rough line, press Learn, and narrate the error number dropping. Then drop one wild outlier and watch the line get pulled: that's a 30-second introduction to why data quality matters. Use "One step" to slow it down and show that each step is tiny. If someone asks "what's the maths?", write loss = mean((wx+b−y)²) on the board and say "Day 3". Don't go further today.</div>
+  </div>
+</section>
+
+<!-- COURSE -->
+<section class="s" id="course">
+  <div class="wrap">
+    <div class="head rv">
+      <div><div class="eyebrow">Stop 08</div><h2>The next 44 days, from 10,000 feet</h2>
+      <p class="lead">Four phases. Each one builds on the last, and every single day has the same shape: a concept, its internals, then code in Colab. We don't skip the maths and we don't stay in the maths.</p></div>
+      <div class="time"><b>4 min</b>54 → 58</div>
+    </div>
+    <div class="map rv">
+      <div class="ph"><div class="w">PHASE 1 · WEEKS 1–2</div><h3>Classical ML</h3><ul><li>Regression &amp; classification</li><li>Gradient descent, from scratch</li><li>Trees, forests, XGBoost, SVM</li><li>Clustering &amp; PCA</li><li>How to know if a model is any good</li></ul></div>
+      <div class="ph"><div class="w">PHASE 2 · WEEKS 3–4</div><h3>Deep Learning &amp; Vision</h3><ul><li>Build a neural net in NumPy</li><li>Backpropagation, derived</li><li>PyTorch &amp; TensorFlow</li><li>CNNs, OpenCV, YOLO detection</li><li>Classical NLP: TF-IDF, Word2Vec</li></ul></div>
+      <div class="ph"><div class="w">PHASE 3 · WEEKS 5–6</div><h3>Transformers &amp; LLMs</h3><ul><li>RNN → LSTM → Attention</li><li>Build a Transformer</li><li>BERT, GPT, Llama, Mistral</li><li>Fine-tuning: LoRA, QLoRA</li><li>RAG &amp; vector databases</li></ul></div>
+      <div class="ph"><div class="w">PHASE 4 · WEEKS 7–8</div><h3>Agents &amp; Production</h3><ul><li>ReAct, tool calling, memory</li><li>LangGraph, CrewAI, AutoGen</li><li>Multi-agent systems</li><li>FastAPI, Docker, deployment</li><li>GitHub &amp; portfolio</li></ul></div>
+      <div class="ph cap"><div><div class="w">FINAL MONTH · CAPSTONES</div><h3>Three production systems</h3><p style="font-size:14px;color:var(--ink2)">Real repos, real deployments, real demos on your portfolio.</p></div>
+        <ul><li><b>Enterprise RAG platform</b> for financial &amp; legal documents, with a routing, extraction and verification agent team</li><li><b>Real-time defect detection</b>: YOLO on video, XGBoost risk scoring, an LLM writing the incident report</li><li><b>Smart-city platform</b>: citizens upload photos, vision models classify potholes and garbage, agents route to departments, forecasts predict hotspots</li></ul></div>
+    </div>
+    <div class="rhythm rv">
+      <div><b>Every day: 3 parts</b><span>Concept (why it exists) → Internals (how it works, with the maths) → Colab (build it, break it, fix it).</span></div>
+      <div><b>Build-first rule</b><span>Before we use a library, we write the naive version ourselves. You'll implement gradient descent, a neural net, attention, and an agent loop by hand before importing them.</span></div>
+      <div><b>Portfolio from Day 2</b><span>Every notebook goes to your GitHub. By Day 45 you'll have 40+ commits, 3 deployed projects and a LinkedIn that recruiters can search.</span></div>
+    </div>
+    <div class="tn">Keep this short; they don't need the details yet. The message is: it's a staircase, not a cliff, and every day has code. Point at the capstones and say "in 45 days you'll have built those three". If anyone looks worried about maths: "Day 2 starts from a straight line. If you can plot y = 2x + 1 you're ready."</div>
+  </div>
+</section>
+
+<!-- QUIZ -->
+<section class="s" id="quiz" style="padding-top:50px">
+  <div class="wrap">
+    <div class="head rv"><div><div class="eyebrow">Quick check</div><h2 style="font-size:30px">AI, ML, or just a program?</h2></div></div>
+    <div class="quiz rv">
+      <div class="q" data-a="P"><p>A calculator app that adds two numbers.</p><div class="opts"><button data-v="P">Program</button><button data-v="ML">ML</button><button data-v="GEN">GenAI</button></div><div class="why">Just a program. Every rule was written by a human. Fast, correct, and not intelligent.</div></div>
+      <div class="q" data-a="ML"><p>Gmail deciding an email is spam.</p><div class="opts"><button data-v="P">Program</button><button data-v="ML">ML</button><button data-v="GEN">GenAI</button></div><div class="why">Machine learning. Nobody wrote "emails with 'lottery' are spam"; the model learned it from millions of labelled examples.</div></div>
+      <div class="q" data-a="GEN"><p>Asking ChatGPT to write a poem about Hyderabad rain.</p><div class="opts"><button data-v="P">Program</button><button data-v="ML">ML</button><button data-v="GEN">GenAI</button></div><div class="why">Generative AI (which is also ML, which is also AI). It produces something new that wasn't in any training example.</div></div>
+      <div class="q" data-a="P"><p>A thermostat: if temp &gt; 25°C, switch on the AC.</p><div class="opts"><button data-v="P">Program</button><button data-v="ML">ML</button><button data-v="GEN">GenAI</button></div><div class="why">A program. One hand-written rule. Marketing might call it "smart", but there's no learning.</div></div>
+      <div class="q" data-a="ML"><p>Netflix putting a show on your homepage.</p><div class="opts"><button data-v="P">Program</button><button data-v="ML">ML</button><button data-v="GEN">GenAI</button></div><div class="why">ML. A recommendation model predicts what you'll watch from what people like you watched.</div></div>
+      <div class="q" data-a="GEN"><p>An agent that reads a bug report, edits your code, and opens a pull request.</p><div class="opts"><button data-v="P">Program</button><button data-v="ML">ML</button><button data-v="GEN">GenAI</button></div><div class="why">Agentic AI: a generative model (LLM) in a loop with tools. The top rung of the ladder, and Week 7.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- SETUP -->
+<section class="s" id="setup">
+  <div class="wrap">
+    <div class="head rv">
+      <div><div class="eyebrow">Stop 09</div><h2>Before Day 2: five minutes of setup</h2></div>
+      <div class="time"><b>2 min</b>58 → 60</div>
+    </div>
+    <div class="grid3 rv">
+      <div class="card"><span class="tag">Required</span><h3>Google Colab</h3><p>Free Jupyter notebooks with a GPU, nothing to install. Open <a href="https://colab.research.google.com/" target="_blank" rel="noopener">colab.research.google.com</a>, sign in, create a notebook, run <code>print("hello AI")</code>. That's the whole homework.</p></div>
+      <div class="card"><span class="tag">Required</span><h3>GitHub account</h3><p>Every notebook you write goes here. <a href="https://github.com/signup" target="_blank" rel="noopener">github.com/signup</a>. By Day 45 this is your portfolio; recruiters look at it before your resume.</p></div>
+      <div class="card"><span class="tag">Recommended</span><h3>Kaggle account</h3><p><a href="https://www.kaggle.com/" target="_blank" rel="noopener">kaggle.com</a>: free datasets, free GPUs, competitions. We'll pull our Week 1 datasets from here.</p></div>
+    </div>
+    <div class="grid2 rv" style="margin-top:20px">
+      <div class="card"><span class="tag">Watch tonight · 20 min</span><h3>Two videos that will make Day 2 click</h3><p><a href="https://www.youtube.com/watch?v=aircAruvnKk" target="_blank" rel="noopener">3Blue1Brown, "But what is a neural network?"</a> is the best 19 minutes on the internet for this. Then <a href="https://www.youtube.com/watch?v=zjkBMFhNj_g" target="_blank" rel="noopener">Andrej Karpathy's "Intro to LLMs"</a> if you're hungry for more (1 hour, optional).</p></div>
+      <div class="card"><span class="tag">Think about</span><h3>One question for tomorrow</h3><p>Pick any app on your phone. Find one feature you're now fairly sure is machine learning. Be ready to say what the "data" was and what the "answers" were that it learned from. We start Day 2 with your examples.</p></div>
+    </div>
+    <div class="tn">End on the phone question, not on setup. It sends them home looking for ML in their own life, which is the habit you want. Confirm everyone can open Colab before they leave; the number-one reason people fall behind on Day 2 is a login problem on Day 1.</div>
+  </div>
+</section>
+
+<div class="fin rv">
+  <div class="eyebrow">Day 01 · complete</div>
+  <h2 style="margin-top:12px">Tomorrow: a straight line, and the machine that finds it.</h2>
+  <p style="color:var(--ink2)">Day 2 · Linear regression, from the ground up. Concept → internals → Colab.</p>
+</div>
+
+<script>
+document.documentElement.classList.add('js');
+/* reveal */
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.08,rootMargin:'0px 0px -40px 0px'});
+document.querySelectorAll('.rv').forEach(el=>io.observe(el));
+document.querySelectorAll('.rv').forEach(el=>{const r=el.getBoundingClientRect();if(r.top<innerHeight)el.classList.add('in')});
+
+/* nav highlight + progress */
+const secs=[...document.querySelectorAll('section[id]')],links=[...document.querySelectorAll('#bar nav a')];
+function onScroll(){
+  const d=document.documentElement;document.getElementById('track').style.width=(scrollY/(d.scrollHeight-innerHeight)*100)+'%';
+  let cur=secs[0].id;secs.forEach(s=>{if(s.getBoundingClientRect().top<120)cur=s.id});
+  links.forEach(a=>a.classList.toggle('on',a.getAttribute('href')==='#'+cur));
+}
+addEventListener('scroll',onScroll,{passive:true});onScroll();
+
+/* timer */
+let t0=null,tick=null;const clk=document.getElementById('clk'),clkb=document.getElementById('clkb');
+clkb.onclick=()=>{if(t0){clearInterval(tick);t0=null;clkb.textContent='Start timer';clk.textContent='00:00';return}
+  t0=Date.now();clkb.textContent='Stop';tick=setInterval(()=>{const s=Math.floor((Date.now()-t0)/1000);clk.textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');clk.style.color=s>3300?'var(--rose)':''},500)};
+/* notes */
+const nb=document.getElementById('nb');const tn=()=>document.body.classList.toggle('notes');nb.onclick=tn;
+addEventListener('keydown',e=>{if(e.key==='n'||e.key==='N'){if(!/input|textarea/i.test(e.target.tagName))tn()}});
+
+/* hero particle field */
+(function(){
+  const c=document.getElementById('bgc'),x=c.getContext('2d');let W,H,P=[];const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  function size(){W=c.width=c.offsetWidth*devicePixelRatio;H=c.height=c.offsetHeight*devicePixelRatio;P=[];const n=Math.min(90,Math.floor(W*H/22000/devicePixelRatio));for(let i=0;i<n;i++)P.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.35*devicePixelRatio,vy:(Math.random()-.5)*.35*devicePixelRatio})}
+  size();addEventListener('resize',size);
+  function col(){return getComputedStyle(document.documentElement).getPropertyValue('--cyan').trim()}
+  function draw(){x.clearRect(0,0,W,H);const cc=col();x.strokeStyle=cc;x.fillStyle=cc;const R=150*devicePixelRatio;
+    for(const p of P){if(!reduce){p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1}x.globalAlpha=.9;x.beginPath();x.arc(p.x,p.y,1.6*devicePixelRatio,0,7);x.fill()}
+    for(let i=0;i<P.length;i++)for(let j=i+1;j<P.length;j++){const a=P[i],b=P[j],d=Math.hypot(a.x-b.x,a.y-b.y);if(d<R){x.globalAlpha=(1-d/R)*.35;x.lineWidth=devicePixelRatio;x.beginPath();x.moveTo(a.x,a.y);x.lineTo(b.x,b.y);x.stroke()}}
+    if(!reduce)requestAnimationFrame(draw)}
+  draw();
+})();
+
+/* turing tape */
+(function(){
+  const tape=document.getElementById('tape'),head=document.getElementById('thead');if(!tape)return;
+  const cells=[1,0,1,1,0,0,1,0,1,1];const cw=30,ox=10,oy=70;
+  cells.forEach((v,i)=>{tape.innerHTML+=`<rect x="${ox+i*cw}" y="${oy}" width="${cw}" height="34" fill="var(--bg2)" stroke="var(--line2)"/><text id="c${i}" x="${ox+i*cw+cw/2}" y="${oy+23}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="15" fill="var(--ink)">${v}</text>`});
+  let i=0;const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+  function step(){head.setAttribute('transform',`translate(${ox+i*cw+cw/2},${oy-6})`);const t=document.getElementById('c'+i);if(cells[i]===0){cells[i]=1;t.textContent='1';t.setAttribute('fill','var(--amber)')}
+    i=(i+1)%cells.length;if(i===0)cells.forEach((_,k)=>{cells[k]=Math.round(Math.random());const q=document.getElementById('c'+k);q.textContent=cells[k];q.setAttribute('fill','var(--ink)')})}
+  step();if(!reduce)setInterval(step,700);
+})();
+
+/* nested circle highlight */
+document.querySelectorAll('.nest .def>div').forEach(d=>{d.addEventListener('click',()=>{document.querySelectorAll('.nest .def>div').forEach(x=>x.classList.remove('on'));d.classList.add('on');
+  ['r-ai','r-ml','r-dl','r-gen','agent'].forEach(id=>{const el=document.getElementById(id);el.style.filter='';el.style.opacity='.55'});
+  const el=document.getElementById(d.dataset.r);el.style.opacity='1';el.style.filter='drop-shadow(0 0 10px currentColor)'})});
+
+/* regression demo */
+(function(){
+  const c=document.getElementById('fit'),x=c.getContext('2d');let pts=[],w=0,b=0,steps=0,running=false;const lr=0.08;
+  const tok=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  function norm(p){return{x:p.x/c.width*2-1,y:1-p.y/c.height*2}}
+  function loss(){if(!pts.length)return 0;let s=0;for(const p of pts){const q=norm(p);s+=(w*q.x+b-q.y)**2}return s/pts.length}
+  function step(){if(pts.length<2)return;let gw=0,gb=0;for(const p of pts){const q=norm(p);const e=w*q.x+b-q.y;gw+=2*e*q.x;gb+=2*e}gw/=pts.length;gb/=pts.length;w-=lr*gw;b-=lr*gb;steps++}
+  function draw(){x.clearRect(0,0,c.width,c.height);x.strokeStyle=tok('--line');x.lineWidth=1;
+    for(let i=1;i<8;i++){x.beginPath();x.moveTo(i*c.width/8,0);x.lineTo(i*c.width/8,c.height);x.stroke();x.beginPath();x.moveTo(0,i*c.height/8);x.lineTo(c.width,i*c.height/8);x.stroke()}
+    if(!pts.length){x.fillStyle=tok('--ink3');x.font='600 22px Manrope,sans-serif';x.textAlign='center';x.fillText('Click to add data points, then press Learn',c.width/2,c.height/2)}
+    if(pts.length>=2){x.strokeStyle=tok('--line2');x.setLineDash([4,6]);for(const p of pts){const q=norm(p);const yy=(1-(w*q.x+b))/2*c.height;x.beginPath();x.moveTo(p.x,p.y);x.lineTo(p.x,yy);x.stroke()}x.setLineDash([]);
+      x.strokeStyle=tok('--rose');x.lineWidth=4;x.beginPath();const y0=(1-(w*-1+b))/2*c.height,y1=(1-(w*1+b))/2*c.height;x.moveTo(0,y0);x.lineTo(c.width,y1);x.stroke()}
+    x.fillStyle=tok('--cyan');for(const p of pts){x.beginPath();x.arc(p.x,p.y,7,0,7);x.fill()}
+    document.getElementById('s-n').textContent=pts.length;document.getElementById('s-step').textContent=steps;
+    document.getElementById('s-err').textContent=pts.length?loss().toFixed(4):'–';document.getElementById('s-eq').textContent=`y = ${w.toFixed(2)} x + ${b.toFixed(2)}`}
+  function add(ev){const r=c.getBoundingClientRect();const px=(ev.clientX-r.left)/r.width*c.width,py=(ev.clientY-r.top)/r.height*c.height;pts.push({x:px,y:py});draw()}
+  c.addEventListener('pointerdown',add);
+  function reset(){pts=[];steps=0;w=(Math.random()-.5)*2;b=(Math.random()-.5);running=false;document.getElementById('learnb').textContent='Learn';draw()}
+  function loop(){if(!running)return;for(let i=0;i<3;i++)step();draw();if(steps<600&&loss()>1e-5)requestAnimationFrame(loop);else{running=false;document.getElementById('learnb').textContent='Learn'}}
+  document.getElementById('learnb').onclick=()=>{if(pts.length<2)return;running=!running;document.getElementById('learnb').textContent=running?'Pause':'Learn';if(running)loop()};
+  document.getElementById('stepb').onclick=()=>{step();draw()};
+  document.getElementById('resetb').onclick=reset;
+  document.getElementById('sampleb').onclick=()=>{pts=[];steps=0;w=(Math.random()-.5)*2;b=(Math.random()-.5);const m=.6+Math.random()*.5,k=(Math.random()-.5)*.4;for(let i=0;i<28;i++){const nx=Math.random()*1.7-.85;const ny=m*nx+k+(Math.random()-.5)*.35;pts.push({x:(nx+1)/2*c.width,y:(1-ny)/2*c.height})}draw()};
+  w=(Math.random()-.5)*2;b=(Math.random()-.5);draw();
+})();
+
+/* neural net diagram */
+(function(){
+  const s=document.getElementById('nnsvg');const layers=[4,6,6,2],X=[80,300,520,720],ns='http://www.w3.org/2000/svg';let html='';const pos=[];
+  layers.forEach((n,li)=>{pos[li]=[];for(let i=0;i<n;i++){pos[li].push({x:X[li],y:130+(i-(n-1)/2)*36})}});
+  for(let l=0;l<layers.length-1;l++)for(const a of pos[l])for(const bb of pos[l+1])html+=`<line x1="${a.x}" y1="${a.y}" x2="${bb.x}" y2="${bb.y}" stroke="var(--line2)" stroke-width="1"/>`;
+  const cols=['var(--cyan)','var(--violet)','var(--violet)','var(--amber)'];
+  pos.forEach((L,li)=>L.forEach(p=>html+=`<circle cx="${p.x}" cy="${p.y}" r="11" fill="var(--bg2)" stroke="${cols[li]}" stroke-width="2"/>`));
+  const lbl=['inputs','hidden layer 1','hidden layer 2','output'];X.forEach((xx,i)=>html+=`<text x="${xx}" y="250" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" fill="var(--ink3)">${lbl[i]}</text>`);
+  ['pixel','pixel','pixel','…'].forEach((t,i)=>html+=`<text x="${X[0]-20}" y="${pos[0][i].y+4}" text-anchor="end" font-family="JetBrains Mono,monospace" font-size="10" fill="var(--ink3)">${t}</text>`);
+  ['cat 0.92','dog 0.08'].forEach((t,i)=>html+=`<text x="${X[3]+20}" y="${pos[3][i].y+4}" font-family="JetBrains Mono,monospace" font-size="11" fill="var(--amber)">${t}</text>`);
+  for(let k=0;k<6;k++){const a=pos[0][k%4],m1=pos[1][(k*2)%6],m2=pos[2][(k*3+1)%6],o=pos[3][k%2];
+    html+=`<circle r="4" fill="var(--cyan)"><animateMotion dur="2.4s" begin="${k*.4}s" repeatCount="indefinite" path="M${a.x} ${a.y} L${m1.x} ${m1.y} L${m2.x} ${m2.y} L${o.x} ${o.y}"/></circle>`}
+  s.innerHTML=html;
+})();
+
+/* quiz */
+document.querySelectorAll('.q').forEach(q=>q.querySelectorAll('button').forEach(bt=>bt.onclick=()=>{if(q.classList.contains('done'))return;q.classList.add('done');q.querySelectorAll('button').forEach(o=>{if(o.dataset.v===q.dataset.a)o.classList.add('ok')});if(bt.dataset.v!==q.dataset.a)bt.classList.add('bad')}));
+</script>
+</body></html>

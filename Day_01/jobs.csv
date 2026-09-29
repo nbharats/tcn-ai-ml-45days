@@ -1,0 +1,601 @@
+title,company,city,salary_lpa,skills
+NLP Engineer,Flipkart,Chennai,17.5,docker; aws; python
+Data Scientist,Ola,Hyderabad,14.1,pandas; tensorflow; python
+NLP Engineer,Infosys,Remote,22.2,git; fastapi; excel; scikit-learn; python; langchain; docker
+AI Engineer,TCS,Remote,20.8,langchain; pandas; numpy; python
+Data Analyst,Flipkart,Bengaluru,15.5,aws; numpy; sql; nlp; scikit-learn; python; langchain
+NLP Engineer,Swiggy,Hyderabad,15.6,pandas; fastapi; excel; python; docker
+AI Engineer,Ola,Hyderabad,19.9,aws; pandas; excel; tensorflow; python; tableau
+NLP Engineer,Zomato,Noida,23.4,sql; nlp; pytorch; python; langchain; docker
+AI Engineer,Zomato,Gurugram,20.3,git; pandas; python; langchain; statistics
+Python Developer,Razorpay,Noida,23.3,aws; spark; llms; sql; scikit-learn; python; docker
+ML Engineer,Flipkart,Noida,19.5,aws; spark; pandas; excel; python; langchain; docker
+Python Developer,TCS,Chennai,12.6,pandas; numpy; excel; tensorflow; python; tableau
+ML Engineer,Swiggy,Gurugram,Not disclosed,git; pandas; numpy; excel; tensorflow; pytorch; python; langchain
+Data Analyst,Flipkart,Bengaluru,10.5,excel; docker; llms; python
+NLP Engineer,Ola,Remote,20.5,aws; spark; pandas; scikit-learn; python; docker; tableau
+NLP Engineer,Infosys,Hyderabad,18.0,excel; langchain; llms; docker
+Data Analyst,Swiggy,Bengaluru,Not disclosed,spark; sql; nlp; python; docker
+Python Developer,Zomato,Chennai,17.7,aws; nlp; tensorflow; python; statistics
+Data Scientist,Zepto,Noida,17.3,fastapi; sql; tensorflow; python; statistics
+NLP Engineer,Infosys,Hyderabad,18.3,langchain; sql; tableau; python
+Python Developer,Flipkart,Bengaluru,20.4,scikit-learn; fastapi; pytorch; nlp; docker; numpy
+NLP Engineer,Zepto,Hyderabad,26.2,spark; pandas; tensorflow; python; langchain; docker; statistics
+Data Scientist,Freshworks,Hyderabad,17.5,langchain; aws; git; python
+ML Engineer,Ola,Remote,23.4,spark; llms; sql; tensorflow; pytorch; python
+Python Developer,Flipkart,Chennai,13.5,spark; pandas; fastapi; sql; python
+ML Engineer,Swiggy,Hyderabad,18.8,aws; pandas; fastapi; excel; sql; python; statistics; tableau
+AI Engineer,Ola,Hyderabad,21.3,git; excel; sql; scikit-learn; pytorch; python; langchain
+Python Developer,Ola,Noida,15.8,git; llms; pandas; numpy; scikit-learn; python
+AI Engineer,TCS,Chennai,20.8,git; spark; pandas; excel; sql; python; tableau
+ML Engineer,TCS,Bengaluru,21.0,aws; fastapi; scikit-learn; tensorflow; python; statistics
+Data Analyst,Razorpay,Chennai,19.5,aws; llms; scikit-learn; pytorch; python; docker
+Data Analyst,Zepto,Pune,14.2,pandas; fastapi; nlp; scikit-learn; python
+ML Engineer,Razorpay,Gurugram,20.2,llms; fastapi; numpy; excel; python
+Data Analyst,PhonePe,Remote,12.6,fastapi; scikit-learn; python; docker; tableau
+Data Analyst,TCS,Remote,17.5,docker; tensorflow; git; pytorch; scikit-learn; langchain
+Data Analyst,Flipkart,Pune,20.5,spark; llms; fastapi; python; langchain; tableau
+ML Engineer,Zomato,Hyderabad,21.9,aws; llms; numpy; sql; excel; tensorflow; pytorch; python
+AI Engineer,Swiggy,Chennai,20.7,tensorflow; fastapi; python
+AI Engineer,Infosys,Gurugram,17.2,excel; spark; nlp; python
+NLP Engineer,Zomato,Chennai,25.0,aws; fastapi; excel; pytorch; python; langchain
+NLP Engineer,Flipkart,Pune,20.8,git; spark; numpy; nlp; python; tableau
+Python Developer,Freshworks,Chennai,16.4,pandas; numpy; nlp; scikit-learn; python; langchain; docker; tableau
+Data Analyst,Flipkart,Remote,18.3,spark; fastapi; numpy; tensorflow; python; langchain; docker
+Data Scientist,Flipkart,Gurugram,15.7,spark; git; pytorch; python
+ML Engineer,Razorpay,Noida,15.6,spark; tableau; git; excel; fastapi; llms
+Data Scientist,Freshworks,Bengaluru,24.6,aws; git; nlp; python; langchain; docker; statistics
+NLP Engineer,Infosys,Bengaluru,24.1,aws; spark; pytorch; python; docker; tableau
+Data Scientist,Zepto,Remote,19.9,git; fastapi; numpy; tensorflow; python; tableau
+Python Developer,Ola,Remote,22.5,statistics; python; llms; scikit-learn; langchain; tensorflow
+Python Developer,PhonePe,Noida,16.7,aws; tensorflow; python; docker; statistics
+ML Engineer,Zepto,Pune,17.7,git; excel; scikit-learn; python; langchain; tableau
+Data Scientist,PhonePe,Pune,18.7,tensorflow; git; tableau; pytorch; langchain
+Data Analyst,Infosys,Remote,13.8,spark; llms; numpy; sql; python; tableau
+Data Analyst,TCS,Remote,10.7,scikit-learn; docker; nlp; spark; tableau; sql; excel
+AI Engineer,PhonePe,Gurugram,20.6,numpy; sql; excel; pytorch; python
+NLP Engineer,Zomato,Remote,20.1,pandas; llms; numpy; python; docker
+Data Analyst,PhonePe,Pune,23.0,aws; llms; fastapi; sql; nlp; pytorch; python; tableau
+NLP Engineer,Ola,Remote,26.2,aws; llms; fastapi; scikit-learn; pytorch; python; tableau
+Data Scientist,PhonePe,Pune,18.3,aws; fastapi; numpy; sql; nlp; python; tableau
+Data Analyst,Zomato,Noida,18.9,spark; numpy; pytorch; python; langchain; statistics; tableau
+AI Engineer,Freshworks,Gurugram,25.6,spark; llms; numpy; sql; tensorflow; python; statistics
+Data Analyst,Zomato,Pune,9.4,excel; docker; langchain; python
+Data Scientist,Infosys,Pune,30.2,aws; spark; llms; fastapi; nlp; pytorch; python; langchain
+Data Analyst,Zomato,Pune,23.8,git; spark; llms; scikit-learn; tensorflow; pytorch; python; docker
+Data Analyst,Zepto,Chennai,13.2,llms; pandas; excel; python; docker
+AI Engineer,Swiggy,Hyderabad,15.2,numpy; excel; statistics; python
+Data Analyst,Zomato,Pune,14.6,pandas; numpy; tensorflow; python; docker; statistics
+Data Analyst,Freshworks,Pune,14.6,fastapi; numpy; python; langchain; docker
+Python Developer,Flipkart,Hyderabad,14.4,excel; sql; numpy; python; langchain; statistics; tableau
+Data Analyst,Freshworks,Bengaluru,10.2,git; excel; numpy; scikit-learn; python; statistics
+NLP Engineer,Flipkart,Bengaluru,18.8,aws; fastapi; sql; tensorflow; python
+ML Engineer,TCS,Chennai,17.1,git; llms; excel; numpy; python; docker
+Python Developer,Zomato,Chennai,20.2,git; pandas; llms; sql; nlp; tensorflow; python
+Data Analyst,Zomato,Gurugram,15.8,aws; sql; pytorch; python; statistics; tableau
+NLP Engineer,TCS,Noida,27.6,llms; pandas; fastapi; tensorflow; pytorch; python; statistics
+Data Scientist,Ola,Remote,20.0,sql; git; pandas; pytorch; scikit-learn; spark; nlp
+Data Analyst,Ola,Hyderabad,14.4,aws; git; fastapi; numpy; sql; excel; pytorch; python
+AI Engineer,Ola,Bengaluru,17.3,numpy; excel; python; langchain; statistics; tableau
+Python Developer,TCS,Gurugram,14.2,spark; pandas; numpy; sql; python; docker; tableau
+Data Scientist,Flipkart,Pune,19.1,git; numpy; excel; scikit-learn; tensorflow; python; docker
+Data Scientist,Razorpay,Gurugram,17.2,aws; spark; llms; scikit-learn; python
+Python Developer,PhonePe,Hyderabad,16.5,llms; tableau; langchain; docker; pytorch; numpy
+Data Scientist,Freshworks,Bengaluru,15.6,langchain; tableau; statistics; python
+ML Engineer,Razorpay,Bengaluru,17.7,aws; git; numpy; sql; python; docker; tableau
+Data Scientist,Freshworks,Remote,20.0,tableau; langchain; pandas; fastapi; pytorch
+Python Developer,PhonePe,Bengaluru,8.0,pandas; docker; excel
+NLP Engineer,Swiggy,Gurugram,16.6,git; pytorch; excel
+ML Engineer,PhonePe,Chennai,22.6,spark; pandas; fastapi; pytorch; python
+NLP Engineer,Freshworks,Pune,17.9,nlp; scikit-learn; python; docker; statistics
+NLP Engineer,Freshworks,Remote,19.5,pytorch; pandas; git; nlp; excel; scikit-learn; tableau
+AI Engineer,Zepto,Remote,20.8,spark; numpy; python; langchain; statistics
+NLP Engineer,TCS,Remote,20.9,aws; git; llms; excel; sql; python
+ML Engineer,Zepto,Pune,24.3,llms; excel; nlp; scikit-learn; tensorflow; python; docker; tableau
+Data Scientist,PhonePe,Hyderabad,15.2,llms; scikit-learn; pandas
+ML Engineer,TCS,Noida,26.3,aws; llms; fastapi; nlp; python
+AI Engineer,PhonePe,Remote,16.0,pandas; scikit-learn; git; python
+Python Developer,PhonePe,Remote,15.5,aws; pandas; scikit-learn; python; langchain
+NLP Engineer,Zomato,Hyderabad,18.6,numpy; docker; statistics; python; excel
+NLP Engineer,Flipkart,Bengaluru,15.8,excel; fastapi; git; python
+ML Engineer,Razorpay,Gurugram,25.0,scikit-learn; langchain; git; pytorch; tableau; llms; spark
+NLP Engineer,Swiggy,Bengaluru,17.6,aws; fastapi; statistics; python
+NLP Engineer,Freshworks,Bengaluru,25.1,llms; sql; nlp; scikit-learn; tensorflow; python
+NLP Engineer,Ola,Hyderabad,15.9,python; sql; tableau; numpy
+Python Developer,Razorpay,Hyderabad,Not disclosed,docker; tableau; scikit-learn; langchain
+Python Developer,TCS,Bengaluru,Not disclosed,pandas; numpy; pytorch; python; statistics
+ML Engineer,Freshworks,Chennai,21.0,git; spark; pandas; numpy; python; langchain; docker
+ML Engineer,Freshworks,Bengaluru,21.7,sql; spark; excel; docker; tableau; python; langchain
+Data Analyst,Swiggy,Gurugram,11.4,pandas; excel; nlp; scikit-learn; python; statistics
+Python Developer,Infosys,Gurugram,16.2,excel; git; fastapi; sql; langchain; llms; spark
+Data Scientist,PhonePe,Pune,15.8,git; fastapi; tensorflow; python; tableau
+NLP Engineer,Razorpay,Chennai,21.6,git; llms; sql; scikit-learn; python; statistics
+Data Analyst,TCS,Chennai,16.9,nlp; tableau; numpy; tensorflow; pytorch; spark; git
+AI Engineer,Flipkart,Remote,22.4,spark; pandas; numpy; tensorflow; python; tableau
+AI Engineer,TCS,Pune,21.7,llms; fastapi; excel; scikit-learn; python; docker; tableau
+AI Engineer,Ola,Hyderabad,21.9,langchain; scikit-learn; pytorch; python
+Data Scientist,Zomato,Bengaluru,18.8,git; llms; scikit-learn; pytorch; python; statistics; tableau
+Data Analyst,Infosys,Remote,12.3,pandas; sql; scikit-learn; pytorch; python
+Python Developer,Freshworks,Chennai,16.8,numpy; llms; fastapi; python
+NLP Engineer,TCS,Pune,18.0,excel; sql; python; langchain; docker
+AI Engineer,Infosys,Chennai,18.6,fastapi; statistics; python
+Python Developer,PhonePe,Noida,17.9,pandas; sql; tensorflow; python; langchain
+NLP Engineer,Swiggy,Bengaluru,21.6,pandas; excel; numpy; pytorch; python; langchain
+Data Scientist,Swiggy,Remote,18.1,langchain; docker; fastapi; python
+ML Engineer,Razorpay,Hyderabad,17.2,spark; numpy; tensorflow
+Data Analyst,Freshworks,Gurugram,14.8,aws; excel; tensorflow; pytorch; python
+Python Developer,TCS,Chennai,17.5,git; spark; pandas; fastapi; sql; python; docker; tableau
+Data Analyst,Flipkart,Chennai,11.7,git; spark; pandas; excel; python; docker
+Python Developer,Ola,Hyderabad,18.3,git; excel; sql; nlp; python; langchain; docker; tableau
+Data Analyst,Zomato,Hyderabad,14.1,aws; spark; pandas; numpy; python; statistics; tableau
+AI Engineer,Swiggy,Bengaluru,19.5,spark; fastapi; excel; pytorch; python; langchain
+AI Engineer,Razorpay,Pune,21.3,langchain; nlp; excel; python
+Data Analyst,Flipkart,Pune,14.3,git; spark; llms; excel; scikit-learn; tensorflow; python; tableau
+Python Developer,Swiggy,Remote,19.0,git; pandas; nlp; scikit-learn; tensorflow; python; tableau
+Data Scientist,Ola,Remote,18.9,spark; sql; scikit-learn; python; docker
+Python Developer,Freshworks,Bengaluru,17.1,pandas; excel; sql; scikit-learn; tensorflow; python; langchain; tableau
+Data Scientist,Infosys,Pune,18.7,git; llms; excel; python; langchain; docker
+Data Scientist,Infosys,Remote,20.4,git; spark; llms; python; langchain
+Python Developer,Ola,Remote,16.6,aws; fastapi; sql; python; statistics
+Data Analyst,Freshworks,Pune,13.5,aws; pandas; pytorch; python; docker; statistics
+Data Analyst,Flipkart,Remote,Not disclosed,llms; numpy; sql; nlp; tensorflow; python; langchain
+NLP Engineer,Zomato,Bengaluru,23.1,spark; fastapi; sql; nlp; scikit-learn; python
+Data Analyst,Ola,Gurugram,11.5,tensorflow; scikit-learn; aws; python
+Data Analyst,Freshworks,Chennai,11.2,excel; numpy; python; docker; statistics
+Python Developer,Swiggy,Hyderabad,Not disclosed,spark; docker; scikit-learn; python
+Python Developer,Freshworks,Bengaluru,24.0,aws; llms; pandas; fastapi; sql; pytorch; python
+NLP Engineer,Flipkart,Remote,25.9,aws; llms; sql; pytorch; python; langchain
+Python Developer,Freshworks,Noida,21.8,aws; llms; sql; scikit-learn; pytorch; python
+ML Engineer,Zepto,Pune,19.8,git; pandas; sql; scikit-learn; python
+AI Engineer,TCS,Bengaluru,24.3,aws; numpy; nlp; python; langchain; statistics; tableau
+AI Engineer,Ola,Pune,25.9,git; pandas; nlp; pytorch; python; langchain; docker
+Data Analyst,PhonePe,Hyderabad,17.7,aws; pandas; fastapi; scikit-learn; pytorch; python; statistics
+NLP Engineer,Zepto,Bengaluru,26.7,git; llms; fastapi; sql; nlp; pytorch; python
+NLP Engineer,Swiggy,Pune,22.2,spark; llms; pandas; excel; pytorch; python
+Data Scientist,PhonePe,Pune,23.8,git; sql; nlp; scikit-learn; pytorch; python; docker; statistics
+NLP Engineer,TCS,Noida,19.5,llms; pandas; numpy; python; docker
+Data Scientist,Razorpay,Noida,17.6,excel; sql; tensorflow; python; statistics
+Data Scientist,Razorpay,Remote,17.4,llms; tableau; pandas; python
+AI Engineer,Swiggy,Gurugram,29.1,spark; pandas; numpy; nlp; tensorflow; python; langchain; docker
+Python Developer,Zomato,Bengaluru,11.5,pandas; nlp; excel; tensorflow
+ML Engineer,Ola,Noida,18.2,aws; git; spark; pandas; python; tableau
+Python Developer,Infosys,Pune,16.3,spark; fastapi; sql; scikit-learn; python
+Python Developer,Zomato,Chennai,18.6,aws; spark; pandas; tensorflow; python; tableau
+Data Analyst,Flipkart,Bengaluru,19.7,llms; fastapi; excel; nlp; scikit-learn; pytorch; python; tableau
+NLP Engineer,TCS,Gurugram,21.3,aws; tensorflow; fastapi; excel; tableau; python; docker
+ML Engineer,Swiggy,Remote,18.3,git; pandas; llms; excel; python; statistics
+NLP Engineer,Infosys,Gurugram,26.9,spark; llms; scikit-learn; pytorch; python; langchain
+Data Analyst,Razorpay,Remote,10.7,git; sql; scikit-learn; python; docker
+AI Engineer,Flipkart,Gurugram,26.5,tableau; tensorflow; pytorch; docker; aws; git; langchain
+Python Developer,Ola,Bengaluru,21.1,git; llms; scikit-learn; tensorflow; python; docker
+Data Analyst,Ola,Hyderabad,21.7,aws; llms; scikit-learn; tensorflow; pytorch; python; langchain
+AI Engineer,Flipkart,Gurugram,25.7,aws; git; pandas; excel; python; langchain; docker; statistics
+AI Engineer,Zepto,Bengaluru,21.8,llms; numpy; excel; nlp; scikit-learn; python
+ML Engineer,PhonePe,Chennai,17.3,statistics; spark; git; pandas; excel
+NLP Engineer,Swiggy,Pune,22.8,spark; llms; excel; python; statistics; tableau
+NLP Engineer,Zomato,Chennai,14.6,excel; fastapi; python
+ML Engineer,Zepto,Chennai,23.0,langchain; pytorch; statistics; python
+NLP Engineer,Zomato,Gurugram,18.1,tensorflow; git; python
+NLP Engineer,Freshworks,Chennai,21.6,spark; scikit-learn; tensorflow; python
+Data Scientist,TCS,Chennai,22.6,aws; git; nlp; pytorch; python; tableau
+Data Scientist,TCS,Noida,12.3,docker; aws; excel; numpy
+ML Engineer,PhonePe,Remote,27.3,aws; spark; llms; python; langchain; statistics; tableau
+AI Engineer,TCS,Noida,22.0,llms; excel; sql; nlp; python
+Data Scientist,Ola,Hyderabad,20.4,aws; spark; pandas; tensorflow; python
+NLP Engineer,Razorpay,Bengaluru,19.1,fastapi; numpy; sql; pytorch; python
+Python Developer,Flipkart,Noida,16.3,spark; fastapi; python; statistics; tableau
+Python Developer,Zepto,Remote,15.1,nlp; sql; pytorch; tensorflow
+Data Scientist,Ola,Chennai,20.7,spark; excel; sql; scikit-learn; pytorch; python
+Data Scientist,Freshworks,Noida,17.8,aws; git; spark; numpy; python
+AI Engineer,PhonePe,Remote,16.2,excel; tableau; statistics; python
+Data Scientist,Zepto,Pune,24.9,spark; pandas; sql; nlp; python; langchain; statistics; tableau
+Data Scientist,Infosys,Bengaluru,16.2,aws; git; scikit-learn; python; tableau
+NLP Engineer,TCS,Noida,16.3,excel; pytorch; git; python
+Data Analyst,Ola,Gurugram,17.2,spark; llms; pandas; python; docker; statistics
+Python Developer,Zomato,Bengaluru,13.2,aws; git; pandas; python; docker
+Data Analyst,Ola,Gurugram,22.3,aws; spark; pandas; scikit-learn; tensorflow; pytorch; python; docker
+Data Analyst,TCS,Noida,16.0,spark; fastapi; excel; scikit-learn; python; docker
+Data Analyst,Flipkart,Gurugram,13.9,aws; spark; excel; sql; tensorflow; python
+Data Analyst,PhonePe,Pune,12.7,fastapi; pytorch; scikit-learn; langchain; tableau
+Data Scientist,PhonePe,Chennai,22.2,aws; git; pandas; nlp; python; langchain; tableau
+ML Engineer,Ola,Gurugram,16.4,excel; docker; nlp; python
+ML Engineer,PhonePe,Chennai,Not disclosed,git; llms; scikit-learn; python; statistics
+Data Analyst,Zepto,Hyderabad,9.6,pandas; numpy; excel; tensorflow; python
+NLP Engineer,TCS,Hyderabad,19.0,langchain; docker; git; python
+NLP Engineer,Zepto,Chennai,22.1,aws; spark; pandas; nlp; scikit-learn; python; docker; tableau
+Python Developer,PhonePe,Gurugram,12.4,fastapi; statistics; sql; pytorch
+ML Engineer,Razorpay,Remote,21.1,fastapi; numpy; pytorch; python; langchain; statistics
+Data Scientist,Flipkart,Gurugram,19.5,spark; nlp; fastapi; python
+AI Engineer,Zomato,Bengaluru,20.9,sql; nlp; tensorflow; python
+Data Analyst,Infosys,Noida,Not disclosed,nlp; tensorflow; statistics; numpy
+Data Analyst,Freshworks,Chennai,21.6,aws; git; numpy; tensorflow; python; langchain; docker
+NLP Engineer,Swiggy,Hyderabad,23.3,aws; spark; llms; excel; python; docker
+AI Engineer,Zomato,Chennai,21.3,llms; pandas; fastapi; sql; python; docker
+NLP Engineer,Swiggy,Pune,22.0,excel; numpy; scikit-learn; tensorflow; pytorch; python; statistics
+Data Scientist,Ola,Noida,26.1,git; llms; pandas; nlp; pytorch; python; statistics
+Data Analyst,Ola,Gurugram,Not disclosed,spark; pandas; sql; nlp; tensorflow; python; langchain
+AI Engineer,Zepto,Bengaluru,20.3,nlp; statistics; python
+Python Developer,Flipkart,Chennai,11.8,aws; fastapi; excel; nlp; python
+ML Engineer,Flipkart,Pune,23.7,aws; spark; fastapi; tensorflow; python
+Data Scientist,PhonePe,Gurugram,20.3,fastapi; excel; sql; nlp; python; docker; tableau
+Python Developer,Flipkart,Chennai,18.0,sql; nlp; tensorflow; pytorch; python; docker
+Data Analyst,Zepto,Hyderabad,12.9,tensorflow; statistics; aws; python
+AI Engineer,Zomato,Hyderabad,17.5,tensorflow; scikit-learn; langchain
+Python Developer,Swiggy,Bengaluru,20.4,llms; pandas; nlp; python; langchain; statistics; tableau
+Data Analyst,Swiggy,Bengaluru,10.2,docker; pandas; tableau; excel; langchain; git
+NLP Engineer,Flipkart,Remote,17.6,git; statistics; docker; pytorch; aws
+Python Developer,Razorpay,Noida,18.1,spark; pandas; scikit-learn; python; docker; statistics
+Data Scientist,PhonePe,Gurugram,19.6,llms; pandas; numpy; scikit-learn; python
+Python Developer,Swiggy,Remote,19.7,aws; spark; fastapi; numpy; sql; pytorch; python
+Data Scientist,Infosys,Chennai,16.3,excel; langchain; fastapi; python
+Python Developer,Flipkart,Hyderabad,16.3,scikit-learn; pytorch; python; langchain; statistics
+Data Scientist,Zomato,Hyderabad,20.7,fastapi; excel; sql; python; langchain; statistics
+Data Scientist,Zomato,Gurugram,12.7,scikit-learn; excel; python
+AI Engineer,Swiggy,Pune,19.4,tableau; fastapi; scikit-learn; statistics; pytorch; excel
+NLP Engineer,Zomato,Hyderabad,24.1,fastapi; scikit-learn; python; langchain; docker; statistics; tableau
+Python Developer,Freshworks,Hyderabad,23.6,git; llms; numpy; scikit-learn; pytorch; python; docker
+NLP Engineer,Zomato,Gurugram,26.2,aws; llms; scikit-learn; tensorflow; python; docker
+Python Developer,Flipkart,Bengaluru,19.8,nlp; spark; fastapi; aws; python; langchain
+ML Engineer,Zepto,Bengaluru,18.2,pytorch; sql; langchain; statistics; nlp
+AI Engineer,Razorpay,Pune,19.6,spark; nlp; python; docker; statistics
+Data Analyst,Swiggy,Pune,12.5,git; fastapi; numpy; excel; sql; python; statistics
+AI Engineer,Flipkart,Bengaluru,25.6,spark; sql; tensorflow; pytorch; python; docker; statistics
+AI Engineer,PhonePe,Gurugram,20.6,docker; nlp; pytorch; python
+ML Engineer,Infosys,Hyderabad,27.4,llms; fastapi; nlp; tensorflow; pytorch; python
+AI Engineer,TCS,Noida,24.2,numpy; llms; pytorch; python
+Data Scientist,TCS,Chennai,20.2,spark; excel; sql; pytorch; python; langchain; statistics; tableau
+Python Developer,Swiggy,Noida,10.5,numpy; tableau; scikit-learn; python
+ML Engineer,Razorpay,Chennai,21.4,spark; pandas; fastapi; excel; scikit-learn; tensorflow; python; langchain
+ML Engineer,Zepto,Gurugram,21.4,fastapi; excel; scikit-learn; pytorch; python; docker; statistics
+ML Engineer,Flipkart,Chennai,19.7,spark; tensorflow; python; langchain; statistics
+Data Analyst,Freshworks,Chennai,12.2,aws; excel; sql; numpy; python
+NLP Engineer,Zepto,Remote,20.9,spark; numpy; excel; nlp; sql; scikit-learn; python
+NLP Engineer,Zepto,Gurugram,23.4,llms; fastapi; sql; nlp; tensorflow; python; tableau
+AI Engineer,Zomato,Noida,22.9,git; spark; pandas; numpy; python; langchain
+Data Scientist,TCS,Chennai,19.7,spark; scikit-learn; tensorflow; python; langchain
+Python Developer,Flipkart,Hyderabad,15.3,spark; excel; python; statistics; tableau
+Data Scientist,Infosys,Remote,15.0,spark; scikit-learn; aws; python
+NLP Engineer,Ola,Noida,20.8,aws; fastapi; scikit-learn; tensorflow; python; statistics; tableau
+AI Engineer,Flipkart,Noida,13.8,git; statistics; tableau; excel; python
+Data Scientist,Zomato,Hyderabad,21.6,pandas; fastapi; tensorflow; python; langchain; statistics
+Python Developer,Razorpay,Gurugram,Not disclosed,spark; sql; nlp; python; langchain; statistics; tableau
+Data Scientist,Flipkart,Noida,14.6,fastapi; tensorflow; scikit-learn
+AI Engineer,Infosys,Gurugram,27.8,llms; pandas; tensorflow; pytorch; python
+NLP Engineer,Zepto,Bengaluru,17.8,numpy; tensorflow; python
+NLP Engineer,Flipkart,Bengaluru,21.0,fastapi; numpy; sql; scikit-learn; python; docker
+AI Engineer,Ola,Chennai,24.3,fastapi; excel; scikit-learn; python; langchain; statistics
+Data Analyst,Freshworks,Remote,22.9,git; spark; llms; numpy; pytorch; python; statistics; tableau
+ML Engineer,Razorpay,Hyderabad,15.3,numpy; nlp; scikit-learn; python
+AI Engineer,TCS,Hyderabad,18.4,excel; docker; python
+Python Developer,Ola,Bengaluru,21.1,spark; numpy; scikit-learn; tensorflow; python; langchain; tableau
+AI Engineer,Flipkart,Bengaluru,27.1,aws; fastapi; scikit-learn; pytorch; python; langchain
+Python Developer,Ola,Remote,16.8,tensorflow; aws; python
+Data Scientist,Razorpay,Chennai,21.3,git; pandas; sql; scikit-learn; python; langchain; statistics
+AI Engineer,Zomato,Bengaluru,23.7,pandas; llms; fastapi; excel; numpy; python; statistics
+AI Engineer,Swiggy,Chennai,21.4,numpy; llms; scikit-learn; python
+Python Developer,Swiggy,Remote,19.9,pytorch; llms; scikit-learn; spark; langchain
+Data Scientist,Ola,Pune,20.1,aws; spark; llms; pandas; excel; python
+Data Analyst,Zepto,Bengaluru,18.3,pytorch; llms; nlp; scikit-learn; langchain; sql
+Data Analyst,Zepto,Chennai,12.0,sql; statistics; llms; tensorflow
+NLP Engineer,Zepto,Hyderabad,28.4,llms; nlp; tensorflow; pytorch; python; docker; tableau
+ML Engineer,Zepto,Pune,24.8,git; spark; pandas; sql; scikit-learn; python; langchain; docker
+ML Engineer,Ola,Remote,20.5,excel; docker; git; pytorch; nlp
+ML Engineer,Zepto,Pune,18.5,numpy; nlp; fastapi; python
+Data Analyst,Flipkart,Bengaluru,20.4,aws; spark; excel; numpy; tensorflow; python; statistics
+ML Engineer,PhonePe,Bengaluru,25.7,git; spark; llms; fastapi; excel; sql; nlp; python
+Python Developer,Freshworks,Pune,15.8,sql; fastapi; scikit-learn; numpy; statistics; spark; pytorch
+ML Engineer,Freshworks,Pune,20.3,numpy; scikit-learn; tensorflow; python
+Data Scientist,TCS,Remote,18.0,llms; nlp; tensorflow; python
+NLP Engineer,Zepto,Noida,22.7,sql; tensorflow; tableau; pandas; nlp; llms; numpy
+AI Engineer,Razorpay,Bengaluru,23.6,fastapi; pytorch; python; langchain; docker
+Data Analyst,Flipkart,Chennai,13.2,docker; scikit-learn; tensorflow; python
+Python Developer,Swiggy,Bengaluru,16.4,pandas; numpy; nlp; python; tableau
+Data Analyst,PhonePe,Hyderabad,22.8,llms; fastapi; sql; tensorflow; pytorch; python; statistics
+AI Engineer,TCS,Gurugram,23.1,pytorch; aws; spark; docker
+Data Scientist,Ola,Hyderabad,23.8,pandas; fastapi; sql; nlp; scikit-learn; tensorflow; python; statistics
+NLP Engineer,Zepto,Pune,25.4,aws; git; spark; llms; python; langchain; docker
+Python Developer,Zomato,Hyderabad,14.9,python; aws; sql; langchain
+ML Engineer,Infosys,Chennai,20.4,docker; nlp; aws; python
+Data Scientist,Zomato,Bengaluru,18.8,spark; excel; nlp; pytorch; python; docker
+NLP Engineer,Zepto,Chennai,23.4,aws; nlp; scikit-learn; tensorflow; python; statistics
+Data Scientist,Swiggy,Bengaluru,17.1,tableau; tensorflow; scikit-learn; python
+Data Analyst,TCS,Pune,15.6,llms; numpy; sql; scikit-learn; python
+ML Engineer,Zomato,Remote,17.5,pandas; fastapi; python; statistics; tableau
+AI Engineer,Zomato,Gurugram,25.2,llms; excel; pytorch; python; langchain
+Python Developer,Freshworks,Hyderabad,16.8,docker; tableau; pytorch; python
+AI Engineer,Swiggy,Gurugram,20.9,docker; llms; tableau; python
+Data Analyst,Zepto,Gurugram,17.2,pandas; scikit-learn; tensorflow; pytorch; python; docker
+Data Scientist,Infosys,Hyderabad,25.2,git; fastapi; nlp; tensorflow; pytorch; python; statistics
+Data Scientist,Flipkart,Pune,13.8,excel; sql; python
+ML Engineer,Zomato,Gurugram,20.0,pytorch; pandas; spark; nlp; excel; fastapi
+ML Engineer,Ola,Noida,13.1,numpy; tableau; tensorflow
+NLP Engineer,PhonePe,Bengaluru,21.8,aws; spark; excel; numpy; sql; tensorflow; python
+AI Engineer,Flipkart,Pune,21.9,pandas; numpy; nlp; tensorflow; python; statistics; tableau
+Data Scientist,TCS,Gurugram,23.0,aws; spark; pandas; tensorflow; python; statistics; tableau
+Data Scientist,Swiggy,Remote,20.3,aws; pandas; sql; python; langchain; docker
+Python Developer,Infosys,Gurugram,17.2,docker; sql; langchain; fastapi; aws; tensorflow
+AI Engineer,Razorpay,Hyderabad,16.5,langchain; sql; scikit-learn; python
+ML Engineer,Zomato,Pune,12.2,scikit-learn; sql; fastapi; spark
+AI Engineer,Ola,Gurugram,22.8,langchain; spark; pandas; python
+Data Analyst,Zomato,Remote,17.6,spark; pandas; fastapi; numpy; excel; nlp; tensorflow; python
+Data Analyst,Freshworks,Bengaluru,15.5,llms; fastapi; nlp; scikit-learn; tensorflow; python
+ML Engineer,TCS,Pune,22.0,langchain; scikit-learn; nlp; python; tensorflow
+Data Analyst,Infosys,Hyderabad,13.0,excel; nlp; aws; fastapi; docker
+AI Engineer,Ola,Remote,21.8,aws; fastapi; excel; sql; nlp; python; tableau
+AI Engineer,Razorpay,Remote,23.8,spark; pandas; pytorch; python
+Python Developer,TCS,Pune,17.4,git; fastapi; numpy; nlp; tensorflow; pytorch; python
+Data Scientist,Freshworks,Chennai,23.6,spark; numpy; excel; pytorch; python; langchain; docker
+Python Developer,Zomato,Remote,22.1,aws; llms; fastapi; nlp; pytorch; python
+ML Engineer,Zepto,Gurugram,Not disclosed,aws; tensorflow; python; docker; tableau
+ML Engineer,PhonePe,Gurugram,15.6,excel; docker; aws; python
+AI Engineer,Flipkart,Bengaluru,27.4,aws; git; nlp; scikit-learn; tensorflow; python; tableau
+Python Developer,TCS,Pune,13.7,spark; excel; sql; nlp; python; tableau
+NLP Engineer,Zomato,Gurugram,21.0,git; scikit-learn; tensorflow; python; docker
+NLP Engineer,Zomato,Remote,16.9,scikit-learn; python; statistics; nlp; git
+ML Engineer,Ola,Hyderabad,25.0,aws; llms; scikit-learn; python; docker; statistics
+AI Engineer,Swiggy,Noida,16.3,scikit-learn; aws; statistics; python
+Data Analyst,TCS,Chennai,13.6,llms; excel; tensorflow; python; docker
+AI Engineer,Flipkart,Remote,17.6,fastapi; numpy; sql; excel; python; statistics; tableau
+NLP Engineer,PhonePe,Chennai,17.9,spark; pandas; fastapi; excel; python; statistics
+Data Scientist,Freshworks,Pune,20.4,pandas; pytorch; python; docker; tableau
+ML Engineer,PhonePe,Gurugram,21.0,spark; pandas; pytorch; python; statistics
+Data Scientist,Zepto,Noida,Not disclosed,python; sql; tensorflow; llms; pytorch; nlp
+NLP Engineer,TCS,Hyderabad,17.6,llms; pandas; excel; python; docker
+Data Analyst,Razorpay,Pune,8.6,excel; nlp; git; python
+Data Scientist,Infosys,Noida,21.3,numpy; tensorflow; pytorch; python; langchain
+Data Analyst,Zomato,Bengaluru,18.2,spark; llms; numpy; nlp; pytorch; python; tableau
+NLP Engineer,Ola,Pune,13.4,numpy; sql; python
+Data Scientist,Razorpay,Gurugram,16.0,excel; nlp; tensorflow; python
+Data Analyst,Ola,Hyderabad,15.3,numpy; excel; nlp; sql; python; langchain; docker; statistics
+AI Engineer,Flipkart,Bengaluru,Not disclosed,aws; excel; sql; numpy; pytorch; python; docker
+Python Developer,Freshworks,Pune,16.4,scikit-learn; pandas; spark; llms; git; sql
+AI Engineer,Zepto,Bengaluru,21.9,fastapi; numpy; sql; scikit-learn; pytorch; python
+ML Engineer,Swiggy,Remote,16.1,git; llms; excel; python; tableau
+AI Engineer,Razorpay,Bengaluru,20.1,spark; numpy; python; langchain; docker
+ML Engineer,Zomato,Noida,18.7,pytorch; numpy; fastapi
+Data Scientist,Freshworks,Bengaluru,23.0,langchain; llms; fastapi; python
+Data Scientist,Zomato,Noida,16.7,aws; pandas; sql; pytorch; python; tableau
+Python Developer,PhonePe,Hyderabad,15.6,spark; numpy; tensorflow; python; tableau
+Python Developer,Freshworks,Pune,23.4,sql; python; pytorch; aws; fastapi; docker; langchain
+ML Engineer,Zomato,Gurugram,21.0,aws; sql; nlp; python; docker; tableau
+Data Analyst,Zepto,Chennai,16.3,git; spark; llms; numpy; python; docker; tableau
+Python Developer,Infosys,Remote,11.3,excel; pandas; tensorflow; python
+Data Scientist,Infosys,Bengaluru,23.7,spark; llms; nlp; python; docker; statistics
+AI Engineer,PhonePe,Bengaluru,21.9,spark; llms; excel; sql; python; statistics
+AI Engineer,Swiggy,Bengaluru,26.4,git; spark; fastapi; numpy; nlp; tensorflow; python; statistics
+Data Scientist,Ola,Noida,17.1,numpy; spark; git; python
+Data Analyst,Zomato,Chennai,17.9,git; llms; pandas; fastapi; excel; pytorch; python; statistics
+AI Engineer,Ola,Pune,29.7,git; fastapi; scikit-learn; tensorflow; pytorch; python; langchain; docker
+NLP Engineer,Razorpay,Noida,24.9,spark; llms; numpy; excel; scikit-learn; tensorflow; python; tableau
+NLP Engineer,PhonePe,Noida,18.0,spark; numpy; python; langchain; tableau
+NLP Engineer,Infosys,Pune,21.4,aws; fastapi; excel; sql; tensorflow; python; statistics
+ML Engineer,Flipkart,Chennai,24.3,aws; llms; sql; scikit-learn; python; langchain
+NLP Engineer,PhonePe,Gurugram,29.5,aws; spark; llms; fastapi; nlp; python; langchain; docker
+Data Scientist,Infosys,Noida,22.5,llms; sql; nlp; scikit-learn; python
+NLP Engineer,Razorpay,Hyderabad,21.4,spark; nlp; scikit-learn; tensorflow; python; docker
+NLP Engineer,Razorpay,Bengaluru,24.8,aws; fastapi; numpy; sql; scikit-learn; tensorflow; python; langchain
+ML Engineer,Swiggy,Chennai,19.2,spark; excel; sql; python; langchain; statistics
+ML Engineer,Swiggy,Pune,21.4,spark; pandas; tensorflow; pytorch; python
+AI Engineer,Flipkart,Noida,25.0,aws; spark; fastapi; tensorflow; python; statistics
+AI Engineer,TCS,Bengaluru,23.9,docker; nlp; sql; tableau; pytorch; tensorflow
+Python Developer,Swiggy,Chennai,15.8,git; spark; nlp; python; docker
+Data Analyst,Flipkart,Hyderabad,11.3,pandas; pytorch; python
+Python Developer,Razorpay,Remote,19.9,llms; pandas; scikit-learn; pytorch; python; docker
+AI Engineer,Zepto,Noida,24.6,aws; git; spark; pandas; tensorflow; python; docker; tableau
+NLP Engineer,Flipkart,Pune,27.8,aws; spark; pandas; sql; nlp; scikit-learn; pytorch; python
+Data Scientist,Razorpay,Pune,18.6,aws; pandas; numpy; python; langchain; statistics
+NLP Engineer,Ola,Bengaluru,20.4,git; numpy; nlp; scikit-learn; python
+AI Engineer,TCS,Hyderabad,22.2,git; llms; fastapi; tensorflow; python
+Data Analyst,Infosys,Noida,11.4,git; pandas; sql; scikit-learn; python
+Python Developer,Freshworks,Pune,16.2,git; llms; numpy; nlp; scikit-learn; python; tableau
+Python Developer,Infosys,Noida,16.4,llms; pandas; scikit-learn; tensorflow; python; tableau
+NLP Engineer,Ola,Bengaluru,22.2,aws; llms; scikit-learn; tableau; spark; pytorch
+ML Engineer,Flipkart,Bengaluru,23.2,aws; git; spark; pandas; numpy; scikit-learn; python; statistics
+Python Developer,Razorpay,Pune,10.5,langchain; sql; tensorflow; python
+Data Scientist,Ola,Bengaluru,14.7,aws; git; excel; scikit-learn; python
+NLP Engineer,Razorpay,Noida,20.4,spark; scikit-learn; pytorch; python; docker
+NLP Engineer,Zepto,Noida,23.7,llms; numpy; sql; python; langchain; docker; statistics
+ML Engineer,TCS,Remote,24.5,llms; langchain; statistics; git; docker; python; spark
+NLP Engineer,Flipkart,Chennai,26.7,nlp; tensorflow; pytorch; python; langchain; tableau
+AI Engineer,Razorpay,Gurugram,24.9,git; spark; fastapi; pytorch; python; langchain; docker
+ML Engineer,Zomato,Noida,20.1,aws; spark; pandas; numpy; python
+Data Analyst,PhonePe,Bengaluru,10.5,fastapi; numpy; python; docker; tableau
+ML Engineer,Zomato,Hyderabad,Not disclosed,nlp; scikit-learn; pytorch; python
+Data Analyst,TCS,Bengaluru,10.4,aws; pytorch; langchain; excel
+ML Engineer,Razorpay,Chennai,22.8,fastapi; numpy; nlp; tensorflow; pytorch; python; statistics
+NLP Engineer,Ola,Remote,Not disclosed,aws; git; excel; pytorch; python; langchain; docker; tableau
+Python Developer,Ola,Remote,18.5,fastapi; numpy; excel; scikit-learn; pytorch; python; docker
+Data Analyst,Swiggy,Remote,10.6,statistics; scikit-learn; python
+Data Analyst,Zomato,Bengaluru,19.2,git; fastapi; tensorflow; pytorch; python; langchain; docker; statistics
+Data Scientist,Infosys,Bengaluru,14.8,aws; statistics; docker; git
+NLP Engineer,Swiggy,Gurugram,19.7,numpy; spark; python
+AI Engineer,PhonePe,Remote,18.2,scikit-learn; aws; fastapi; python
+ML Engineer,Zomato,Pune,25.6,aws; spark; fastapi; nlp; pytorch; python; statistics
+NLP Engineer,Ola,Chennai,23.8,scikit-learn; numpy; docker; statistics; langchain; llms
+NLP Engineer,Freshworks,Chennai,20.8,langchain; pytorch; python
+Data Scientist,PhonePe,Chennai,15.8,docker; pandas; aws; python
+NLP Engineer,Ola,Pune,19.3,fastapi; excel; sql; pytorch; python; docker; tableau
+ML Engineer,Razorpay,Bengaluru,19.1,spark; nlp; docker; python
+AI Engineer,Flipkart,Chennai,24.2,aws; spark; llms; excel; numpy; python; langchain
+AI Engineer,Flipkart,Chennai,21.1,llms; nlp; aws; numpy; excel; git; docker
+Data Analyst,Freshworks,Gurugram,15.8,aws; fastapi; excel; numpy; scikit-learn; python; langchain; tableau
+Python Developer,Infosys,Noida,12.0,docker; tableau; git; spark; nlp; excel
+NLP Engineer,TCS,Hyderabad,21.6,aws; llms; fastapi; python; tableau
+AI Engineer,Zomato,Pune,19.6,langchain; pandas; tableau; python
+ML Engineer,Infosys,Hyderabad,23.7,llms; tensorflow; python; docker; statistics
+ML Engineer,Freshworks,Pune,26.9,git; llms; numpy; sql; scikit-learn; python; langchain; tableau
+Python Developer,Infosys,Remote,16.2,statistics; aws; nlp; pandas; langchain
+Python Developer,Razorpay,Gurugram,14.7,sql; spark; fastapi; docker
+Data Analyst,Zomato,Remote,15.4,git; spark; numpy; tensorflow; python; statistics; tableau
+AI Engineer,Infosys,Gurugram,21.1,aws; nlp; scikit-learn; python; docker
+NLP Engineer,Infosys,Remote,24.1,aws; llms; pandas; python; langchain; docker
+Data Analyst,PhonePe,Gurugram,Not disclosed,pandas; fastapi; numpy; python; langchain; docker
+ML Engineer,Razorpay,Bengaluru,19.0,aws; git; excel; nlp; scikit-learn; python; statistics; tableau
+ML Engineer,Swiggy,Bengaluru,21.7,git; llms; numpy; pytorch; python; statistics
+Data Scientist,Swiggy,Noida,20.6,llms; tensorflow; pytorch
+Python Developer,Swiggy,Gurugram,17.2,git; pandas; excel; scikit-learn; python; langchain; docker
+NLP Engineer,TCS,Chennai,27.3,spark; pandas; fastapi; numpy; pytorch; python; langchain; statistics
+NLP Engineer,Infosys,Noida,Not disclosed,aws; git; llms; statistics; excel; nlp
+AI Engineer,Freshworks,Chennai,23.7,langchain; tensorflow; pytorch; python
+Data Analyst,PhonePe,Pune,13.3,langchain; spark; pandas; python
+ML Engineer,Zepto,Noida,15.7,git; pandas; excel; scikit-learn; python
+AI Engineer,Freshworks,Noida,24.1,aws; git; nlp; python; docker; statistics
+NLP Engineer,TCS,Pune,23.9,aws; git; spark; fastapi; excel; pytorch; python; docker
+Data Scientist,Zepto,Noida,17.4,aws; excel; scikit-learn; python; statistics
+Data Scientist,Swiggy,Hyderabad,Not disclosed,fastapi; excel; nlp; scikit-learn; python; langchain
+Data Scientist,Infosys,Chennai,25.3,pandas; llms; fastapi; nlp; python; langchain; docker; tableau
+Python Developer,Flipkart,Noida,15.7,aws; fastapi; excel; numpy; python; statistics
+Data Scientist,TCS,Hyderabad,20.6,aws; git; pandas; numpy; pytorch; python; statistics
+NLP Engineer,Freshworks,Pune,21.6,spark; pandas; nlp; python; docker; statistics
+Data Scientist,Infosys,Remote,15.7,pandas; tableau; scikit-learn; python
+AI Engineer,Infosys,Gurugram,23.1,numpy; tensorflow; python; langchain; docker; statistics
+NLP Engineer,Zepto,Noida,22.8,spark; tensorflow; statistics; python
+Python Developer,Infosys,Bengaluru,17.1,numpy; aws; statistics; tableau; scikit-learn; nlp; pytorch
+ML Engineer,Freshworks,Noida,20.8,excel; scikit-learn; pytorch; python; langchain; tableau
+Python Developer,Swiggy,Remote,18.0,spark; llms; pandas; python; docker
+NLP Engineer,Ola,Remote,19.6,sql; llms; scikit-learn; python
+NLP Engineer,Zepto,Gurugram,21.7,git; spark; llms; tensorflow; python
+NLP Engineer,Zomato,Remote,19.5,spark; pandas; excel; numpy; nlp; python; statistics
+Python Developer,Swiggy,Gurugram,17.6,spark; pandas; scikit-learn; python; docker
+Data Analyst,PhonePe,Hyderabad,17.1,git; spark; fastapi; excel; pytorch; python; langchain
+Python Developer,Flipkart,Bengaluru,16.4,excel; nlp; scikit-learn; tensorflow; pytorch; python; tableau
+ML Engineer,Freshworks,Chennai,21.6,numpy; sql; tensorflow; python; docker
+Python Developer,Freshworks,Remote,19.8,aws; spark; llms; numpy; sql; excel; python; statistics
+Data Analyst,Flipkart,Remote,21.3,llms; fastapi; sql; pytorch; python; langchain; statistics
+AI Engineer,PhonePe,Hyderabad,19.1,numpy; spark; tensorflow; python
+ML Engineer,Flipkart,Hyderabad,26.7,llms; fastapi; sql; pytorch; python; langchain; docker; tableau
+ML Engineer,Swiggy,Chennai,20.5,aws; spark; pandas; excel; python; langchain; statistics; tableau
+AI Engineer,TCS,Pune,19.7,fastapi; excel; numpy; nlp; python; tableau
+Data Scientist,TCS,Bengaluru,21.6,spark; excel; sql; scikit-learn; python; langchain
+AI Engineer,Ola,Chennai,20.0,langchain; tableau; tensorflow; python
+Python Developer,Zomato,Hyderabad,13.9,git; numpy; sql; pytorch; python
+ML Engineer,Zomato,Remote,19.5,pandas; excel; numpy; nlp; python; langchain
+Data Analyst,PhonePe,Remote,14.3,spark; excel; sql; pytorch; python; langchain; statistics
+Data Analyst,Infosys,Hyderabad,11.9,langchain; sql; scikit-learn; python
+Data Analyst,Swiggy,Bengaluru,18.0,git; spark; pandas; numpy; scikit-learn; tensorflow; python
+Data Scientist,Freshworks,Gurugram,26.3,aws; fastapi; sql; nlp; tensorflow; python; langchain; statistics
+NLP Engineer,Flipkart,Bengaluru,25.7,spark; numpy; sql; nlp; scikit-learn; tensorflow; python; docker
+NLP Engineer,Zomato,Remote,28.5,spark; llms; fastapi; numpy; nlp; pytorch; python
+Data Scientist,Flipkart,Bengaluru,23.1,git; spark; fastapi; numpy; sql; scikit-learn; python; langchain
+NLP Engineer,Zepto,Pune,16.0,excel; docker; scikit-learn; python
+ML Engineer,Zepto,Gurugram,22.6,tensorflow; nlp; aws; statistics; docker; excel; llms
+Python Developer,PhonePe,Noida,Not disclosed,aws; llms; numpy; sql; scikit-learn; pytorch; python
+AI Engineer,Ola,Noida,17.8,fastapi; numpy; excel; python; tableau
+Data Analyst,Ola,Pune,Not disclosed,statistics; pandas; pytorch; numpy; aws
+AI Engineer,Ola,Pune,22.9,git; spark; pytorch; python; langchain; tableau
+Data Analyst,Ola,Noida,14.0,aws; pandas; numpy; python; langchain
+Python Developer,Swiggy,Gurugram,14.9,fastapi; docker; scikit-learn; tensorflow
+Python Developer,PhonePe,Remote,16.3,fastapi; nlp; scikit-learn; tensorflow; python
+ML Engineer,Razorpay,Noida,22.2,aws; git; pandas; llms; sql; pytorch; python; tableau
+Data Analyst,Infosys,Bengaluru,16.1,fastapi; nlp; excel; docker; llms
+ML Engineer,Swiggy,Bengaluru,14.8,excel; docker; aws; python
+NLP Engineer,Infosys,Bengaluru,24.1,spark; llms; scikit-learn; pytorch; python; statistics; tableau
+Data Scientist,Infosys,Bengaluru,19.5,docker; aws; fastapi; python
+ML Engineer,Swiggy,Gurugram,23.5,git; numpy; nlp; tensorflow; python; statistics; tableau
+Python Developer,Infosys,Chennai,23.0,aws; spark; sql; nlp; python; langchain; docker; statistics
+Python Developer,PhonePe,Pune,18.4,numpy; sql; nlp; scikit-learn; python; langchain; docker
+Python Developer,Ola,Bengaluru,16.5,spark; scikit-learn; git; python
+ML Engineer,Freshworks,Bengaluru,25.5,nlp; scikit-learn; tensorflow; pytorch; python; langchain; docker
+AI Engineer,Ola,Noida,22.8,pandas; llms; numpy; sql; pytorch; python
+Data Scientist,Razorpay,Remote,24.6,spark; pandas; nlp; pytorch; python; langchain; statistics
+NLP Engineer,TCS,Noida,16.2,excel; spark; fastapi; python
+ML Engineer,Ola,Remote,17.6,scikit-learn; tensorflow; python
+Data Analyst,Zomato,Bengaluru,19.3,spark; excel; tensorflow; python; langchain; docker; statistics; tableau
+ML Engineer,Zomato,Pune,21.2,aws; git; pandas; sql; tensorflow; python; tableau
+AI Engineer,TCS,Chennai,15.6,sql; numpy; fastapi
+NLP Engineer,Flipkart,Remote,24.1,git; spark; llms; excel; nlp; pytorch; python
+Data Scientist,Infosys,Noida,23.3,pandas; llms; excel; sql; nlp; scikit-learn; python; statistics
+ML Engineer,Swiggy,Pune,21.1,sql; numpy; pandas; docker; llms; fastapi; excel
+Python Developer,Zomato,Hyderabad,21.9,aws; llms; nlp; scikit-learn; python; docker; statistics; tableau
+NLP Engineer,PhonePe,Gurugram,23.1,spark; numpy; tensorflow; python; docker
+Data Analyst,Flipkart,Pune,16.9,llms; numpy; tensorflow; python; tableau
+AI Engineer,Infosys,Pune,22.5,spark; sql; nlp; pytorch; python; langchain; tableau
+AI Engineer,Swiggy,Gurugram,19.5,pandas; sql; scikit-learn; python; docker; statistics; tableau
+Data Scientist,Swiggy,Bengaluru,16.5,excel; spark; tableau; python
+ML Engineer,PhonePe,Hyderabad,21.4,aws; spark; python; langchain; tableau
+Python Developer,TCS,Hyderabad,12.8,excel; sql; tableau; python
+Python Developer,Freshworks,Chennai,21.7,llms; numpy; pytorch; python; langchain
+Data Analyst,Flipkart,Remote,18.9,spark; scikit-learn; tensorflow; pytorch; docker; llms
+Python Developer,Zepto,Pune,16.9,git; sql; nlp; tensorflow; python
+Data Analyst,Infosys,Pune,13.6,aws; git; pandas; sql; python; statistics; tableau
+ML Engineer,Razorpay,Hyderabad,18.0,aws; excel; python; langchain; tableau
+AI Engineer,TCS,Chennai,17.0,numpy; spark; python
+ML Engineer,Freshworks,Noida,17.7,aws; pandas; excel; python; tableau
+Data Analyst,Freshworks,Chennai,13.2,langchain; sql; pandas; python
+AI Engineer,Flipkart,Remote,23.8,git; pandas; tensorflow; python; langchain; tableau
+NLP Engineer,Zomato,Pune,16.9,git; spark; llms; numpy; excel; python; tableau
+AI Engineer,Freshworks,Gurugram,23.4,git; spark; pytorch; python; docker; tableau
+ML Engineer,TCS,Chennai,25.2,llms; fastapi; numpy; scikit-learn; tensorflow; python
+Data Scientist,Zomato,Gurugram,23.8,aws; spark; pandas; fastapi; python; docker; statistics
+Data Scientist,Freshworks,Pune,20.6,tableau; docker; pytorch; nlp; git; sql; llms
+Python Developer,Flipkart,Noida,9.2,git; pytorch; excel
+Python Developer,Razorpay,Noida,Not disclosed,tableau; statistics; sql; spark; numpy; pandas
+ML Engineer,Swiggy,Pune,21.2,git; spark; excel; nlp; python; langchain; docker
+Python Developer,Zepto,Pune,12.5,llms; pandas; fastapi; excel; python
+Python Developer,Infosys,Gurugram,13.9,python; llms; numpy
+NLP Engineer,Swiggy,Remote,26.3,aws; git; fastapi; nlp; tensorflow; python; langchain; tableau
+Data Scientist,Freshworks,Noida,Not disclosed,excel; spark; scikit-learn; python
+Data Scientist,Razorpay,Gurugram,18.5,pandas; fastapi; scikit-learn; python; statistics
+Python Developer,Freshworks,Remote,Not disclosed,git; pandas; numpy; nlp; pytorch; python; langchain
+NLP Engineer,Swiggy,Bengaluru,17.5,aws; git; spark; fastapi; python
+Python Developer,Infosys,Gurugram,20.9,aws; pandas; sql; scikit-learn; python; docker; statistics
+NLP Engineer,Freshworks,Chennai,12.9,nlp; excel; sql
+NLP Engineer,TCS,Noida,20.8,llms; pandas; fastapi; excel; scikit-learn; python
+Python Developer,Freshworks,Bengaluru,Not disclosed,excel; sql; pytorch; python; statistics
+ML Engineer,Flipkart,Chennai,Not disclosed,pandas; aws; spark; nlp; excel; scikit-learn; langchain
+ML Engineer,Flipkart,Hyderabad,Not disclosed,git; llms; pandas; nlp; scikit-learn; python; langchain; statistics
+Python Developer,Razorpay,Hyderabad,17.9,fastapi; numpy; python; langchain; statistics
+Python Developer,Ola,Hyderabad,12.8,aws; pandas; numpy; sql; python
+Data Scientist,Freshworks,Gurugram,23.9,aws; spark; fastapi; scikit-learn; tensorflow; python; statistics
+NLP Engineer,TCS,Pune,21.6,aws; git; spark; numpy; sql; python
+AI Engineer,Zomato,Remote,22.9,aws; numpy; python; langchain; docker; statistics
+ML Engineer,Freshworks,Pune,25.0,aws; fastapi; nlp; pytorch; python; statistics; tableau
+ML Engineer,Infosys,Chennai,18.4,aws; excel; sql; tensorflow; python
+NLP Engineer,Razorpay,Bengaluru,17.3,numpy; pandas; scikit-learn; python
+NLP Engineer,TCS,Remote,11.2,aws; excel; git; tableau
+Data Scientist,TCS,Hyderabad,19.5,aws; pandas; scikit-learn; pytorch; python; langchain
+Data Scientist,Razorpay,Chennai,22.3,langchain; tensorflow; statistics; python
+Data Scientist,Zepto,Gurugram,19.2,aws; git; numpy; sql; python
+ML Engineer,PhonePe,Chennai,20.4,langchain; sql; aws; python
+Data Analyst,Freshworks,Bengaluru,25.2,spark; llms; fastapi; sql; nlp; tensorflow; python; statistics
+Python Developer,Swiggy,Bengaluru,20.4,spark; llms; excel; tensorflow; python; langchain; tableau
+Data Scientist,Swiggy,Gurugram,20.5,sql; nlp; tensorflow; pytorch; python; tableau
+Data Analyst,PhonePe,Bengaluru,13.7,tensorflow; scikit-learn; sql; numpy; python; llms
+Python Developer,Ola,Gurugram,16.8,git; nlp; pytorch; python; statistics
+NLP Engineer,Zomato,Bengaluru,24.2,spark; llms; pandas; scikit-learn; python; docker; statistics
+ML Engineer,Zomato,Bengaluru,18.7,sql; git; pytorch; python
+Data Analyst,PhonePe,Pune,10.1,docker; pandas; statistics; python
+Data Analyst,PhonePe,Hyderabad,16.7,fastapi; numpy; nlp; scikit-learn; python; langchain; tableau
+NLP Engineer,Zomato,Gurugram,20.4,git; numpy; excel; nlp; pytorch; python
+ML Engineer,TCS,Gurugram,18.0,pandas; statistics; python
+NLP Engineer,Razorpay,Chennai,22.2,aws; nlp; scikit-learn; tensorflow; python; statistics; tableau
+NLP Engineer,Infosys,Hyderabad,Not disclosed,pandas; statistics; pytorch; python
+Data Analyst,Flipkart,Remote,18.5,llms; fastapi; numpy; python; langchain; docker; statistics; tableau
+ML Engineer,Freshworks,Bengaluru,21.8,spark; fastapi; pytorch; python; statistics; tableau
+Data Analyst,Flipkart,Bengaluru,16.7,spark; nlp; pytorch; python
+ML Engineer,PhonePe,Remote,27.9,llms; fastapi; nlp; tensorflow; pytorch; python; tableau
+ML Engineer,Zomato,Gurugram,19.7,docker; pandas; statistics; excel; nlp; python
+ML Engineer,Zomato,Bengaluru,Not disclosed,git; llms; numpy; nlp; scikit-learn; python; tableau
+AI Engineer,TCS,Chennai,22.1,git; spark; numpy; tensorflow; python
+ML Engineer,Zepto,Noida,25.7,pytorch; docker; pandas; tensorflow; fastapi; aws; spark
+Data Scientist,Razorpay,Chennai,17.6,fastapi; excel; python; docker; tableau
+Data Analyst,Flipkart,Gurugram,18.4,aws; llms; sql; nlp; python; langchain; statistics
+Data Scientist,Flipkart,Bengaluru,16.1,numpy; pandas; fastapi; python
+Data Scientist,Swiggy,Noida,21.4,git; spark; pytorch; python; docker
+Data Scientist,TCS,Noida,15.9,langchain; pandas; tableau; python
+Python Developer,Zepto,Pune,21.7,aws; llms; pandas; tensorflow; python; statistics; tableau
+AI Engineer,Flipkart,Noida,20.2,nlp; pandas; tensorflow; spark
+Data Scientist,Ola,Chennai,26.4,aws; scikit-learn; tensorflow; pytorch; python; docker; statistics; tableau
+Data Analyst,Flipkart,Hyderabad,18.3,git; spark; excel; nlp; pytorch; python; langchain
+Data Scientist,Razorpay,Gurugram,20.5,langchain; pandas; pytorch; python
+ML Engineer,Razorpay,Gurugram,17.5,spark; python; excel; tensorflow
+AI Engineer,PhonePe,Chennai,18.7,git; python; excel; numpy; sql; spark
+AI Engineer,TCS,Hyderabad,25.3,git; spark; scikit-learn; python; docker; statistics
+AI Engineer,Zomato,Hyderabad,22.2,llms; excel; python; langchain; statistics
+NLP Engineer,Flipkart,Bengaluru,25.5,git; spark; llms; fastapi; excel; pytorch; python; tableau
+AI Engineer,Freshworks,Chennai,22.9,aws; git; pandas; numpy; scikit-learn; pytorch; python; statistics
+ML Engineer,Razorpay,Bengaluru,18.4,excel; numpy; python; tensorflow; docker; langchain; pandas
+NLP Engineer,Swiggy,Noida,23.3,spark; excel; scikit-learn; python; langchain; docker; statistics; tableau
+Data Analyst,Swiggy,Bengaluru,13.0,spark; numpy; sql; scikit-learn; tensorflow; python
+AI Engineer,Freshworks,Noida,21.2,spark; docker; tensorflow; python
+NLP Engineer,Ola,Bengaluru,20.2,langchain; spark; tensorflow; python

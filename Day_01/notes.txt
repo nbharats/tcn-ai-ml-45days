@@ -1,0 +1,2 @@
+day 01: python basics
+day 02: oop, generators, decorators

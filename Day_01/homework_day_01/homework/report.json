@@ -1,0 +1,25 @@
+{
+  "n_jobs": 4,
+  "top_skills": [
+    [
+      "python",
+      4
+    ],
+    [
+      "docker",
+      4
+    ],
+    [
+      "pytorch",
+      3
+    ],
+    [
+      "aws",
+      3
+    ],
+    [
+      "pandas",
+      1
+    ]
+  ]
+}

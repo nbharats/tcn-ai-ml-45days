@@ -1,0 +1,7 @@
+Junior AI Engineer - Bangalore
+
+We are looking for a Junior AI Engineer to join our ML platform team.
+You will build and deploy machine learning models using Python and PyTorch.
+Experience with pandas and numpy for data work is required. We use AWS for
+hosting and Docker for packaging models. Familiarity with NLP tasks is a plus.
+Strong Python skills and clean code habits are expected.

@@ -1,0 +1,649 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Day 01: Python, the AI's mother tongue</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0A0E1A; --bg2:#111729; --panel:#161D33; --line:#243052; --line2:#2E3B62;
+  --ink:#EDF0FA; --ink2:#AEB7D3; --ink3:#7B86A8;
+  --amber:#FFB43A; --cyan:#4FD3F2; --rose:#FF6B8A; --lime:#9BE56B; --violet:#9D8CFF;
+  --glow:rgba(79,211,242,.18);
+  --display:'Syne',ui-sans-serif,system-ui,sans-serif;
+  --body:'Manrope',ui-sans-serif,system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#F3F5FB; --bg2:#FFFFFF; --panel:#FFFFFF; --line:#D7DDEE; --line2:#C3CBE3;
+    --ink:#0F1730; --ink2:#3B4666; --ink3:#6B7694;
+    --amber:#C97A00; --cyan:#0A8FB3; --rose:#D93A5D; --lime:#4E9A1E; --violet:#6A55E8;
+    --glow:rgba(10,143,179,.14);
+  }
+}
+:root[data-theme="light"]{
+  --bg:#F3F5FB; --bg2:#FFFFFF; --panel:#FFFFFF; --line:#D7DDEE; --line2:#C3CBE3;
+  --ink:#0F1730; --ink2:#3B4666; --ink3:#6B7694;
+  --amber:#C97A00; --cyan:#0A8FB3; --rose:#D93A5D; --lime:#4E9A1E; --violet:#6A55E8;
+  --glow:rgba(10,143,179,.14);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;padding-inline:clamp(16px,4vw,48px);padding-block:0 80px}
+a{color:var(--cyan)}
+h1,h2,h3,h4{font-family:var(--display);text-wrap:balance;line-height:1.08;margin:0}
+h2{font-size:clamp(30px,4.2vw,50px);font-weight:800;letter-spacing:-.01em}
+h3{font-size:clamp(20px,2.2vw,26px);font-weight:700}
+h4{font-size:17px;font-weight:700}
+p{max-width:68ch;margin:0}
+p+p{margin-top:12px}
+ul,ol{max-width:70ch}
+li{margin-bottom:6px}
+.wrap{max-width:1180px;margin:0 auto}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)}
+.eyebrow b{color:var(--amber);font-weight:600}
+code,.mono{font-family:var(--mono)}
+p code,li code,td code{font-size:.9em;background:var(--bg2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--cyan)}
+
+/* progress bar + nav */
+#bar{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);margin-inline:calc(-1*clamp(16px,4vw,48px));padding-inline:clamp(16px,4vw,48px)}
+#bar .wrap{display:flex;align-items:center;gap:14px;height:56px;overflow-x:auto;scrollbar-width:none}
+#bar .wrap::-webkit-scrollbar{display:none}
+#bar .brand{font-family:var(--display);font-weight:800;font-size:15px;white-space:nowrap}
+#bar .brand span{color:var(--amber)}
+#bar nav{display:flex;gap:4px;flex:1}
+#bar nav a{font-family:var(--mono);font-size:11.5px;text-decoration:none;color:var(--ink3);padding:6px 10px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+#bar nav a.on{color:var(--ink);border-color:var(--line2);background:var(--panel)}
+#bar nav a i{font-style:normal;color:var(--amber);margin-right:5px}
+#bar .clock{font-family:var(--mono);font-size:12px;color:var(--ink2);white-space:nowrap;display:flex;gap:8px;align-items:center}
+#bar .clock button{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line2);border-radius:6px;padding:4px 9px;cursor:pointer}
+#track{position:absolute;left:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--cyan),var(--amber));width:0}
+
+/* sections */
+section.s{padding-block:88px 40px;border-top:1px solid var(--line);position:relative}
+.head{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end;margin-bottom:38px}
+.time{font-family:var(--mono);font-size:12px;color:var(--ink3);text-align:right;line-height:1.5}
+.time b{display:block;font-size:22px;color:var(--amber);font-weight:600}
+.lead{font-size:clamp(18px,1.6vw,21px);color:var(--ink2);max-width:62ch;margin-top:16px}
+
+/* hero */
+#hero{padding-block:70px 60px;position:relative;overflow:hidden;margin-inline:calc(-1*clamp(16px,4vw,48px));padding-inline:clamp(16px,4vw,48px)}
+#hero canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.55;pointer-events:none}
+#hero .wrap{position:relative}
+#hero h1{font-size:clamp(40px,7vw,96px);font-weight:800;letter-spacing:-.03em;line-height:.98}
+#hero h1 em{font-style:normal;color:var(--amber)}
+#hero h1 .c{color:var(--cyan)}
+.hero-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:40px;align-items:end;margin-top:30px}
+.agenda{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
+.agenda h3{font-size:14px;font-family:var(--mono);font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-bottom:12px}
+.agenda ol{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.agenda li{display:grid;grid-template-columns:52px 1fr;gap:12px;font-size:15px;align-items:baseline;margin:0}
+.agenda li span{font-family:var(--mono);font-size:12px;color:var(--amber)}
+.agenda li a{color:var(--ink);text-decoration:none}
+.agenda li a:hover{color:var(--cyan)}
+
+/* generic blocks */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;transition:transform .25s,border-color .25s}
+.card:hover{border-color:var(--cyan)}
+.card h3{margin-bottom:8px}
+.card h4{margin-bottom:6px}
+.card p{font-size:15.5px;color:var(--ink2)}
+.card.amber{border-color:var(--amber)} .card.violet{border-color:var(--violet)} .card.lime{border-color:var(--lime)} .card.rose{border-color:var(--rose)}
+.tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid var(--line2);color:var(--ink3);margin-bottom:12px}
+.pill{display:inline-flex;gap:6px;align-items:center;font-family:var(--mono);font-size:12px;padding:5px 11px;border-radius:999px;background:var(--bg2);border:1px solid var(--line);color:var(--ink2);text-decoration:none;margin:4px 6px 4px 0}
+.pill:hover{border-color:var(--cyan);color:var(--ink)}
+.callout{border-left:4px solid var(--amber);background:var(--panel);border-radius:0 14px 14px 0;padding:16px 20px;margin-block:18px}
+.callout.cy{border-left-color:var(--cyan)} .callout.ro{border-left-color:var(--rose)} .callout.li{border-left-color:var(--lime)} .callout.vi{border-left-color:var(--violet)}
+.callout b.t{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);display:block;margin-bottom:6px}
+.callout.cy b.t{color:var(--cyan)} .callout.ro b.t{color:var(--rose)} .callout.li b.t{color:var(--lime)} .callout.vi b.t{color:var(--violet)}
+.callout p{font-size:15.5px;color:var(--ink2)}
+
+/* analogy strip */
+.analogy{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start;background:linear-gradient(135deg,color-mix(in srgb,var(--amber) 10%,var(--panel)),var(--panel));border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-block:22px}
+.analogy .em{font-size:38px;line-height:1}
+.analogy h4{margin-bottom:4px}
+.analogy p{font-size:15.5px;color:var(--ink2)}
+
+/* code */
+pre{background:var(--bg2);border:1px solid var(--line2);border-radius:12px;padding:16px 18px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.55;margin:0;color:var(--ink)}
+pre .c{color:var(--ink3)} pre .k{color:var(--violet)} pre .s{color:var(--lime)} pre .n{color:var(--amber)} pre .f{color:var(--cyan)}
+.codewrap{position:relative;margin-block:14px}
+.codewrap .lbl{position:absolute;top:8px;right:12px;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+
+/* tabs */
+.tabs{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel)}
+.tabs .tb{display:flex;gap:2px;border-bottom:1px solid var(--line);background:var(--bg2);overflow-x:auto}
+.tabs .tb button{font:600 13px var(--body);background:transparent;color:var(--ink3);border:0;padding:11px 16px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.tabs .tb button.on{color:var(--ink);border-bottom-color:var(--amber)}
+.tabs .tp{display:none;padding:18px}
+.tabs .tp.on{display:block}
+
+/* figures / charts */
+figure{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;overflow:hidden}
+figure svg{width:100%;height:auto;display:block}
+figcaption{font-family:var(--mono);font-size:11.5px;color:var(--ink3);margin-top:8px}
+.chart{position:relative;height:300px}
+.chart canvas{width:100%!important;height:100%!important}
+canvas.demo{width:100%;height:auto;background:var(--bg2);border:1px solid var(--line2);border-radius:14px;display:block;touch-action:none}
+.ctl{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.ctl label{font-family:var(--mono);font-size:12px;color:var(--ink2);display:flex;gap:8px;align-items:center}
+.ctl input[type=range]{accent-color:var(--amber)}
+.btn{font:600 14px var(--body);color:var(--bg);background:var(--amber);border:0;border-radius:9px;padding:10px 16px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line2)}
+.btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.stats{font-family:var(--mono);font-size:13px;color:var(--ink2);display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin-top:14px;font-variant-numeric:tabular-nums}
+.stats b{color:var(--cyan);font-weight:600}
+
+/* steps */
+.steps{display:grid;gap:10px;counter-reset:st}
+.steps>div{display:grid;grid-template-columns:32px 1fr;gap:12px;align-items:start;font-size:15px;color:var(--ink2)}
+.steps>div::before{counter-increment:st;content:counter(st);font-family:var(--mono);font-size:12px;color:var(--amber);border:1px solid var(--line2);border-radius:50%;width:26px;height:26px;display:grid;place-items:center}
+.steps b{color:var(--ink)}
+
+/* table */
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+th,td{padding:10px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);background:var(--bg2)}
+tr:last-child td{border-bottom:0}
+
+/* tools + career */
+.tools{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.tool{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:6px}
+.tool b{font-family:var(--display);font-size:16px}
+.tool span{font-size:14px;color:var(--ink2)}
+.tool a{font-family:var(--mono);font-size:12px;text-decoration:none}
+.career{border:1px solid var(--violet);background:linear-gradient(135deg,color-mix(in srgb,var(--violet) 12%,var(--panel)),var(--panel));border-radius:14px;padding:22px}
+.career .tag{border-color:var(--violet);color:var(--violet)}
+
+/* homework */
+.hw{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.hw .card{border-color:var(--line2)}
+.hw .lvl{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--lime);margin-bottom:6px;display:block}
+
+/* quiz */
+.quiz{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.q{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.q p{font-size:15px;margin-bottom:12px;color:var(--ink)}
+.q .opts{display:flex;gap:8px;flex-wrap:wrap}
+.q button{font:600 13px var(--body);padding:7px 12px;border-radius:8px;border:1px solid var(--line2);background:var(--bg2);color:var(--ink);cursor:pointer}
+.q button.ok{border-color:var(--lime);color:var(--lime)} .q button.bad{border-color:var(--rose);color:var(--rose)}
+.q .why{font-size:13.5px;color:var(--ink2);margin-top:10px;display:none}
+.q.done .why{display:block}
+
+/* details */
+details{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:0 18px;margin-block:10px}
+summary{cursor:pointer;padding:14px 0;font-family:var(--display);font-weight:700;font-size:16px}
+details[open] summary{border-bottom:1px solid var(--line);margin-bottom:12px}
+details>*:not(summary){padding-bottom:14px}
+
+/* footer */
+.fin{text-align:center;padding-block:60px 20px}
+.fin h2{font-size:clamp(28px,4vw,44px)}
+.fin p{margin:14px auto 0}
+
+/* reveal */
+.rv{opacity:1;transform:none;transition:opacity .6s ease,transform .6s ease}
+.js .rv:not(.in){opacity:.001;transform:translateY(18px)}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+@keyframes dash{to{stroke-dashoffset:0}}
+.flowline{stroke-dasharray:6 6;animation:flow 1.2s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-24}}
+@media (prefers-reduced-motion:reduce){.js .rv:not(.in){opacity:1;transform:none}.rv{transition:none}*{animation:none!important}}
+
+@media (max-width:980px){
+  .grid4,.tools,.hw{grid-template-columns:1fr 1fr}
+  .grid3,.quiz{grid-template-columns:1fr 1fr}
+}
+@media (max-width:720px){
+  .hero-grid,.grid2,.grid3,.grid4,.tools,.hw,.quiz,.analogy{grid-template-columns:1fr}
+  .head{grid-template-columns:1fr}.time{text-align:left}
+}
+
+/* Day 01 extras */
+.memviz{display:grid;grid-template-columns:1fr 1.2fr;gap:18px;align-items:start}
+.memviz .code{background:var(--bg2);border:1px solid var(--line2);border-radius:12px;padding:12px 14px;font-family:var(--mono);font-size:13.5px;line-height:1.7}
+.memviz .code div{padding:2px 8px;border-radius:6px;color:var(--ink2);cursor:pointer}
+.memviz .code div.on{background:color-mix(in srgb,var(--amber) 18%,transparent);color:var(--ink)}
+.memviz .code div.done{color:var(--ink)}
+.memviz .code .c{color:var(--ink3)}
+.typegrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.typegrid .t{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px}
+.typegrid .t b{font-family:var(--mono);color:var(--cyan);display:block;margin-bottom:4px}
+.typegrid .t span{font-size:13.5px;color:var(--ink2)}
+.typegrid .t i{display:block;font-style:normal;font-family:var(--mono);font-size:11px;color:var(--amber);margin-top:6px}
+.kbd{font-family:var(--mono);font-size:12px;border:1px solid var(--line2);border-radius:6px;padding:1px 6px;background:var(--bg2)}
+@media (max-width:980px){.typegrid{grid-template-columns:1fr 1fr}}
+@media (max-width:720px){.memviz,.typegrid{grid-template-columns:1fr}}
+</style></head><body>
+
+<div id="bar"><div class="wrap">
+  <div class="brand">AI <span>&amp;</span> ML Engineering · Day 01</div>
+  <nav id="nav"><!-- filled by JS from section[data-nav] --></nav>
+  <div class="clock"><span id="clk">00:00</span><button id="clkbtn" type="button">Start 60 min</button></div>
+</div><div id="track"></div></div>
+
+<!-- ============ HERO ============ -->
+<header id="hero"><canvas id="bgc"></canvas><div class="wrap">
+  <div class="eyebrow"><b>Day 01</b> · Phase 1 · Python for AI · 60 minutes</div>
+  <h1 style="margin-top:18px">Python, the <em>AI's</em><br><span class="c">mother tongue.</span></h1>
+  <div class="hero-grid">
+    <p class="lead">Every model you will train in the next 43 days is driven by Python. Today is not "learn Python from zero"; it is "learn the 20% of Python that AI code is written in": how data is stored, how it flows through functions, how you read it from files, and the three shortcuts (f-strings, comprehensions, lambdas) that make AI code look the way it looks. By the end you will read a CSV of job postings and compute which skills pay the most, in pure Python, no libraries.</p>
+    <div class="agenda"><h3>Today's route</h3><ol>
+      <li><span>00–05</span><a href="#hook">Hook: the language of the machines</a></li>
+      <li><span>05–22</span><a href="#concept">Concept: names, objects, flow</a></li>
+      <li><span>22–32</span><a href="#deeper">Deeper: comprehensions, lambdas, errors</a></li>
+      <li><span>32–45</span><a href="#code">Code: the salary-vs-skills analyzer</a></li>
+      <li><span>45–50</span><a href="#realworld">Real world &amp; tools</a></li>
+      <li><span>50–53</span><a href="#career">Career corner</a></li>
+      <li><span>53–56</span><a href="#quiz">Quiz</a></li>
+      <li><span>56–58</span><a href="#homework">Homework</a></li>
+      <li><span>58–60</span><a href="#next">Next</a></li>
+    </ol></div>
+  </div>
+</div></header>
+
+<!-- ============ HOOK ============ -->
+<section class="s" id="hook" data-nav="Hook"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">01 · Hook</div><h2>Open the code behind the models</h2><p class="lead">Put this on the projector: <a href="https://github.com/huggingface/transformers" target="_blank" rel="noopener">github.com/huggingface/transformers</a>. Scroll to the language bar on the right. It says <b>Python ≈ 99%</b>. That library is how the world downloads and runs BERT, Llama, Whisper and thousands of other models.</p></div><div class="time"><b>5</b>min</div></div>
+  <div class="grid2 rv">
+    <div class="card amber"><span class="tag">The story</span><h3>Two graduates, one JD</h3><p>Priya (ECE) and Arjun (CSE) both apply for a "Junior AI Engineer" role. The first-round task is small: "Here is a CSV of 5,000 support tickets. Tell us which product has the most complaints and the average response time." Arjun writes a 15-line Python script in 20 minutes and emails a table. Priya opens Excel, spends two hours, and sends a screenshot. Same brain, same degree. The difference is that Arjun speaks the dialect the job is conducted in.</p><p style="margin-top:10px">Python is not "the best language". C++ is faster, Rust is safer, JavaScript is everywhere. Python won AI because it is the language <em>researchers</em> could think in, and every fast library (NumPy, PyTorch) put a Python face on C++ muscle.</p></div>
+    <div class="card"><span class="tag">Try on the projector</span><h3>Three tabs to open</h3>
+      <p><a href="https://github.com/pytorch/pytorch" target="_blank" rel="noopener">pytorch/pytorch</a>: the engine of most deep learning. Python at the top, C++ and CUDA underneath: exactly the "Python face, C++ muscle" pattern.</p>
+      <p><a href="https://survey.stackoverflow.co/2024/technology" target="_blank" rel="noopener">Stack Overflow Developer Survey 2024</a>: Python sits in the top three most-used languages overall and is the most-wanted language among people learning to code.</p>
+      <p><a href="https://pythontutor.com/" target="_blank" rel="noopener">Python Tutor</a>: paste any snippet from today and watch memory being drawn step by step. We will use it for the "names are stickers" idea.</p>
+    </div>
+  </div>
+  <div class="callout cy rv"><b class="t">Framing for today</b><p>Think of English as the language and Python as a dialect: it has a small vocabulary (about 35 keywords), reads like pseudo-code, and the AI community has agreed to speak it. You do not need to be fluent in all of Python today. You need to be fluent in the part that shows up in every model training script, and that part fits in one hour.</p></div>
+</div></section>
+
+<!-- ============ CONCEPT ============ -->
+<section class="s" id="concept" data-nav="Concept"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">02 · Concept</div><h2>Names, objects, and the flow of data</h2><p class="lead">Four ideas carry 80% of Python: everything is an object, a variable is a name stuck on an object, data lives in four containers, and functions are the pipes that move it.</p></div><div class="time"><b>17</b>min</div></div>
+
+  <h3 class="rv">1. Variables are stickers, not boxes</h3>
+  <p class="rv" style="margin-top:8px">In C you learned "a variable is a box that holds a value". Python is different, and the difference causes half of all beginner bugs in AI code. In Python the <b>object</b> (a list, a number, a model) lives somewhere in memory, and a variable is just a <b>name sticker</b> you slap on it. <code>b = a</code> does not copy the box; it puts a second sticker on the same object.</p>
+  <div class="analogy rv"><div class="em">🍱</div><div><h4>The tiffin analogy</h4><p>One steel tiffin box on the table. You write "Rahul" on a sticky note and stick it on. Then you write "Lunch" on another note and stick that on too. Two names, one box. If Rahul opens it and eats a roti, "Lunch" also has one roti less; it is the same box. That is <code>b = a</code> for a list. But if you instead pack a <em>new</em> tiffin with the same food (<code>c = a[:]</code> or <code>a.copy()</code>), now there are two boxes and eating from one does not touch the other.</p></div></div>
+
+  <figure class="rv">
+    <div class="memviz">
+      <div class="code" id="mvcode">
+        <div data-i="0">a = [1, 2, 3]</div>
+        <div data-i="1">b = a          <span class="c"># second sticker</span></div>
+        <div data-i="2">b.append(4)    <span class="c"># mutate the box</span></div>
+        <div data-i="3">c = a.copy()   <span class="c"># new box</span></div>
+        <div data-i="4">c.append(9)</div>
+        <div data-i="5">x = 5;  y = x</div>
+        <div data-i="6">y = y + 1      <span class="c"># rebinds y, ints never change</span></div>
+      </div>
+      <div><svg id="mvsvg" viewBox="0 0 520 300" role="img" aria-label="Memory diagram of names pointing to objects"></svg>
+        <div class="ctl"><button class="btn" id="mvnext" type="button">Step ▶</button><button class="btn ghost" id="mvreset" type="button">Reset</button><span class="mono" id="mvmsg" style="font-size:12.5px;color:var(--ink2)"></span></div></div>
+    </div>
+    <figcaption>Interactive: click Step to run one line at a time. Watch which sticker points where. Lines 1–3 show aliasing (the number-one source of "why did my data change?" bugs in ML preprocessing). Lines 6–7 show that <code>int</code> is immutable: <code>y + 1</code> creates a new object and moves the sticker.</figcaption>
+  </figure>
+
+  <div class="callout ro rv"><b class="t">Common confusion</b><p>"I passed my list into a function and the function changed it. Python is pass-by-reference?" Not quite. Python is <b>pass-by-object</b> (also called pass-by-assignment): the function gets another sticker on the same object. If the object is mutable (list, dict, set, NumPy array, PyTorch tensor) the function can change it in place. If it is immutable (int, float, str, tuple) it cannot; any "change" creates a new object. This is exactly why <code>df.dropna()</code> in Pandas returns a new frame while <code>df.dropna(inplace=True)</code> does not.</p></div>
+
+  <h3 class="rv" style="margin-top:34px">2. The four containers you will meet in every AI script</h3>
+  <div class="typegrid rv" style="margin-top:14px">
+    <div class="t"><b>list  [ ]</b><span>Ordered, mutable, allows duplicates. The default "bag of things".</span><i>losses = [0.9, 0.7, 0.5]</i></div>
+    <div class="t"><b>tuple ( )</b><span>Ordered, immutable. Use for things that should not change: shapes, coordinates, function returns.</span><i>shape = (28, 28, 3)</i></div>
+    <div class="t"><b>dict { k: v }</b><span>Key → value lookup. Configs, JSON, model hyperparameters, word counts.</span><i>cfg = {"lr": 0.01, "epochs": 5}</i></div>
+    <div class="t"><b>set { }</b><span>Unordered, unique items. "Which skills appear in ANY job?" is a set union.</span><i>{"python","sql"} &amp; jd_skills</i></div>
+  </div>
+  <p class="rv" style="margin-top:14px">A rule of thumb that survives all the way to PyTorch: <b>if the order matters and it will grow, list. If it is a fixed record, tuple. If you look things up by name, dict. If you only care about membership, set.</b> An image batch in PyTorch has a <code>shape</code> that is a tuple (fixed record). Training losses go in a list (grows every epoch). Hyperparameters go in a dict (looked up by name). Vocabulary is a set (membership).</p>
+
+  <h3 class="rv" style="margin-top:34px">3. Control flow is the traffic police</h3>
+  <p class="rv" style="margin-top:8px">A program without <code>if</code> and <code>for</code> is a straight road. Control flow lets data take different routes. Python has no braces: <b>indentation is the syntax</b>. Four spaces, always. A training loop in PyTorch is literally a <code>for epoch in range(N):</code> containing a <code>for batch in loader:</code>, so learn to read nested loops like a story.</p>
+
+  <figure class="rv" style="margin-top:14px">
+    <canvas class="demo" id="pipe" width="900" height="300"></canvas>
+    <div class="ctl">
+      <label>Filter <select id="pipeFilter"><option value="even">n % 2 == 0</option><option value="gt5">n &gt; 5</option><option value="all">no filter</option></select></label>
+      <label>Transform <select id="pipeMap"><option value="sq">n ** 2</option><option value="dbl">n * 2</option><option value="id">n</option></select></label>
+      <button class="btn" id="pipePlay" type="button">Play ▶</button><button class="btn ghost" id="pipeReset" type="button">Reset</button>
+    </div>
+    <div class="stats"><div>Expression: <b id="pipeExpr">[n**2 for n in data if n%2==0]</b></div><div>Result so far: <b id="pipeOut">[]</b></div></div>
+    <figcaption>Animated: a list comprehension is a pipeline. Each item walks left to right, meets the <em>if</em> gate (odd ones bounce off), passes through the transform, and lands in the new list. Change the gate and the transform; the expression and the result update. This is also the mental model for <code>filter</code> → <code>map</code> in a data pipeline and for a PyTorch <code>DataLoader</code> transform.</figcaption>
+  </figure>
+
+  <h3 class="rv" style="margin-top:34px">4. Functions are pipes, and they are also objects</h3>
+  <div class="analogy rv"><div class="em">🫖</div><div><h4>The chai stall analogy</h4><p>A function is a chai-wala's recipe: fixed steps, some inputs with defaults (<code>sugar=2</code>), and an output. You do not re-explain the recipe every time; you just say <code>make_chai(sugar=0)</code>. The AI-code twist: in Python the recipe itself is a thing you can hand to someone. You can pass <code>make_chai</code> to a scheduler that calls it every morning. Tomorrow's decorators are exactly that: a function that takes your function, wraps it (adds a timer, a retry, a cache) and hands it back.</p></div></div>
+
+  <div class="grid2 rv">
+    <div class="card"><span class="tag">Signature you will see daily</span><h3>Defaults, keywords, docstring</h3>
+      <div class="codewrap"><span class="lbl">python</span><pre><span class="k">def</span> <span class="f">train</span>(model, data, epochs=<span class="n">5</span>, lr=<span class="n">0.01</span>):
+    <span class="s">"""Train model on data. Returns list of losses."""</span>
+    losses = []
+    <span class="k">for</span> epoch <span class="k">in</span> <span class="f">range</span>(epochs):
+        loss = step(model, data, lr)
+        losses.append(loss)
+    <span class="k">return</span> losses
+
+train(m, d)                  <span class="c"># defaults used</span>
+train(m, d, lr=<span class="n">0.1</span>)          <span class="c"># keyword arg: readable!</span></pre></div>
+    </div>
+    <div class="card"><span class="tag">Why this matters for AI code</span><h3>Every library API is a function with keyword defaults</h3><p><code>LinearRegression(fit_intercept=True)</code>, <code>torch.optim.Adam(params, lr=1e-3)</code>, <code>pd.read_csv(path, sep=",")</code>. When you read documentation you are reading a function signature. When you see <code>lr=1e-3</code> you should instantly parse: "keyword argument, float in scientific notation, 0.001".</p><p style="margin-top:8px">A function that returns a value ends the story; a function that <b>mutates its input</b> (like <code>optimizer.step()</code> updating the model in place) is the sticker idea again. Both patterns are everywhere.</p></div>
+  </div>
+
+  <h3 class="rv" style="margin-top:34px">Why not just write the loop? (numbers)</h3>
+  <div class="grid2 rv" style="margin-top:12px">
+    <div class="chart"><canvas id="speedChart"></canvas></div>
+    <div><p>The same job: sum of squares of the even numbers below one million. Four ways to write it, measured on Python 3.11 on a laptop. The loop, the comprehension and the generator are all "Python speed", within 15% of each other; the difference is readability, not performance. NumPy is a different animal because the loop runs in C. That is Day 03's whole point: <b>write the expression, not the loop</b>.</p>
+      <div class="callout li" style="margin-top:14px"><b class="t">Key idea</b><p>Learn comprehensions for <em>clarity</em> (one line says "what", not "how"), and learn NumPy/Pandas for <em>speed</em>. A senior engineer's code has almost no bare <code>for</code> loops over numbers.</p></div>
+    </div>
+  </div>
+
+  <div class="callout rv"><b class="t">Interview answer</b><p>"Why is Python the language of AI?" — Python is glue: readable, dynamically typed and interactive, so researchers iterate fast, while the heavy numerical work happens in C/C++/CUDA underneath libraries like NumPy and PyTorch. You get the productivity of a scripting language with near-native speed where it counts.</p></div>
+</div></section>
+
+<!-- ============ DEEPER ============ -->
+<section class="s" id="deeper" data-nav="Deeper"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">03 · Deeper</div><h2>The five idioms that make AI code look like AI code</h2><p class="lead">f-strings, comprehensions, lambdas, try/except and <code>with open</code>. Once you can read these five, most training scripts stop looking cryptic.</p></div><div class="time"><b>10</b>min</div></div>
+
+  <div class="tbl rv"><table>
+    <thead><tr><th>Idiom</th><th>Looks like</th><th>Plain meaning</th><th>Where you'll see it in AI</th></tr></thead>
+    <tbody>
+      <tr><td><b>f-string</b></td><td><code>f"epoch {e}: loss={loss:.4f}"</code></td><td>Put variables inside a string; <code>:.4f</code> means 4 decimals</td><td>Every training log line</td></tr>
+      <tr><td><b>List comprehension</b></td><td><code>[len(t) for t in texts if t]</code></td><td>Build a list from another, optionally filtering</td><td>Token lengths, batch construction</td></tr>
+      <tr><td><b>Dict comprehension</b></td><td><code>{w: i for i, w in enumerate(vocab)}</code></td><td>Build a lookup table in one line</td><td>Word → index vocab, label encoding</td></tr>
+      <tr><td><b>lambda</b></td><td><code>sorted(rows, key=lambda r: r["salary"])</code></td><td>A tiny nameless function, used once</td><td>Sort keys, <code>df.apply</code>, callbacks</td></tr>
+      <tr><td><b>try / except</b></td><td><code>try: float(x)  except ValueError: ...</code></td><td>Attempt; if it fails, recover instead of crashing</td><td>Messy CSVs, API calls, GPU out-of-memory</td></tr>
+      <tr><td><b>with open</b></td><td><code>with open(p) as f: data = f.read()</code></td><td>Open a file and guarantee it closes</td><td>Reading datasets, saving checkpoints</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 class="rv" style="margin-top:30px">Decoding a comprehension</h3>
+  <p class="rv" style="margin-top:8px">Read it as three parts, in this order: <span class="mono">[ <b style="color:var(--cyan)">expression</b> for <b style="color:var(--amber)">item</b> in <b style="color:var(--lime)">source</b> if <b style="color:var(--rose)">condition</b> ]</span>. The <span style="color:var(--lime)">source</span> is where items come from (a list, a file, a range). The <span style="color:var(--amber)">item</span> is the name given to each one. The <span style="color:var(--rose)">condition</span> is a gate; items that fail it are skipped. The <span style="color:var(--cyan)">expression</span> is what actually gets stored. It is exactly the for-loop you already know, folded into one line, and it runs slightly faster because Python does not have to look up <code>.append</code> a million times.</p>
+
+  <h3 class="rv" style="margin-top:30px">Decoding an f-string format spec</h3>
+  <p class="rv" style="margin-top:8px"><span class="mono">f"{loss:8.4f}"</span> reads as: take <code>loss</code>, format as a fixed-point float (<code>f</code>) with 4 digits after the decimal (<code>.4</code>) padded to a total width of 8 characters (<code>8</code>). <span class="mono">f"{acc:.1%}"</span> multiplies by 100 and adds a percent sign. <span class="mono">f"{n:,}"</span> adds thousands separators (<code>1,000,000</code>). <span class="mono">f"{name!r}"</span> shows the value with quotes for debugging. These four cover every log line you will ever write.</p>
+
+  <h3 class="rv" style="margin-top:30px">Error handling: the difference between a script and a tool</h3>
+  <p class="rv" style="margin-top:8px">A script crashes at row 3,417 of a CSV because the salary column says <code>"Not disclosed"</code>. A tool catches that, counts it, and keeps going. The shape is always the same: <code>try</code> the risky thing, <code>except</code> the <em>specific</em> error you expect (<code>ValueError</code>, <code>FileNotFoundError</code>, <code>KeyError</code>), optionally <code>else</code> on success, and <code>finally</code> for cleanup that must happen regardless. Never write a bare <code>except:</code> in production; it also swallows <code>KeyboardInterrupt</code> and hides real bugs.</p>
+
+  <div class="callout ro rv"><b class="t">Common confusion</b><p><code>import</code> vs <code>pip install</code>. <code>pip install pandas</code> downloads the package to your machine once (a one-time purchase). <code>import pandas as pd</code> loads it into the current program (taking it out of the cupboard). In Colab, most packages are pre-installed; you only <code>!pip install</code> the ones that are missing. A <b>module</b> is any <code>.py</code> file; a <b>package</b> is a folder of modules with an <code>__init__.py</code>. When you write <code>from utils import clean</code>, Python looks for <code>utils.py</code> next to your script or on the path.</p></div>
+
+  <div class="callout rv"><b class="t">How to say this in an interview</b><p>"Python's core strengths for data work are readability and expressiveness: comprehensions and f-strings let you say what you want in one line, everything is an object so functions can be passed around, and exceptions let a pipeline degrade gracefully on bad rows instead of crashing. Mutability is the main thing to watch: lists and dicts are shared by reference, so I copy explicitly when I need isolation."</p></div>
+</div></section>
+
+<!-- ============ CODE ============ -->
+<section class="s" id="code" data-nav="Code"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">04 · Code</div><h2>Build: the salary-vs-skills analyzer (pure Python)</h2><p class="lead">A CSV of job postings: title, company, city, salary in LPA, and a skills column. Which skill is worth the most? No pandas yet; we do it with the tools from today. <b>Full runnable version: open <code>Day_01_Python_Foundations.ipynb</code> in Google Colab.</b></p></div><div class="time"><b>13</b>min</div></div>
+
+  <h3 class="rv">Snippet 1 — read the file, guard against bad rows</h3>
+  <div class="codewrap rv"><span class="lbl">python</span><pre><span class="k">import</span> csv
+
+rows, skipped = [], <span class="n">0</span>
+<span class="k">with</span> <span class="f">open</span>(<span class="s">"jobs.csv"</span>, newline=<span class="s">""</span>, encoding=<span class="s">"utf-8"</span>) <span class="k">as</span> f:
+    <span class="k">for</span> r <span class="k">in</span> csv.DictReader(f):            <span class="c"># each row is a dict: {"title": ..., "salary_lpa": ...}</span>
+        <span class="k">try</span>:
+            r[<span class="s">"salary_lpa"</span>] = <span class="f">float</span>(r[<span class="s">"salary_lpa"</span>])   <span class="c"># "Not disclosed" → ValueError</span>
+        <span class="k">except</span> ValueError:
+            skipped += <span class="n">1</span>
+            <span class="k">continue</span>                              <span class="c"># skip this row, keep going</span>
+        r[<span class="s">"skills"</span>] = {s.strip().lower() <span class="k">for</span> s <span class="k">in</span> r[<span class="s">"skills"</span>].split(<span class="s">";"</span>)}  <span class="c"># set comprehension</span>
+        rows.append(r)
+
+<span class="f">print</span>(<span class="s">f"loaded {len(rows):,} rows, skipped {skipped}"</span>)</pre></div>
+
+  <h3 class="rv" style="margin-top:26px">Snippet 2 — count, filter, and sort with comprehensions and lambda</h3>
+  <div class="codewrap rv"><span class="lbl">python</span><pre><span class="c"># every distinct skill across all postings = set union</span>
+all_skills = <span class="f">set</span>().union(*[r[<span class="s">"skills"</span>] <span class="k">for</span> r <span class="k">in</span> rows])
+
+<span class="c"># dict comprehension: skill -&gt; average salary of jobs that ask for it</span>
+avg_by_skill = {
+    s: <span class="f">sum</span>(r[<span class="s">"salary_lpa"</span>] <span class="k">for</span> r <span class="k">in</span> rows <span class="k">if</span> s <span class="k">in</span> r[<span class="s">"skills"</span>])
+       / <span class="f">sum</span>(<span class="n">1</span> <span class="k">for</span> r <span class="k">in</span> rows <span class="k">if</span> s <span class="k">in</span> r[<span class="s">"skills"</span>])
+    <span class="k">for</span> s <span class="k">in</span> all_skills
+}
+
+<span class="c"># sort dict items by value (a tuple (skill, avg)), highest first</span>
+top = <span class="f">sorted</span>(avg_by_skill.items(), key=<span class="k">lambda</span> kv: kv[<span class="n">1</span>], reverse=<span class="k">True</span>)
+<span class="k">for</span> skill, avg <span class="k">in</span> top[:<span class="n">5</span>]:
+    <span class="f">print</span>(<span class="s">f"{skill:&lt;12} {avg:6.1f} LPA"</span>)      <span class="c"># &lt;12 = left-align in 12 chars</span></pre></div>
+
+  <h3 class="rv" style="margin-top:26px">Snippet 3 — the same job three ways</h3>
+  <div class="tabs rv">
+    <div class="tb"><button class="on" type="button">Plain for-loop</button><button type="button">Comprehension</button><button type="button">collections.Counter</button></div>
+    <div class="tp on"><div class="codewrap"><span class="lbl">python · how a beginner writes it</span><pre>counts = {}
+<span class="k">for</span> r <span class="k">in</span> rows:
+    <span class="k">for</span> s <span class="k">in</span> r[<span class="s">"skills"</span>]:
+        <span class="k">if</span> s <span class="k">in</span> counts:
+            counts[s] += <span class="n">1</span>
+        <span class="k">else</span>:
+            counts[s] = <span class="n">1</span></pre></div></div>
+    <div class="tp"><div class="codewrap"><span class="lbl">python · one comprehension + dict.get</span><pre>counts = {}
+<span class="k">for</span> s <span class="k">in</span> [s <span class="k">for</span> r <span class="k">in</span> rows <span class="k">for</span> s <span class="k">in</span> r[<span class="s">"skills"</span>]]:   <span class="c"># nested comprehension = flatten</span>
+    counts[s] = counts.get(s, <span class="n">0</span>) + <span class="n">1</span>                 <span class="c"># .get(key, default) avoids the if/else</span></pre></div></div>
+    <div class="tp"><div class="codewrap"><span class="lbl">python · how a senior engineer writes it</span><pre><span class="k">from</span> collections <span class="k">import</span> Counter
+counts = Counter(s <span class="k">for</span> r <span class="k">in</span> rows <span class="k">for</span> s <span class="k">in</span> r[<span class="s">"skills"</span>])
+<span class="f">print</span>(counts.most_common(<span class="n">5</span>))     <span class="c"># [('python', 412), ('sql', 300), ...]</span></pre></div></div>
+  </div>
+
+  <h3 class="rv" style="margin-top:26px">Snippet 4 — turn it into a reusable module</h3>
+  <div class="codewrap rv"><span class="lbl">python · jobs_tool.py</span><pre><span class="s">"""Tiny job-market analyzer. Usage: python jobs_tool.py jobs.csv"""</span>
+<span class="k">import</span> sys, csv, json
+<span class="k">from</span> collections <span class="k">import</span> Counter
+
+<span class="k">def</span> <span class="f">load</span>(path):
+    <span class="s">"""Return list of row dicts with float salary and a set of skills."""</span>
+    ...                                   <span class="c"># snippet 1 goes here</span>
+
+<span class="k">def</span> <span class="f">report</span>(rows, top_n=<span class="n">5</span>):
+    counts = Counter(s <span class="k">for</span> r <span class="k">in</span> rows <span class="k">for</span> s <span class="k">in</span> r[<span class="s">"skills"</span>])
+    <span class="k">return</span> {<span class="s">"n_jobs"</span>: <span class="f">len</span>(rows), <span class="s">"top_skills"</span>: counts.most_common(top_n)}
+
+<span class="k">if</span> __name__ == <span class="s">"__main__"</span>:              <span class="c"># runs only when executed directly, not when imported</span>
+    rows = load(sys.argv[<span class="n">1</span>])
+    <span class="f">print</span>(json.dumps(report(rows), indent=<span class="n">2</span>))</pre></div>
+  <p class="rv" style="margin-top:12px">Notice the shape: a docstring at the top, functions that each do one thing, and the <code>if __name__ == "__main__":</code> guard so the file can be both a script (<code>python jobs_tool.py</code>) and a library (<code>from jobs_tool import report</code>). Every serious repo you clone, from scikit-learn to Ultralytics, is built from files that look like this.</p>
+
+  <div class="callout cy rv"><b class="t">Key idea</b><p>You just did a full data-analysis pipeline: <b>load → clean → aggregate → sort → report</b>. Day 03 replaces snippets 1 and 2 with three lines of Pandas. But the pandas lines only make sense if you can picture the loops they replace, and now you can.</p></div>
+</div></section>
+
+<!-- ============ REAL WORLD ============ -->
+<section class="s" id="realworld" data-nav="Real world"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">05 · Real world &amp; tools</div><h2>Where to practise, and what the pros use</h2><p class="lead">Direct links. Bookmark them on the projector.</p></div><div class="time"><b>5</b>min</div></div>
+  <div class="grid3 rv">
+    <div class="card"><span class="tag">Visualise</span><h3>Python Tutor</h3><p>Paste code, press "Visualize", watch stickers point at objects. The fastest way to fix your mental model of memory.</p><a href="https://pythontutor.com/python-compiler.html" target="_blank" rel="noopener">pythontutor.com ↗</a></div>
+    <div class="card"><span class="tag">Practise</span><h3>Kaggle Learn: Python</h3><p>Seven short lessons with exercises inside a notebook. Free, no install. Finish it this week and you have a certificate for LinkedIn.</p><a href="https://www.kaggle.com/learn/python" target="_blank" rel="noopener">kaggle.com/learn/python ↗</a></div>
+    <div class="card"><span class="tag">Practise</span><h3>Exercism Python track</h3><p>140+ small exercises with human mentoring. Do two a day; solutions get reviewed by real engineers.</p><a href="https://exercism.org/tracks/python" target="_blank" rel="noopener">exercism.org/tracks/python ↗</a></div>
+    <div class="card"><span class="tag">Reference</span><h3>The official tutorial</h3><p>Chapters 3–7 (data structures, control flow, modules, I/O, errors) are exactly today's syllabus, written by the language's authors.</p><a href="https://docs.python.org/3/tutorial/" target="_blank" rel="noopener">docs.python.org/3/tutorial ↗</a></div>
+    <div class="card"><span class="tag">Read real code</span><h3>scikit-learn on GitHub</h3><p>Open any file under <code>sklearn/</code>. You will see functions with keyword defaults, docstrings, and <code>try/except</code>: today's Python, in production.</p><a href="https://github.com/scikit-learn/scikit-learn" target="_blank" rel="noopener">github.com/scikit-learn ↗</a></div>
+    <div class="card"><span class="tag">Data</span><h3>Kaggle: Data Science Job Salaries</h3><p>Real salary data by role and experience level. Use it for the Stretch homework instead of the synthetic CSV.</p><a href="https://www.kaggle.com/datasets/ruchi798/data-science-job-salaries" target="_blank" rel="noopener">kaggle.com/datasets ↗</a></div>
+  </div>
+  <h3 class="rv" style="margin-top:34px">Modern tools for writing Python in 2026</h3>
+  <div class="tools rv" style="margin-top:14px">
+    <div class="tool"><b>Google Colab</b><span>Free notebooks with GPU. Every notebook in this course opens here.</span><a href="https://colab.research.google.com/" target="_blank" rel="noopener">colab.research.google.com</a></div>
+    <div class="tool"><b>Cursor</b><span>VS Code with an AI pair-programmer built in. Ask "explain this comprehension" inline.</span><a href="https://cursor.com/" target="_blank" rel="noopener">cursor.com</a></div>
+    <div class="tool"><b>GitHub Copilot</b><span>Free tier for students via GitHub Education. Autocompletes loops and docstrings.</span><a href="https://github.com/features/copilot" target="_blank" rel="noopener">github.com/features/copilot</a></div>
+    <div class="tool"><b>Claude / ChatGPT</b><span>Paste an error message, ask "why?" Use it as a tutor, then re-type the fix yourself.</span><a href="https://claude.ai/" target="_blank" rel="noopener">claude.ai</a></div>
+    <div class="tool"><b>uv</b><span>The 2025+ way to install Python and packages, 10–100× faster than pip. <code>uv pip install pandas</code>.</span><a href="https://docs.astral.sh/uv/" target="_blank" rel="noopener">docs.astral.sh/uv</a></div>
+    <div class="tool"><b>Ruff</b><span>Linter + formatter in one. Catches unused imports and mutable-default bugs before you run.</span><a href="https://docs.astral.sh/ruff/" target="_blank" rel="noopener">docs.astral.sh/ruff</a></div>
+  </div>
+</div></section>
+
+<!-- ============ CAREER ============ -->
+<section class="s" id="career" data-nav="Career"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">06 · Career corner</div><h2>Python is on every AI JD. Here is how it is tested.</h2></div><div class="time"><b>3</b>min</div></div>
+  <div class="career rv">
+    <span class="tag">In job descriptions</span>
+    <p><b>Data Analyst</b>, <b>Junior ML Engineer</b>, <b>AI Engineer</b>, <b>Python Developer (AI/ML)</b>. The line is usually "Strong proficiency in Python and its data ecosystem". What they actually test in a screening round is: can you read a CSV, clean it, aggregate it, and explain your code, in under 30 minutes. Today's snippets are that test.</p>
+    <h4 style="margin-top:18px">Interview questions you can now answer</h4>
+    <ul style="margin-top:8px">
+      <li><b>"List vs tuple?"</b> — Both ordered; list is mutable and grows, tuple is immutable and hashable (usable as a dict key). Use tuples for fixed records like shapes.</li>
+      <li><b>"Is Python pass-by-value or pass-by-reference?"</b> — Neither; pass-by-object. The callee gets a reference to the same object, so mutable objects can be changed in place, immutable ones cannot.</li>
+      <li><b>"What is wrong with <code>def f(x, acc=[])</code>?"</b> — The default list is created once at definition time and shared across calls, so it keeps growing. Use <code>acc=None</code> and create the list inside.</li>
+    </ul>
+    <h4 style="margin-top:18px">Job-hunt action for today</h4>
+    <p>Add <b>Python</b> to your LinkedIn Skills section (it is the single most-searched keyword by recruiters filtering for AI roles) and start a public GitHub repo named <code>ai-ml-45days</code>. Push today's notebook to it. From tomorrow, every day adds one commit; a 45-commit green streak is a talking point in every interview.</p>
+  </div>
+</div></section>
+
+<!-- ============ QUIZ ============ -->
+<section class="s" id="quiz" data-nav="Quiz"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">07 · Quiz</div><h2>Three quick checks</h2></div><div class="time"><b>3</b>min</div></div>
+  <div class="quiz rv">
+    <div class="q" data-a="1"><p><code>a = [1, 2]; b = a; b.append(3); print(a)</code> prints?</p><div class="opts"><button type="button">[1, 2]</button><button type="button">[1, 2, 3]</button><button type="button">Error</button></div><div class="why"><b>b = a</b> adds a second sticker to the same list object. Appending through either name changes the one list. To get an independent copy use <code>a.copy()</code> or <code>a[:]</code>.</div></div>
+    <div class="q" data-a="2"><p>What does <code>[w.upper() for w in words if len(w) &gt; 3]</code> produce?</p><div class="opts"><button type="button">All words, uppercased</button><button type="button">Words longer than 3, unchanged</button><button type="button">Words longer than 3, uppercased</button></div><div class="why">Read it as: expression <code>w.upper()</code>, for each <code>w</code> in <code>words</code>, only if the condition holds. The <code>if</code> filters, the expression transforms.</div></div>
+    <div class="q" data-a="0"><p>Which is the correct way to catch a bad number conversion?</p><div class="opts"><button type="button"><code>except ValueError:</code></button><button type="button"><code>except:</code></button><button type="button"><code>except Exception as e: pass</code></button></div><div class="why">Catch the specific error you expect. A bare <code>except:</code> also swallows Ctrl-C and typos; <code>pass</code> on <code>Exception</code> hides every bug silently.</div></div>
+  </div>
+</div></section>
+
+<!-- ============ HOMEWORK ============ -->
+<section class="s" id="homework" data-nav="Homework"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">08 · Homework</div><h2>20–40 minutes, tonight</h2></div><div class="time"><b>2</b>min</div></div>
+  <div class="hw rv">
+    <div class="card"><span class="lvl">Easy · 10 min</span><h3>Your skills, formatted</h3><p>Make a dict of 6 skills you have → confidence 0–1 (e.g. <code>{"python": 0.6, "sql": 0.4}</code>). Print a table with f-strings: name left-aligned in 12 chars, confidence as a percentage with 0 decimals, sorted highest first. One comprehension, one lambda, one f-string format spec.</p></div>
+    <div class="card"><span class="lvl">Medium · 15 min · job hunt</span><h3>JD keyword counter</h3><p>Copy 3 real job descriptions from LinkedIn/Naukri into <code>jd1.txt</code>, <code>jd2.txt</code>, <code>jd3.txt</code>. Write a function <code>count_skills(path, skills)</code> that returns a <code>Counter</code> of how often each skill in your list appears (case-insensitive). Use <code>with open</code>, a comprehension, and <code>try/except FileNotFoundError</code>. Print the union of skills asked across all three: that is your study list.</p></div>
+    <div class="card"><span class="lvl">Stretch · 15 min</span><h3>Analyzer → CLI tool</h3><p>Put the salary analyzer into <code>jobs_tool.py</code> with the <code>__main__</code> guard. Add a second command-line argument <code>--city</code> that filters rows before reporting. Bonus: write the report to <code>report.json</code> with <code>json.dump</code>. Commit it to your <code>ai-ml-45days</code> repo.</p></div>
+  </div>
+</div></section>
+
+<!-- ============ NEXT ============ -->
+<section class="s" id="next" data-nav="Next"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">09 · Next</div><h2>Tomorrow</h2></div><div class="time"><b>2</b>min</div></div>
+  <div class="fin rv">
+    <h2>Day 02 · Python that senior engineers write</h2>
+    <p>Classes with <code>__len__</code> and <code>__getitem__</code> (the exact shape of a PyTorch Dataset), generators that stream a 50 GB file through 8 GB of RAM, and decorators that add timing, retries and caching to any function with one line.</p>
+    <div style="margin-top:24px;text-align:left;max-width:560px;margin-inline:auto"><div class="callout cy"><b class="t">Before next class</b><p>1. Run today's notebook top to bottom in Colab and push it to your <code>ai-ml-45days</code> repo.<br>2. Do the Medium homework: the JD keyword counter becomes the seed of a project we extend on Day 28.<br>3. Watch Corey Schafer's 10-minute <a href="https://www.youtube.com/watch?v=3ohzBxoFHAY" target="_blank" rel="noopener">list comprehensions</a> video if comprehensions still feel like magic.</p></div></div>
+  </div>
+</div></section>
+
+<script>
+/* ---------- Memory / sticker visual ---------- */
+(function(){
+  const svg=document.getElementById('mvsvg'),code=document.getElementById('mvcode'),msg=document.getElementById('mvmsg');
+  if(!svg)return;
+  const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  let step=-1;
+  // state: objects {id, kind, val, x, y}, names {name -> objId}
+  function state(s){
+    const objs=[],names={};
+    if(s>=0){objs.push({id:'L1',kind:'list',val:[1,2,3],x:250,y:40});names.a='L1';}
+    if(s>=1){names.b='L1';}
+    if(s>=2){objs[0].val=[1,2,3,4];}
+    if(s>=3){objs.push({id:'L2',kind:'list',val:[1,2,3,4],x:250,y:120});names.c='L2';}
+    if(s>=4){objs[1].val=[1,2,3,4,9];}
+    if(s>=5){objs.push({id:'I5',kind:'int',val:5,x:250,y:200});names.x='I5';names.y='I5';}
+    if(s>=6){objs.push({id:'I6',kind:'int',val:6,x:400,y:200});names.y='I6';}
+    return {objs,names};
+  }
+  const notes=['a is a sticker on a new list object.','b = a: a SECOND sticker on the SAME object. No copy.','b.append(4) mutates the object. a sees it too!','a.copy() makes a NEW list object; c points there.','c.append(9) changes only the new box. a and b untouched.','x and y both point to the int 5.','y + 1 makes a NEW int 6 and moves the y sticker. x still 5. Ints are immutable.'];
+  function draw(){
+    const {objs,names}=state(step);
+    const nameOrder=['a','b','c','x','y'];
+    let h='';
+    const ink=css('--ink'),ink2=css('--ink2'),cyan=css('--cyan'),amber=css('--amber'),line=css('--line2'),lime=css('--lime');
+    h+=`<text x="30" y="24" font-family="JetBrains Mono,monospace" font-size="11" fill="${ink2}" letter-spacing="2">NAMES</text><text x="250" y="24" font-family="JetBrains Mono,monospace" font-size="11" fill="${ink2}" letter-spacing="2">OBJECTS IN MEMORY</text>`;
+    const ny={};let yy=50;
+    nameOrder.forEach(n=>{if(names[n]!==undefined){ny[n]=yy;h+=`<rect x="30" y="${yy-16}" width="60" height="30" rx="8" fill="${css('--panel')}" stroke="${amber}"/><text x="60" y="${yy+4}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="14" fill="${ink}">${n}</text>`;yy+=48;}});
+    objs.forEach(o=>{
+      const w=o.kind==='list'?36*o.val.length+12:56;
+      h+=`<rect x="${o.x}" y="${o.y}" width="${w}" height="52" rx="10" fill="${css('--bg2')}" stroke="${o.kind==='list'?cyan:lime}" stroke-width="1.5"/>`;
+      h+=`<text x="${o.x+6}" y="${o.y-6}" font-family="JetBrains Mono,monospace" font-size="10" fill="${ink2}">${o.kind} @${o.id}</text>`;
+      if(o.kind==='list'){o.val.forEach((v,i)=>{h+=`<rect x="${o.x+6+i*36}" y="${o.y+10}" width="32" height="32" rx="6" fill="${css('--panel')}" stroke="${line}"/><text x="${o.x+22+i*36}" y="${o.y+31}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="14" fill="${ink}">${v}</text>`;});}
+      else h+=`<text x="${o.x+28}" y="${o.y+33}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="18" fill="${ink}">${o.val}</text>`;
+      o.w=w;
+    });
+    Object.entries(names).forEach(([n,id])=>{const o=objs.find(q=>q.id===id);h+=`<path d="M92 ${ny[n]} C 170 ${ny[n]}, 170 ${o.y+26}, ${o.x-4} ${o.y+26}" fill="none" stroke="${amber}" stroke-width="1.6" class="flowline"/><circle cx="${o.x-4}" cy="${o.y+26}" r="3.5" fill="${amber}"/>`;});
+    svg.innerHTML=h;
+    code.querySelectorAll('div[data-i]').forEach(d=>{const i=+d.dataset.i;d.classList.toggle('on',i===step);d.classList.toggle('done',i<step);});
+    msg.textContent=step<0?'Click Step to run line 1.':notes[step];
+  }
+  document.getElementById('mvnext').onclick=()=>{if(step<6)step++;draw();};
+  document.getElementById('mvreset').onclick=()=>{step=-1;draw();};
+  code.querySelectorAll('div[data-i]').forEach(d=>d.onclick=()=>{step=+d.dataset.i;draw();});
+  draw();
+})();
+
+/* ---------- Comprehension pipeline canvas ---------- */
+(function(){
+  const c=document.getElementById('pipe');if(!c)return;const x=c.getContext('2d');
+  const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const data=[1,2,3,4,5,6,7,8,9,10];
+  const filters={even:{f:n=>n%2===0,s:'n%2==0'},gt5:{f:n=>n>5,s:'n>5'},all:{f:()=>true,s:''}};
+  const maps={sq:{f:n=>n*n,s:'n**2'},dbl:{f:n=>n*2,s:'n*2'},id:{f:n=>n,s:'n'}};
+  const selF=document.getElementById('pipeFilter'),selM=document.getElementById('pipeMap');
+  let items=[],out=[],playing=false,t0=0,idx=0,raf=null;
+  const W=900,H=300,gateX=330,mapX=560,binX=760;
+  function expr(){const f=filters[selF.value],m=maps[selM.value];return '['+m.s+' for n in data'+(f.s?' if '+f.s:'')+']';}
+  function reset(){cancelAnimationFrame(raf);playing=false;items=[];out=[];idx=0;document.getElementById('pipePlay').textContent='Play ▶';document.getElementById('pipeExpr').textContent=expr();document.getElementById('pipeOut').textContent='[]';draw();}
+  function spawn(){if(idx>=data.length)return;const n=data[idx++];items.push({n,x:40,y:150,v:n,phase:'go',alive:true,vy:0,t:0});}
+  function draw(){
+    const ink=css('--ink'),ink2=css('--ink2'),cyan=css('--cyan'),amber=css('--amber'),rose=css('--rose'),lime=css('--lime'),panel=css('--panel'),line=css('--line2');
+    x.clearRect(0,0,W,H);
+    x.font='12px JetBrains Mono,monospace';x.fillStyle=ink2;x.textAlign='left';
+    x.fillText('source: data = ['+data.join(', ')+']',30,40);
+    // conveyor
+    x.strokeStyle=line;x.lineWidth=2;x.setLineDash([6,6]);x.beginPath();x.moveTo(30,150);x.lineTo(binX-20,150);x.stroke();x.setLineDash([]);
+    // gate
+    x.fillStyle=panel;x.strokeStyle=rose;x.lineWidth=2;roundRect(gateX-40,95,80,110,12);x.fill();x.stroke();
+    x.fillStyle=rose;x.textAlign='center';x.font='bold 12px JetBrains Mono,monospace';x.fillText('if',gateX,120);x.font='12px JetBrains Mono,monospace';x.fillText(filters[selF.value].s||'(open)',gateX,140);x.fillStyle=ink2;x.fillText('gate',gateX,190);
+    // map
+    x.fillStyle=panel;x.strokeStyle=cyan;roundRect(mapX-45,95,90,110,12);x.fill();x.stroke();
+    x.fillStyle=cyan;x.font='bold 12px JetBrains Mono,monospace';x.fillText('expr',mapX,120);x.font='12px JetBrains Mono,monospace';x.fillText(maps[selM.value].s,mapX,140);x.fillStyle=ink2;x.fillText('transform',mapX,190);
+    // bin
+    x.strokeStyle=lime;x.lineWidth=2;x.beginPath();x.moveTo(binX-10,100);x.lineTo(binX-10,210);x.lineTo(binX+120,210);x.lineTo(binX+120,100);x.stroke();
+    x.fillStyle=lime;x.textAlign='center';x.fillText('new list',binX+55,232);
+    out.forEach((v,i)=>{const bx=binX+4+(i%4)*29,by=190-Math.floor(i/4)*30;ball(bx+10,by-8,String(v),lime,ink);});
+    // items
+    items.forEach(it=>{if(!it.alive)return;ball(it.x,it.y,String(it.v),it.phase==='mapped'?cyan:amber,ink);});
+    x.fillStyle=ink2;x.textAlign='left';x.font='12px JetBrains Mono,monospace';x.fillText('rejected items fall out of the pipeline',30,280);
+  }
+  function roundRect(px,py,w,h,r){x.beginPath();x.moveTo(px+r,py);x.arcTo(px+w,py,px+w,py+h,r);x.arcTo(px+w,py+h,px,py+h,r);x.arcTo(px,py+h,px,py,r);x.arcTo(px,py,px+w,py,r);x.closePath();}
+  function ball(bx,by,txt,col,ink){x.beginPath();x.arc(bx,by,15,0,7);x.fillStyle=col;x.fill();x.fillStyle='#0A0E1A';x.font='bold 12px JetBrains Mono,monospace';x.textAlign='center';x.fillText(txt,bx,by+4);}
+  function tick(ts){
+    if(!t0)t0=ts;
+    if(ts-t0>650){t0=ts;spawn();}
+    const f=filters[selF.value].f,m=maps[selM.value].f;
+    items.forEach(it=>{
+      if(!it.alive)return;
+      if(it.phase==='fall'){it.vy+=.6;it.y+=it.vy;it.x+=1.2;if(it.y>H+20)it.alive=false;return;}
+      it.x+=3.2;
+      if(it.phase==='go'&&it.x>=gateX){if(f(it.n)){it.phase='passed';}else{it.phase='fall';it.vy=-3;}}
+      if(it.phase==='passed'&&it.x>=mapX){it.v=m(it.n);it.phase='mapped';}
+      if(it.phase==='mapped'&&it.x>=binX-10){it.alive=false;out.push(it.v);document.getElementById('pipeOut').textContent='['+out.join(', ')+']';}
+    });
+    draw();
+    if(idx<data.length||items.some(i=>i.alive))raf=requestAnimationFrame(tick);else{playing=false;document.getElementById('pipePlay').textContent='Play ▶';}
+  }
+  document.getElementById('pipePlay').onclick=()=>{if(playing){cancelAnimationFrame(raf);playing=false;document.getElementById('pipePlay').textContent='Play ▶';return;}if(idx>=data.length&&!items.some(i=>i.alive)){reset();}playing=true;t0=0;document.getElementById('pipePlay').textContent='Pause';raf=requestAnimationFrame(tick);};
+  document.getElementById('pipeReset').onclick=reset;
+  selF.onchange=reset;selM.onchange=reset;
+  reset();
+})();
+
+/* ---------- Speed chart ---------- */
+(function(){
+  const el=document.getElementById('speedChart');if(!el||!window.Chart)return;
+  const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  new Chart(el,{type:'bar',data:{labels:['for loop + append','list comprehension','generator + sum()','NumPy (vectorised)'],datasets:[{label:'ms per run (lower is better)',data:[76,70,65,15],backgroundColor:[css('--rose'),css('--amber'),css('--amber'),css('--lime')],borderRadius:8}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},title:{display:true,text:'sum of squares of even n < 1,000,000 · Python 3.11'},tooltip:{callbacks:{label:c=>c.parsed.y+' ms'}}},scales:{y:{beginAtZero:true,title:{display:true,text:'milliseconds'}}}}});
+})();
+</script>
+
+<script>
+document.documentElement.classList.add('js');
+/* nav from sections */
+(function(){const nav=document.getElementById('nav');document.querySelectorAll('section.s[data-nav]').forEach((s,i)=>{const a=document.createElement('a');a.href='#'+s.id;a.innerHTML='<i>'+String(i+1).padStart(2,'0')+'</i>'+s.dataset.nav;nav.appendChild(a);});
+const links=[...nav.querySelectorAll('a')];const secs=[...document.querySelectorAll('section.s[data-nav]')];
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle('on',l.getAttribute('href')==='#'+e.target.id));}})},{rootMargin:'-40% 0px -55% 0px'});secs.forEach(s=>io.observe(s));
+window.addEventListener('scroll',()=>{const h=document.documentElement;document.getElementById('track').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';},{passive:true});})();
+/* reveal */
+(function(){const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:.1});document.querySelectorAll('.rv').forEach(el=>io.observe(el));})();
+/* class timer */
+(function(){let t=0,id=null;const el=document.getElementById('clk'),b=document.getElementById('clkbtn');b.onclick=()=>{if(id){clearInterval(id);id=null;b.textContent='Resume';return;}b.textContent='Pause';id=setInterval(()=>{t++;el.textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');if(t>=3600){clearInterval(id);el.textContent='60:00';b.textContent='Done';}},1000);};})();
+/* hero particles */
+(function(){const c=document.getElementById('bgc');if(!c)return;const x=c.getContext('2d');let w,h,P=[];function rs(){w=c.width=c.offsetWidth;h=c.height=c.offsetHeight;P=Array.from({length:Math.min(70,w/14)},()=>({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-.5)*.4,vy:(Math.random()-.5)*.4}));}rs();window.addEventListener('resize',rs);const col=()=>getComputedStyle(document.documentElement).getPropertyValue('--cyan').trim();function f(){x.clearRect(0,0,w,h);const cc=col();for(const p of P){p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>w)p.vx*=-1;if(p.y<0||p.y>h)p.vy*=-1;}for(let i=0;i<P.length;i++){for(let j=i+1;j<P.length;j++){const d=Math.hypot(P[i].x-P[j].x,P[i].y-P[j].y);if(d<120){x.strokeStyle=cc;x.globalAlpha=(1-d/120)*.35;x.beginPath();x.moveTo(P[i].x,P[i].y);x.lineTo(P[j].x,P[j].y);x.stroke();}}}x.globalAlpha=1;x.fillStyle=cc;for(const p of P){x.beginPath();x.arc(p.x,p.y,1.8,0,7);x.fill();}requestAnimationFrame(f);}if(!matchMedia('(prefers-reduced-motion:reduce)').matches)f();})();
+/* tabs */
+document.querySelectorAll('.tabs').forEach(t=>{const bs=t.querySelectorAll('.tb button'),ps=t.querySelectorAll('.tp');bs.forEach((b,i)=>b.onclick=()=>{bs.forEach(x=>x.classList.remove('on'));ps.forEach(x=>x.classList.remove('on'));b.classList.add('on');ps[i].classList.add('on');});});
+/* quiz: <div class="q" data-a="1"> with .opts buttons; index of correct answer in data-a */
+document.querySelectorAll('.q').forEach(q=>{const a=+q.dataset.a;q.querySelectorAll('.opts button').forEach((b,i)=>b.onclick=()=>{if(q.classList.contains('done'))return;q.classList.add('done');b.classList.add(i===a?'ok':'bad');if(i!==a)q.querySelectorAll('.opts button')[a].classList.add('ok');});});
+/* Chart.js theme defaults */
+if(window.Chart){const cs=getComputedStyle(document.documentElement);Chart.defaults.color=cs.getPropertyValue('--ink2').trim();Chart.defaults.borderColor=cs.getPropertyValue('--line').trim();Chart.defaults.font.family=cs.getPropertyValue('--mono').trim();}
+</script>
+</body></html>

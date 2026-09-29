@@ -1,0 +1,11 @@
+title,company,city,salary_lpa,skills
+AI Engineer,NeuraLabs,Bangalore,18.0,python;pytorch;pandas;docker
+Data Scientist,InsightCo,Mumbai,14.5,python;sql;pandas;numpy
+ML Engineer,DeepNet,Bangalore,22.0,python;pytorch;aws;docker
+Data Analyst,BrightBI,Delhi,9.0,python;sql;excel
+AI Research Intern,NeuraLabs,Bangalore,Not disclosed,python;pytorch;nlp
+Backend Python Dev,CloudKart,Bangalore,16.0,python;sql;docker;aws
+NLP Engineer,TalkBot,Remote,25.0,python;pytorch;nlp;spark
+Data Engineer,FlowPipe,Mumbai,19.5,python;sql;spark;aws
+Junior ML Engineer,InsightCo,Delhi,11.0,python;pytorch;pandas
+ML Platform Engineer,DeepNet,Bangalore,28.0,python;pytorch;docker;aws;spark
