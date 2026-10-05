@@ -1,0 +1,639 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Day 03: The data stack: NumPy, Pandas, Matplotlib</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0A0E1A; --bg2:#111729; --panel:#161D33; --line:#243052; --line2:#2E3B62;
+  --ink:#EDF0FA; --ink2:#AEB7D3; --ink3:#7B86A8;
+  --amber:#FFB43A; --cyan:#4FD3F2; --rose:#FF6B8A; --lime:#9BE56B; --violet:#9D8CFF;
+  --glow:rgba(79,211,242,.18);
+  --display:'Syne',ui-sans-serif,system-ui,sans-serif;
+  --body:'Manrope',ui-sans-serif,system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#F3F5FB; --bg2:#FFFFFF; --panel:#FFFFFF; --line:#D7DDEE; --line2:#C3CBE3;
+    --ink:#0F1730; --ink2:#3B4666; --ink3:#6B7694;
+    --amber:#C97A00; --cyan:#0A8FB3; --rose:#D93A5D; --lime:#4E9A1E; --violet:#6A55E8;
+    --glow:rgba(10,143,179,.14);
+  }
+}
+:root[data-theme="light"]{
+  --bg:#F3F5FB; --bg2:#FFFFFF; --panel:#FFFFFF; --line:#D7DDEE; --line2:#C3CBE3;
+  --ink:#0F1730; --ink2:#3B4666; --ink3:#6B7694;
+  --amber:#C97A00; --cyan:#0A8FB3; --rose:#D93A5D; --lime:#4E9A1E; --violet:#6A55E8;
+  --glow:rgba(10,143,179,.14);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;padding-inline:clamp(16px,4vw,48px);padding-block:0 80px}
+a{color:var(--cyan)}
+h1,h2,h3,h4{font-family:var(--display);text-wrap:balance;line-height:1.08;margin:0}
+h2{font-size:clamp(30px,4.2vw,50px);font-weight:800;letter-spacing:-.01em}
+h3{font-size:clamp(20px,2.2vw,26px);font-weight:700}
+h4{font-size:17px;font-weight:700}
+p{max-width:68ch;margin:0}
+p+p{margin-top:12px}
+ul,ol{max-width:70ch}
+li{margin-bottom:6px}
+.wrap{max-width:1180px;margin:0 auto}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)}
+.eyebrow b{color:var(--amber);font-weight:600}
+code,.mono{font-family:var(--mono)}
+p code,li code,td code{font-size:.9em;background:var(--bg2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--cyan)}
+
+/* progress bar + nav */
+#bar{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);margin-inline:calc(-1*clamp(16px,4vw,48px));padding-inline:clamp(16px,4vw,48px)}
+#bar .wrap{display:flex;align-items:center;gap:14px;height:56px;overflow-x:auto;scrollbar-width:none}
+#bar .wrap::-webkit-scrollbar{display:none}
+#bar .brand{font-family:var(--display);font-weight:800;font-size:15px;white-space:nowrap}
+#bar .brand span{color:var(--amber)}
+#bar nav{display:flex;gap:4px;flex:1}
+#bar nav a{font-family:var(--mono);font-size:11.5px;text-decoration:none;color:var(--ink3);padding:6px 10px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+#bar nav a.on{color:var(--ink);border-color:var(--line2);background:var(--panel)}
+#bar nav a i{font-style:normal;color:var(--amber);margin-right:5px}
+#bar .clock{font-family:var(--mono);font-size:12px;color:var(--ink2);white-space:nowrap;display:flex;gap:8px;align-items:center}
+#bar .clock button{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line2);border-radius:6px;padding:4px 9px;cursor:pointer}
+#track{position:absolute;left:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--cyan),var(--amber));width:0}
+
+/* sections */
+section.s{padding-block:88px 40px;border-top:1px solid var(--line);position:relative}
+.head{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end;margin-bottom:38px}
+.time{font-family:var(--mono);font-size:12px;color:var(--ink3);text-align:right;line-height:1.5}
+.time b{display:block;font-size:22px;color:var(--amber);font-weight:600}
+.lead{font-size:clamp(18px,1.6vw,21px);color:var(--ink2);max-width:62ch;margin-top:16px}
+
+/* hero */
+#hero{padding-block:70px 60px;position:relative;overflow:hidden;margin-inline:calc(-1*clamp(16px,4vw,48px));padding-inline:clamp(16px,4vw,48px)}
+#hero canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.55;pointer-events:none}
+#hero .wrap{position:relative}
+#hero h1{font-size:clamp(40px,7vw,96px);font-weight:800;letter-spacing:-.03em;line-height:.98}
+#hero h1 em{font-style:normal;color:var(--amber)}
+#hero h1 .c{color:var(--cyan)}
+.hero-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:40px;align-items:end;margin-top:30px}
+.agenda{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
+.agenda h3{font-size:14px;font-family:var(--mono);font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-bottom:12px}
+.agenda ol{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.agenda li{display:grid;grid-template-columns:52px 1fr;gap:12px;font-size:15px;align-items:baseline;margin:0}
+.agenda li span{font-family:var(--mono);font-size:12px;color:var(--amber)}
+.agenda li a{color:var(--ink);text-decoration:none}
+.agenda li a:hover{color:var(--cyan)}
+
+/* generic blocks */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;transition:transform .25s,border-color .25s}
+.card:hover{border-color:var(--cyan)}
+.card h3{margin-bottom:8px}
+.card h4{margin-bottom:6px}
+.card p{font-size:15.5px;color:var(--ink2)}
+.card.amber{border-color:var(--amber)} .card.violet{border-color:var(--violet)} .card.lime{border-color:var(--lime)} .card.rose{border-color:var(--rose)}
+.tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid var(--line2);color:var(--ink3);margin-bottom:12px}
+.pill{display:inline-flex;gap:6px;align-items:center;font-family:var(--mono);font-size:12px;padding:5px 11px;border-radius:999px;background:var(--bg2);border:1px solid var(--line);color:var(--ink2);text-decoration:none;margin:4px 6px 4px 0}
+.pill:hover{border-color:var(--cyan);color:var(--ink)}
+.callout{border-left:4px solid var(--amber);background:var(--panel);border-radius:0 14px 14px 0;padding:16px 20px;margin-block:18px}
+.callout.cy{border-left-color:var(--cyan)} .callout.ro{border-left-color:var(--rose)} .callout.li{border-left-color:var(--lime)} .callout.vi{border-left-color:var(--violet)}
+.callout b.t{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);display:block;margin-bottom:6px}
+.callout.cy b.t{color:var(--cyan)} .callout.ro b.t{color:var(--rose)} .callout.li b.t{color:var(--lime)} .callout.vi b.t{color:var(--violet)}
+.callout p{font-size:15.5px;color:var(--ink2)}
+
+/* analogy strip */
+.analogy{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start;background:linear-gradient(135deg,color-mix(in srgb,var(--amber) 10%,var(--panel)),var(--panel));border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-block:22px}
+.analogy .em{font-size:38px;line-height:1}
+.analogy h4{margin-bottom:4px}
+.analogy p{font-size:15.5px;color:var(--ink2)}
+
+/* code */
+pre{background:var(--bg2);border:1px solid var(--line2);border-radius:12px;padding:16px 18px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.55;margin:0;color:var(--ink)}
+pre .c{color:var(--ink3)} pre .k{color:var(--violet)} pre .s{color:var(--lime)} pre .n{color:var(--amber)} pre .f{color:var(--cyan)}
+.codewrap{position:relative;margin-block:14px}
+.codewrap .lbl{position:absolute;top:8px;right:12px;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+
+/* tabs */
+.tabs{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel)}
+.tabs .tb{display:flex;gap:2px;border-bottom:1px solid var(--line);background:var(--bg2);overflow-x:auto}
+.tabs .tb button{font:600 13px var(--body);background:transparent;color:var(--ink3);border:0;padding:11px 16px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.tabs .tb button.on{color:var(--ink);border-bottom-color:var(--amber)}
+.tabs .tp{display:none;padding:18px}
+.tabs .tp.on{display:block}
+
+/* figures / charts */
+figure{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;overflow:hidden}
+figure svg{width:100%;height:auto;display:block}
+figcaption{font-family:var(--mono);font-size:11.5px;color:var(--ink3);margin-top:8px}
+.chart{position:relative;height:300px}
+.chart canvas{width:100%!important;height:100%!important}
+canvas.demo{width:100%;height:auto;background:var(--bg2);border:1px solid var(--line2);border-radius:14px;display:block;touch-action:none}
+.ctl{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.ctl label{font-family:var(--mono);font-size:12px;color:var(--ink2);display:flex;gap:8px;align-items:center}
+.ctl input[type=range]{accent-color:var(--amber)}
+.btn{font:600 14px var(--body);color:var(--bg);background:var(--amber);border:0;border-radius:9px;padding:10px 16px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line2)}
+.btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.stats{font-family:var(--mono);font-size:13px;color:var(--ink2);display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin-top:14px;font-variant-numeric:tabular-nums}
+.stats b{color:var(--cyan);font-weight:600}
+
+/* steps */
+.steps{display:grid;gap:10px;counter-reset:st}
+.steps>div{display:grid;grid-template-columns:32px 1fr;gap:12px;align-items:start;font-size:15px;color:var(--ink2)}
+.steps>div::before{counter-increment:st;content:counter(st);font-family:var(--mono);font-size:12px;color:var(--amber);border:1px solid var(--line2);border-radius:50%;width:26px;height:26px;display:grid;place-items:center}
+.steps b{color:var(--ink)}
+
+/* table */
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+th,td{padding:10px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);background:var(--bg2)}
+tr:last-child td{border-bottom:0}
+
+/* tools + career */
+.tools{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.tool{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:6px}
+.tool b{font-family:var(--display);font-size:16px}
+.tool span{font-size:14px;color:var(--ink2)}
+.tool a{font-family:var(--mono);font-size:12px;text-decoration:none}
+.career{border:1px solid var(--violet);background:linear-gradient(135deg,color-mix(in srgb,var(--violet) 12%,var(--panel)),var(--panel));border-radius:14px;padding:22px}
+.career .tag{border-color:var(--violet);color:var(--violet)}
+
+/* homework */
+.hw{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.hw .card{border-color:var(--line2)}
+.hw .lvl{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--lime);margin-bottom:6px;display:block}
+
+/* quiz */
+.quiz{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.q{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.q p{font-size:15px;margin-bottom:12px;color:var(--ink)}
+.q .opts{display:flex;gap:8px;flex-wrap:wrap}
+.q button{font:600 13px var(--body);padding:7px 12px;border-radius:8px;border:1px solid var(--line2);background:var(--bg2);color:var(--ink);cursor:pointer}
+.q button.ok{border-color:var(--lime);color:var(--lime)} .q button.bad{border-color:var(--rose);color:var(--rose)}
+.q .why{font-size:13.5px;color:var(--ink2);margin-top:10px;display:none}
+.q.done .why{display:block}
+
+/* details */
+details{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:0 18px;margin-block:10px}
+summary{cursor:pointer;padding:14px 0;font-family:var(--display);font-weight:700;font-size:16px}
+details[open] summary{border-bottom:1px solid var(--line);margin-bottom:12px}
+details>*:not(summary){padding-bottom:14px}
+
+/* footer */
+.fin{text-align:center;padding-block:60px 20px}
+.fin h2{font-size:clamp(28px,4vw,44px)}
+.fin p{margin:14px auto 0}
+
+/* reveal */
+.rv{opacity:1;transform:none;transition:opacity .6s ease,transform .6s ease}
+.js .rv:not(.in){opacity:.001;transform:translateY(18px)}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+@keyframes dash{to{stroke-dashoffset:0}}
+.flowline{stroke-dasharray:6 6;animation:flow 1.2s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-24}}
+@media (prefers-reduced-motion:reduce){.js .rv:not(.in){opacity:1;transform:none}.rv{transition:none}*{animation:none!important}}
+
+@media (max-width:980px){
+  .grid4,.tools,.hw{grid-template-columns:1fr 1fr}
+  .grid3,.quiz{grid-template-columns:1fr 1fr}
+}
+@media (max-width:720px){
+  .hero-grid,.grid2,.grid3,.grid4,.tools,.hw,.quiz,.analogy{grid-template-columns:1fr}
+  .head{grid-template-columns:1fr}.time{text-align:left}
+}
+</style><style>
+/* Day 03 extras */
+.bc{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.bc select{font:600 13px var(--mono);background:var(--bg2);color:var(--ink);border:1px solid var(--line2);border-radius:8px;padding:6px 10px}
+.bc .msg{font-family:var(--mono);font-size:12.5px;color:var(--ink2);margin-top:10px;min-height:64px;line-height:1.6}
+.bc .msg b{color:var(--cyan)} .bc .msg .err{color:var(--rose)}
+.stack{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.stack .l{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px}
+.stack .l b{font-family:var(--display);font-size:17px;display:block;margin-bottom:4px}
+.stack .l span{font-size:14px;color:var(--ink2)}
+.stack .l i{display:block;font-style:normal;font-family:var(--mono);font-size:11px;color:var(--amber);margin-top:8px}
+.gitviz{display:grid;grid-template-columns:1.2fr 1fr;gap:18px;align-items:start}
+.gitviz .cmds{background:var(--bg2);border:1px solid var(--line2);border-radius:12px;padding:12px 14px;font-family:var(--mono);font-size:13px;line-height:1.75}
+.gitviz .cmds div{padding:3px 8px;border-radius:6px;color:var(--ink2);cursor:pointer}
+.gitviz .cmds div.on{background:color-mix(in srgb,var(--amber) 20%,transparent);color:var(--ink)}
+.gitviz .cmds div.done{color:var(--ink)}
+.gitviz .cmds .c{color:var(--ink3)}
+@media (max-width:980px){.stack{grid-template-columns:1fr}}
+@media (max-width:720px){.bc,.gitviz{grid-template-columns:1fr}}
+</style>
+</head><body>
+
+<div id="bar"><div class="wrap">
+  <div class="brand">AI <span>&amp;</span> ML Engineering · Day 03</div>
+  <nav id="nav"><!-- filled by JS from section[data-nav] --></nav>
+  <div class="clock"><span id="clk">00:00</span><button id="clkbtn" type="button">Start 60 min</button></div>
+</div><div id="track"></div></div>
+
+
+
+<!-- ============ HERO ============ -->
+<header id="hero"><canvas id="bgc"></canvas><div class="wrap">
+  <div class="eyebrow"><b>Day 03</b> · Phase 1 · Python for AI · 60 minutes</div>
+  <h1 style="margin-top:18px">The <em>data</em> stack:<br><span class="c">NumPy, Pandas, Matplotlib.</span></h1>
+  <div class="hero-grid">
+    <p class="lead">On Day 01 you wrote loops to aggregate a CSV. Today you delete the loops. NumPy turns a million numbers into one expression that runs in C. Pandas turns "load, clean, group, merge" into one readable line each. Matplotlib and Seaborn turn the result into a picture you can put in a README. And Git turns all of it into a portfolio a recruiter can open. By the end you will have explored the Titanic dataset end to end and pushed the notebook to GitHub.</p>
+    <div class="agenda"><h3>Today's route</h3><ol>
+      <li><span>00–05</span><a href="#hook">Hook: every dataset is a table</a></li>
+      <li><span>05–22</span><a href="#concept">Concept: arrays, frames, figures</a></li>
+      <li><span>22–32</span><a href="#deeper">Deeper: broadcasting, groupby, merge</a></li>
+      <li><span>32–45</span><a href="#code">Code: Titanic end to end + git push</a></li>
+      <li><span>45–50</span><a href="#realworld">Real world &amp; tools</a></li>
+      <li><span>50–53</span><a href="#career">Career corner</a></li>
+      <li><span>53–56</span><a href="#quiz">Quiz</a></li>
+      <li><span>56–58</span><a href="#homework">Homework</a></li>
+      <li><span>58–60</span><a href="#next">Next</a></li>
+    </ol></div>
+  </div>
+</div></header>
+
+<!-- ============ HOOK ============ -->
+<section class="s" id="hook" data-nav="Hook"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">01 · Hook</div><h2>Every dataset in AI is secretly a table of numbers</h2><p class="lead">Open on the projector: <a href="https://www.kaggle.com/competitions/titanic/data" target="_blank" rel="noopener">Kaggle: Titanic dataset</a>. 891 passengers, 12 columns, one question: who survived? This is the "hello world" of data science, and 1.5 million people have submitted an answer. Today your notebook becomes one of them.</p></div><div class="time"><b>5</b>min</div></div>
+  <div class="grid2 rv">
+    <div class="card amber"><span class="tag">The story</span><h3>Why an image is a table too</h3><p>A 28×28 grayscale digit is a NumPy array of shape <code>(28, 28)</code>: 784 numbers between 0 and 255. A colour photo is <code>(height, width, 3)</code>. A batch of 64 photos is <code>(64, 224, 224, 3)</code>. A sentence, after tokenising, is a row of integers. A month of UPI transactions is a DataFrame with a million rows. Everything a model ever sees is an <b>n-dimensional array</b>, and NumPy is the language of arrays. PyTorch tensors, TensorFlow tensors, JAX arrays: all NumPy's children, with the same indexing, the same broadcasting rules, the same <code>.shape</code>.</p><p style="margin-top:10px">The order today mirrors a real job: load with Pandas, compute with NumPy, look with Matplotlib, share with Git.</p></div>
+    <div class="card"><span class="tag">Try on the projector</span><h3>Three tabs to open</h3>
+      <p><a href="https://numpy.org/doc/stable/user/absolute_beginners.html" target="_blank" rel="noopener">NumPy: the absolute beginner's guide</a>: scroll to the broadcasting picture. We will animate that exact diagram below.</p>
+      <p><a href="https://pandas.pydata.org/docs/user_guide/10min.html" target="_blank" rel="noopener">10 minutes to pandas</a>: the official tour. Everything in today's Code section is in there.</p>
+      <p><a href="https://github.com/trending/jupyter-notebook" target="_blank" rel="noopener">GitHub trending: Jupyter notebooks</a>: this is where your notebook lives by the end of the hour.</p>
+    </div>
+  </div>
+  <div class="callout cy rv"><b class="t">Framing for today</b><p>Day 01: loops over lists. Day 03: one expression over an array. The gain is not just speed (10–100× because the loop runs in C) but <b>thinking in whole columns</b>: "fare divided by family size" is one line, not a for-loop, and the line reads like the English sentence. That habit is what separates a data analyst from someone who knows Python.</p></div>
+</div></section>
+
+<!-- ============ CONCEPT ============ -->
+<section class="s" id="concept" data-nav="Concept"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">02 · Concept</div><h2>Arrays, frames and figures</h2><p class="lead">Three libraries, three mental models: NumPy is a grid of numbers with a shape; Pandas is a spreadsheet with a brain; Matplotlib is a canvas with axes.</p></div><div class="time"><b>17</b>min</div></div>
+
+  <div class="stack rv">
+    <div class="l"><b>NumPy · ndarray</b><span>A block of numbers of one dtype with a <code>.shape</code>. Operations apply to the whole block at once (vectorisation). Every ML library speaks this.</span><i>x = np.array([[1,2,3],[4,5,6]])  # shape (2,3)</i></div>
+    <div class="l"><b>Pandas · DataFrame</b><span>Labelled columns of possibly different dtypes, with an index. Built on NumPy. Load, clean, filter, group, merge, pivot.</span><i>df = pd.read_csv("titanic.csv")  # 891 × 15</i></div>
+    <div class="l"><b>Matplotlib / Seaborn</b><span>Figure → Axes → plot calls. Seaborn is a layer of "statistical plots from a DataFrame in one call" on top.</span><i>sns.barplot(df, x="class", y="survived")</i></div>
+  </div>
+
+  <h3 class="rv" style="margin-top:34px">1. NumPy: think in shapes, not loops</h3>
+  <div class="analogy rv"><div class="em">🍬</div><div><h4>The sweet-box analogy</h4><p>A box of 12 laddoos in 3 rows of 4 is an array of shape <code>(3, 4)</code>. "Add 5 g of sugar to every laddoo" is <code>box + 5</code>: one instruction, all 12 laddoos, no loop; the scalar is <em>broadcast</em>. "Add a different topping to each of the 4 columns" is <code>box + toppings</code> where <code>toppings</code> has shape <code>(4,)</code>: NumPy stretches the 4 toppings across the 3 rows. "Give each of the 3 rows its own syrup" needs shape <code>(3, 1)</code>, a column, so the stretch happens sideways. Try to add 3 syrups written as a row of shape <code>(3,)</code> to a (3, 4) box and NumPy refuses: the trailing dimensions (4 vs 3) do not match. That refusal is the most common NumPy error you will meet, and the visual below makes the rule visible.</p></div></div>
+
+  <figure class="rv">
+    <div class="bc">
+      <div>
+        <div class="ctl"><label>A shape: <b class="mono">(3, 4)</b></label><label>B shape <select id="bcB"><option value="scalar">()   scalar</option><option value="4" selected>(4,)  one row</option><option value="31">(3, 1)  one column</option><option value="14">(1, 4)</option><option value="34">(3, 4)  same</option><option value="3">(3,)  ✗ mismatch</option><option value="2">(2, 4)  ✗ mismatch</option></select></label><button class="btn" id="bcPlay" type="button">Broadcast ▶</button></div>
+        <div class="msg" id="bcMsg"></div>
+      </div>
+      <svg id="bcsvg" viewBox="0 0 560 250" role="img" aria-label="Broadcasting animation"></svg>
+    </div>
+    <figcaption>Interactive: choose the shape of B and click Broadcast. B's cells stretch (copied virtually, no memory used) to match A, then <code>A + B</code> is computed cell by cell. The rule: align shapes from the <em>right</em>; each pair of dimensions must be equal or one of them must be 1. Rows of shape (3,) cannot stretch onto a (3, 4) block, but a column (3, 1) can.</figcaption>
+  </figure>
+
+  <div class="callout ro rv"><b class="t">Common confusion</b><p>Array <em>views</em> versus <em>copies</em>. Slicing a NumPy array (<code>b = a[:, 0]</code>) returns a <b>view</b>: same memory, so writing into <code>b</code> changes <code>a</code>. This is Day 01's sticker problem again, at the level of memory buffers. Boolean/fancy indexing (<code>a[a &gt; 0]</code>, <code>a[[0, 2]]</code>) returns a copy. When in doubt: <code>.copy()</code>. Pandas has the same issue, which is what the <code>SettingWithCopyWarning</code> is about; pandas 3.0 solves it with Copy-on-Write, so <code>df2 = df[df.age &gt; 30]</code> is now always safe to modify.</p></div>
+
+  <h3 class="rv" style="margin-top:34px">2. Pandas: split, apply, combine</h3>
+  <div class="analogy rv"><div class="em">🏏</div><div><h4>The IPL points-table analogy</h4><p>The scorer has one long log of every match: (team, runs, result). To make the points table she <b>splits</b> the log by team, <b>applies</b> "count wins, sum runs" to each pile, and <b>combines</b> the piles into one table with one row per team. That is <code>df.groupby("team").agg(wins=("won", "sum"), runs=("runs", "sum"))</code>. Every dashboard, every "average salary by city", every "churn rate by plan" is this one move. Watch it happen below.</p></div></div>
+
+  <figure class="rv">
+    <canvas class="demo" id="sac" width="900" height="320"></canvas>
+    <div class="ctl"><label>groupby <select id="sacKey"><option value="class">class</option><option value="sex">sex</option></select></label><label>agg <select id="sacAgg"><option value="mean">survived.mean()</option><option value="count">size()</option><option value="fare">fare.mean()</option></select></label><button class="btn" id="sacPlay" type="button">Run groupby ▶</button><button class="btn ghost" id="sacReset" type="button">Reset</button></div>
+    <figcaption>Animated: twelve Titanic-like rows. <em>Split</em>: each row slides into the pile for its key. <em>Apply</em>: the aggregation runs on each pile. <em>Combine</em>: one row per group comes back, indexed by the key. Change the key and the aggregation and run again. This is exactly what <code>df.groupby(key)[col].mean()</code> does on 891 rows, or 891 million.</figcaption>
+  </figure>
+
+  <div class="grid2 rv" style="margin-top:20px">
+    <div class="chart"><canvas id="titanicChart"></canvas></div>
+    <div><p>The result of one line, <code>df.groupby(["class", "sex"])["survived"].mean()</code>, on the real data: 96.8% of first-class women survived; 13.5% of third-class men did. That single chart is the whole story of "women and children first" plus the location of the lifeboats. It took one <code>groupby</code> and one <code>sns.barplot</code>. On Day 06 a logistic-regression model will rediscover these same two features on its own.</p>
+      <div class="callout li" style="margin-top:14px"><b class="t">Key idea</b><p>Exploratory data analysis (EDA) is asking "group by what?" and "plot what against what?" until the story appears. The libraries make each question one line, so you can ask fifty questions in an hour.</p></div>
+    </div>
+  </div>
+
+  <h3 class="rv" style="margin-top:34px">3. Matplotlib: figure, axes, then plot</h3>
+  <p class="rv" style="margin-top:8px">The two lines to memorise: <code>fig, ax = plt.subplots(figsize=(8, 4))</code> then <code>ax.plot(x, y)</code> (or <code>ax.hist</code>, <code>ax.scatter</code>, <code>ax.bar</code>). Everything else is labelling: <code>ax.set(title=..., xlabel=..., ylabel=...)</code>. Seaborn wraps this so that <code>sns.histplot(df, x="age", hue="survived")</code> gives you a coloured, legended histogram in one call. Pandas even has a shortcut: <code>df["age"].hist()</code>. Use Seaborn for exploration, Matplotlib when you need control, and always label the axes: an unlabelled chart in a portfolio is a red flag to a hiring manager.</p>
+
+  <div class="callout rv"><b class="t">Interview answer</b><p>"Why NumPy instead of Python lists?" — NumPy arrays are contiguous blocks of one dtype, so operations run as compiled C loops over raw memory instead of interpreted Python loops over boxed objects. That gives 10–100× speed, far less memory, and broadcasting so I can write whole-array expressions instead of loops.</p></div>
+</div></section>
+
+<!-- ============ DEEPER ============ -->
+<section class="s" id="deeper" data-nav="Deeper"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">03 · Deeper</div><h2>The rules under the hood</h2><p class="lead">Broadcasting formally, the four kinds of indexing, missing values, merges, and what Git is actually storing.</p></div><div class="time"><b>10</b>min</div></div>
+
+  <h3 class="rv">Broadcasting in one sentence</h3>
+  <p class="rv" style="margin-top:8px">Two shapes are compatible if, comparing dimensions from the <em>right</em>, each pair is equal or one of them is 1; missing leading dimensions count as 1; the result takes the larger size in each position. So <span class="mono">(64, 224, 224, 3) − (3,)</span> works: the 3-channel mean is subtracted from every pixel of every image, which is exactly how you normalise an image batch. <span class="mono">(3, 4) + (3,)</span> fails because 4 ≠ 3; reshape to <span class="mono">(3, 1)</span> with <code>b[:, None]</code> and it works.</p>
+
+  <div class="tbl rv" style="margin-top:18px"><table>
+    <thead><tr><th>Indexing</th><th>NumPy</th><th>Pandas</th><th>Returns</th></tr></thead>
+    <tbody>
+      <tr><td>By position</td><td><code>a[0, 2]</code>, <code>a[:, 1]</code></td><td><code>df.iloc[0, 2]</code></td><td>NumPy: view · Pandas: value/Series</td></tr>
+      <tr><td>By label</td><td>—</td><td><code>df.loc[5, "fare"]</code>, <code>df["fare"]</code></td><td>Series or scalar</td></tr>
+      <tr><td>Boolean mask</td><td><code>a[a &gt; 30]</code></td><td><code>df[df.age &gt; 30]</code>, <code>df.query("age &gt; 30")</code></td><td>Copy</td></tr>
+      <tr><td>Fancy (list of indices)</td><td><code>a[[0, 5, 9]]</code></td><td><code>df.iloc[[0, 5, 9]]</code></td><td>Copy</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 class="rv" style="margin-top:26px">Missing values: decide, don't ignore</h3>
+  <p class="rv" style="margin-top:8px">Titanic's <code>age</code> is missing for 177 of 891 rows and <code>deck</code> for 688. <code>df.isna().sum()</code> shows it. Three honest options: <b>drop</b> the column when mostly empty (<code>deck</code>); <b>fill</b> with a robust statistic when a minority is missing (<code>age</code> with the median, ideally the median <em>per group</em>: <code>df.groupby("pclass")["age"].transform("median")</code>); or <b>flag</b> it (<code>df["age_missing"] = df.age.isna()</code>) so the model can learn that missingness itself carries signal. Never fill with 0 silently: a 0-year-old is a real value with a real meaning.</p>
+
+  <h3 class="rv" style="margin-top:26px">Merge: joining two tables on a key</h3>
+  <p class="rv" style="margin-top:8px"><code>pd.merge(orders, customers, on="customer_id", how="left")</code> keeps every order and attaches the customer's columns where the id matches, <code>NaN</code> where it does not. <code>how="inner"</code> keeps only matches; <code>"outer"</code> keeps everything from both. This is SQL's JOIN, and "explain left vs inner join" is asked in nearly every data interview. Always check the row count before and after a merge; an accidental many-to-many join silently multiplies rows.</p>
+
+  <h3 class="rv" style="margin-top:26px">Git: three areas and four commands</h3>
+  <figure class="rv" style="margin-top:12px">
+    <div class="gitviz">
+      <div><svg id="gitsvg" viewBox="0 0 560 230" role="img" aria-label="Git working directory, staging area, local repo, GitHub"></svg></div>
+      <div>
+        <div class="cmds" id="gitcmds">
+          <div data-i="0">git init                 <span class="c"># once per project</span></div>
+          <div data-i="1">git add Day_03.ipynb     <span class="c"># stage: choose what goes in</span></div>
+          <div data-i="2">git commit -m "EDA on Titanic"</div>
+          <div data-i="3">git remote add origin https://github.com/&lt;you&gt;/ai-ml-45days.git</div>
+          <div data-i="4">git push -u origin main  <span class="c"># upload to GitHub</span></div>
+        </div>
+        <div class="ctl"><button class="btn" id="gitNext" type="button">Run next ▶</button><button class="btn ghost" id="gitReset" type="button">Reset</button></div>
+      </div>
+    </div>
+    <figcaption>Interactive: click through the four commands. A file moves from your working directory to the staging area (<code>add</code>), becomes a permanent snapshot in the local repo (<code>commit</code>), and is uploaded to GitHub (<code>push</code>). A commit is a snapshot plus a message plus a pointer to the previous commit, which is why history is a chain. <code>git status</code> tells you which area every file is in; run it whenever confused.</figcaption>
+  </figure>
+
+  <div class="callout rv"><b class="t">How to say this in an interview</b><p>"My EDA workflow is: load with Pandas, check <code>shape</code>, <code>dtypes</code> and <code>isna().sum()</code>, decide per column whether to drop, fill or flag missing values, then ask questions with <code>groupby</code> and plot the answers with Seaborn. I keep numerical heavy lifting in NumPy because it is vectorised, and I version every notebook in Git so results are reproducible."</p></div>
+</div></section>
+
+<!-- ============ CODE ============ -->
+<section class="s" id="code" data-nav="Code"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">04 · Code</div><h2>Build: Titanic end to end, then push it</h2><p class="lead">Load, inspect, clean, ask three questions, plot, save, push. <b>Full runnable version: open <code>Day_03_NumPy_Pandas_Viz.ipynb</code> in Google Colab.</b></p></div><div class="time"><b>13</b>min</div></div>
+
+  <h3 class="rv">Snippet 1 — NumPy in 12 lines: Day 01's loop becomes one expression</h3>
+  <div class="codewrap rv"><span class="lbl">python</span><pre><span class="k">import</span> numpy <span class="k">as</span> np
+fares = np.array([<span class="n">7.25</span>, <span class="n">71.28</span>, <span class="n">7.92</span>, <span class="n">53.1</span>, <span class="n">8.05</span>])         <span class="c"># shape (5,), dtype float64</span>
+family = np.array([<span class="n">1</span>, <span class="n">1</span>, <span class="n">0</span>, <span class="n">1</span>, <span class="n">0</span>]) + <span class="n">1</span>                       <span class="c"># sibsp+parch+1 ; scalar broadcast</span>
+per_head = fares / family                                  <span class="c"># element-wise, no loop</span>
+<span class="f">print</span>(per_head.mean(), per_head.max(), per_head.argmax())  <span class="c"># reductions</span>
+<span class="f">print</span>(fares[fares &gt; <span class="n">10</span>])                                    <span class="c"># boolean mask → copy</span>
+<span class="f">print</span>((fares &gt; <span class="n">10</span>).mean())                                  <span class="c"># fraction that paid over 10 : True counts as 1</span>
+
+X = np.random.default_rng(<span class="n">0</span>).normal(size=(<span class="n">891</span>, <span class="n">4</span>))         <span class="c"># 891 rows × 4 features</span>
+X_std = (X - X.mean(axis=<span class="n">0</span>)) / X.std(axis=<span class="n">0</span>)                <span class="c"># (891,4) − (4,) broadcasts: standardise columns</span>
+<span class="f">print</span>(X_std.shape, X_std.mean(axis=<span class="n">0</span>).round(<span class="n">6</span>))            <span class="c"># axis=0 → down the rows, one value per column</span></pre></div>
+
+  <h3 class="rv" style="margin-top:26px">Snippet 2 — load, inspect, clean</h3>
+  <div class="codewrap rv"><span class="lbl">python</span><pre><span class="k">import</span> pandas <span class="k">as</span> pd
+url = <span class="s">"https://raw.githubusercontent.com/mwaskom/seaborn-data/master/titanic.csv"</span>
+df = pd.read_csv(url)
+df.shape, df.dtypes, df.head(), df.describe()             <span class="c"># the four looks you always take first</span>
+df.isna().sum()                                            <span class="c"># age 177, deck 688, embarked 2</span>
+
+df = df.drop(columns=[<span class="s">"deck"</span>])                              <span class="c"># 77% missing → drop</span>
+df[<span class="s">"age"</span>] = df[<span class="s">"age"</span>].fillna(df.groupby(<span class="s">"pclass"</span>)[<span class="s">"age"</span>].transform(<span class="s">"median"</span>))  <span class="c"># fill per class</span>
+df[<span class="s">"embarked"</span>] = df[<span class="s">"embarked"</span>].fillna(df[<span class="s">"embarked"</span>].mode()[<span class="n">0</span>])
+df[<span class="s">"family"</span>] = df[<span class="s">"sibsp"</span>] + df[<span class="s">"parch"</span>] + <span class="n">1</span>                <span class="c"># new column = whole-column arithmetic</span>
+df[<span class="s">"fare_per_head"</span>] = df[<span class="s">"fare"</span>] / df[<span class="s">"family"</span>]
+<span class="k">assert</span> df.isna().sum().sum() == <span class="n">0</span>                            <span class="c"># prove it's clean</span></pre></div>
+
+  <h3 class="rv" style="margin-top:26px">Snippet 3 — the same question three ways</h3>
+  <div class="tabs rv">
+    <div class="tb"><button class="on" type="button">groupby</button><button type="button">pivot_table</button><button type="button">Day 01 pure Python</button></div>
+    <div class="tp on"><div class="codewrap"><span class="lbl">python · survival rate by class and sex</span><pre>rate = df.groupby([<span class="s">"class"</span>, <span class="s">"sex"</span>], observed=<span class="k">True</span>)[<span class="s">"survived"</span>].mean()
+<span class="f">print</span>(rate.round(<span class="n">3</span>))
+<span class="c"># class   sex
+# First   female    0.968
+#         male      0.369
+# Second  female    0.921
+#         male      0.157
+# Third   female    0.500
+#         male      0.135</span>
+summary = df.groupby(<span class="s">"class"</span>, observed=<span class="k">True</span>).agg(n=(<span class="s">"survived"</span>, <span class="s">"size"</span>), rate=(<span class="s">"survived"</span>, <span class="s">"mean"</span>), fare=(<span class="s">"fare"</span>, <span class="s">"median"</span>))</pre></div></div>
+    <div class="tp"><div class="codewrap"><span class="lbl">python · a 2-D table in one call</span><pre>pd.pivot_table(df, values=<span class="s">"survived"</span>, index=<span class="s">"class"</span>, columns=<span class="s">"sex"</span>, aggfunc=<span class="s">"mean"</span>, observed=<span class="k">True</span>).round(<span class="n">3</span>)
+<span class="c"># sex     female   male
+# class
+# First    0.968  0.369
+# Second   0.921  0.157
+# Third    0.500  0.135</span></pre></div></div>
+    <div class="tp"><div class="codewrap"><span class="lbl">python · what pandas replaced</span><pre>totals, counts = {}, {}
+<span class="k">for</span> r <span class="k">in</span> rows:                                   <span class="c"># rows = list of dicts from csv.DictReader</span>
+    key = (r[<span class="s">"class"</span>], r[<span class="s">"sex"</span>])
+    totals[key] = totals.get(key, <span class="n">0</span>) + <span class="f">int</span>(r[<span class="s">"survived"</span>])
+    counts[key] = counts.get(key, <span class="n">0</span>) + <span class="n">1</span>
+rate = {k: totals[k] / counts[k] <span class="k">for</span> k <span class="k">in</span> totals}
+<span class="c"># 6 lines, no labels, no sorting, no NaN handling. Same numbers.</span></pre></div></div>
+  </div>
+
+  <h3 class="rv" style="margin-top:26px">Snippet 4 — plot it, save it, push it</h3>
+  <div class="codewrap rv"><span class="lbl">python</span><pre><span class="k">import</span> matplotlib.pyplot <span class="k">as</span> plt, seaborn <span class="k">as</span> sns
+fig, axes = plt.subplots(<span class="n">1</span>, <span class="n">2</span>, figsize=(<span class="n">11</span>, <span class="n">4</span>))
+sns.barplot(df, x=<span class="s">"class"</span>, y=<span class="s">"survived"</span>, hue=<span class="s">"sex"</span>, ax=axes[<span class="n">0</span>])
+axes[<span class="n">0</span>].set(title=<span class="s">"Survival rate by class and sex"</span>, ylabel=<span class="s">"P(survived)"</span>)
+sns.histplot(df, x=<span class="s">"age"</span>, hue=<span class="s">"survived"</span>, bins=<span class="n">30</span>, ax=axes[<span class="n">1</span>], element=<span class="s">"step"</span>)
+axes[<span class="n">1</span>].set(title=<span class="s">"Age distribution"</span>)
+fig.tight_layout(); fig.savefig(<span class="s">"titanic_eda.png"</span>, dpi=<span class="n">150</span>)   <span class="c"># goes in your README</span>
+df.to_csv(<span class="s">"titanic_clean.csv"</span>, index=<span class="k">False</span>)</pre></div>
+  <div class="codewrap rv"><span class="lbl">bash · in Colab prefix each with ! · on your laptop, plain</span><pre>git clone https://github.com/&lt;you&gt;/ai-ml-45days.git &amp;&amp; cd ai-ml-45days
+cp /content/Day_03_NumPy_Pandas_Viz.ipynb .            <span class="c"># or download from Colab: File → Download .ipynb</span>
+git add Day_03_NumPy_Pandas_Viz.ipynb titanic_eda.png
+git commit -m <span class="s">"Day 03: Titanic EDA with pandas + seaborn"</span>
+git push</pre></div>
+  <p class="rv" style="margin-top:10px">Easiest path from Colab: <b>File → Save a copy in GitHub</b> commits the notebook straight into your repo with a message, no terminal needed. Do that today; learn the four terminal commands this week.</p>
+
+  <div class="callout cy rv"><b class="t">Key idea</b><p>You now have the full analyst loop: <b>load → inspect → clean → group → plot → save → push</b>. Every Kaggle notebook, every dashboard, every "quick analysis for the product team" is this loop with different columns.</p></div>
+</div></section>
+
+<!-- ============ REAL WORLD ============ -->
+<section class="s" id="realworld" data-nav="Real world"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">05 · Real world &amp; tools</div><h2>Where to practise, and what the pros use</h2><p class="lead">Direct links; every one opens in a browser.</p></div><div class="time"><b>5</b>min</div></div>
+  <div class="grid3 rv">
+    <div class="card"><span class="tag">Compete</span><h3>Kaggle: Titanic</h3><p>Submit a prediction and get a public leaderboard score. Your Day 06 logistic regression will land around 0.77; that is a real number for your resume.</p><a href="https://www.kaggle.com/competitions/titanic" target="_blank" rel="noopener">kaggle.com/competitions/titanic ↗</a></div>
+    <div class="card"><span class="tag">Practise</span><h3>Kaggle Learn: Pandas</h3><p>Six short lessons (indexing, groupby, missing values, merging) with graded exercises in the browser. Certificate at the end.</p><a href="https://www.kaggle.com/learn/pandas" target="_blank" rel="noopener">kaggle.com/learn/pandas ↗</a></div>
+    <div class="card"><span class="tag">Visualise</span><h3>Seaborn example gallery</h3><p>Every plot type with the code that made it. Find the picture you want, copy the six lines.</p><a href="https://seaborn.pydata.org/examples/index.html" target="_blank" rel="noopener">seaborn.pydata.org/examples ↗</a></div>
+    <div class="card"><span class="tag">Reference</span><h3>NumPy broadcasting docs</h3><p>The official rule with the diagrams we animated. Read once, remember forever.</p><a href="https://numpy.org/doc/stable/user/basics.broadcasting.html" target="_blank" rel="noopener">numpy.org/doc ↗</a></div>
+    <div class="card"><span class="tag">Data</span><h3>Indian Startup Funding (Kaggle)</h3><p>Real, messy Indian data: inconsistent city names, amounts as strings with commas. Perfect cleaning practice for the Stretch homework.</p><a href="https://www.kaggle.com/datasets/sudalairajkumar/indian-startup-funding" target="_blank" rel="noopener">kaggle.com/datasets ↗</a></div>
+    <div class="card"><span class="tag">Git</span><h3>GitHub Skills: Introduction to GitHub</h3><p>A guided one-hour course that runs inside a real repo: branch, commit, pull request, merge.</p><a href="https://github.com/skills/introduction-to-github" target="_blank" rel="noopener">github.com/skills ↗</a></div>
+  </div>
+  <h3 class="rv" style="margin-top:34px">Modern tools for the data stack</h3>
+  <div class="tools rv" style="margin-top:14px">
+    <div class="tool"><b>Google Colab</b><span>"File → Save a copy in GitHub" commits your notebook with one click.</span><a href="https://colab.research.google.com/" target="_blank" rel="noopener">colab.research.google.com</a></div>
+    <div class="tool"><b>Polars</b><span>A Rust-powered DataFrame library, often 5–20× faster than pandas on big files; same ideas, similar API.</span><a href="https://pola.rs/" target="_blank" rel="noopener">pola.rs</a></div>
+    <div class="tool"><b>DuckDB</b><span>Run SQL directly on a CSV or a pandas DataFrame: <code>duckdb.sql("SELECT ... FROM df")</code>.</span><a href="https://duckdb.org/" target="_blank" rel="noopener">duckdb.org</a></div>
+    <div class="tool"><b>Plotly</b><span>Interactive charts (hover, zoom) for dashboards; <code>px.scatter(df, x, y, color)</code>.</span><a href="https://plotly.com/python/" target="_blank" rel="noopener">plotly.com/python</a></div>
+    <div class="tool"><b>GitHub Desktop</b><span>Point-and-click add / commit / push if the terminal is scary today.</span><a href="https://github.com/apps/desktop" target="_blank" rel="noopener">github.com/apps/desktop</a></div>
+    <div class="tool"><b>Claude / ChatGPT</b><span>Paste <code>df.head()</code> and ask "what cleaning steps would you do?" Then verify each with <code>df.isna().sum()</code>.</span><a href="https://claude.ai/" target="_blank" rel="noopener">claude.ai</a></div>
+  </div>
+</div></section>
+
+<!-- ============ CAREER ============ -->
+<section class="s" id="career" data-nav="Career"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">06 · Career corner</div><h2>Data analyst is the door; ML engineer is the room behind it</h2></div><div class="time"><b>3</b>min</div></div>
+  <div class="career rv">
+    <span class="tag">In job descriptions</span>
+    <p><b>Data Analyst</b>, <b>Business Analyst (Python/SQL)</b>, <b>Junior Data Scientist</b>, <b>ML Engineer</b>. The line is "Proficient in NumPy, Pandas, Matplotlib/Seaborn; comfortable with Git". Data-analyst openings outnumber ML-engineer openings roughly three to one for freshers, and the skills are a strict subset: today's loop is the entire analyst interview, and every ML engineer spends half their day doing it before any model is trained. Getting an analyst role first and moving to ML inside the company is the most common path in Indian tech, and it is a good one.</p>
+    <h4 style="margin-top:18px">Interview questions you can now answer</h4>
+    <ul style="margin-top:8px">
+      <li><b>"How would you handle missing values in a column?"</b> — First measure how much is missing and whether it is random. Drop the column if mostly empty, fill with median (per group if there is structure) if a minority, and add a missing-flag column when missingness may carry signal.</li>
+      <li><b>"Difference between <code>loc</code> and <code>iloc</code>?"</b> — <code>loc</code> selects by label (index values, column names, boolean masks); <code>iloc</code> selects by integer position. <code>df.loc[df.age &gt; 30, "fare"]</code> vs <code>df.iloc[0:5, 2]</code>.</li>
+      <li><b>"What is broadcasting?"</b> — NumPy's rule for combining arrays of different shapes: align from the right, dimensions must be equal or 1, the size-1 dimension is stretched virtually. Lets me subtract a per-column mean from a whole matrix without a loop.</li>
+    </ul>
+    <h4 style="margin-top:18px">Job-hunt action for today</h4>
+    <p>Push today's notebook and <code>titanic_eda.png</code> to your <code>ai-ml-45days</code> repo and add a 5-line README: what the data is, one chart, one sentence of insight ("first-class women survived at 97%, third-class men at 14%"). Then add <b>Pandas, NumPy, Data Analysis, Git</b> to LinkedIn skills. A recruiter searching "pandas" now finds you, and the link they click shows a real chart with a real finding.</p>
+  </div>
+</div></section>
+
+<!-- ============ QUIZ ============ -->
+<section class="s" id="quiz" data-nav="Quiz"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">07 · Quiz</div><h2>Three quick checks</h2></div><div class="time"><b>3</b>min</div></div>
+  <div class="quiz rv">
+    <div class="q" data-a="1"><p><code>A.shape == (3, 4)</code>, <code>B.shape == (3,)</code>. What does <code>A + B</code> do?</p><div class="opts"><button type="button">Adds B to each row</button><button type="button">Raises a ValueError</button><button type="button">Adds B to each column</button></div><div class="why">Align from the right: 4 vs 3, neither is 1, so the shapes are incompatible. Reshape B to (3, 1) with <code>B[:, None]</code> to add it down the columns.</div></div>
+    <div class="q" data-a="2"><p><code>df.groupby("class")["fare"].mean()</code> returns…</p><div class="opts"><button type="button">A single number</button><button type="button">A DataFrame with all columns averaged</button><button type="button">A Series indexed by class with one mean fare per class</button></div><div class="why">Split by class, apply mean to the fare column of each group, combine into one Series whose index is the group key.</div></div>
+    <div class="q" data-a="0"><p>After <code>git add file.ipynb</code> but before <code>git commit</code>, the file is in the…</p><div class="opts"><button type="button">Staging area</button><button type="button">Local repository history</button><button type="button">Remote (GitHub)</button></div><div class="why"><code>add</code> stages, <code>commit</code> snapshots into local history, <code>push</code> uploads to the remote. <code>git status</code> shows which stage each file is at.</div></div>
+  </div>
+</div></section>
+
+<!-- ============ HOMEWORK ============ -->
+<section class="s" id="homework" data-nav="Homework"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">08 · Homework</div><h2>20–40 minutes, tonight</h2></div><div class="time"><b>2</b>min</div></div>
+  <div class="hw rv">
+    <div class="card"><span class="lvl">Easy · 10 min</span><h3>Three more Titanic questions</h3><p>Using <code>groupby</code> only: (1) survival rate by <code>embark_town</code>, (2) median fare by <code>class</code> and <code>alone</code>, (3) the age histogram of survivors vs non-survivors with <code>sns.histplot(hue=...)</code>. One plot, labelled axes, saved as PNG.</p></div>
+    <div class="card"><span class="lvl">Medium · 15 min · daily life</span><h3>Your own data</h3><p>Export your Swiggy/Zomato order history, or your UPI statement, or your phone's screen-time as a CSV (or type 30 rows by hand). Load it, clean the amount column, and answer: spend per weekday, top 5 merchants, and a line plot of monthly total. Commit it to your repo (remove personal identifiers first).</p></div>
+    <div class="card"><span class="lvl">Stretch · 15 min</span><h3>Indian startup funding cleanup</h3><p>Download the Kaggle Indian startup funding dataset. The amounts are strings like <code>"1,50,00,000"</code> and cities are spelled five ways. Clean both with <code>str.replace</code>, <code>pd.to_numeric(errors="coerce")</code> and a mapping dict; then plot total funding by year and top 10 cities. This is exactly the messiness of real work.</p></div>
+  </div>
+</div></section>
+
+<!-- ============ NEXT ============ -->
+<section class="s" id="next" data-nav="Next"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">09 · Next</div><h2>Tomorrow</h2></div><div class="time"><b>2</b>min</div></div>
+  <div class="fin rv">
+    <h2>Day 04 · How a machine learns a line</h2>
+    <p>The Python pre-requisite is done. Tomorrow the machine starts learning: a cost function, a slope that tells us which way is downhill, and gradient descent walking toward the best line. You will implement it from scratch in NumPy, in exactly the vectorised style you learned today.</p>
+    <div style="margin-top:24px;text-align:left;max-width:560px;margin-inline:auto"><div class="callout cy"><b class="t">Before next class</b><p>1. Your <code>ai-ml-45days</code> repo has Day 01–03 notebooks and <code>titanic_eda.png</code> visible on GitHub.<br>2. Do the Easy homework: <code>groupby</code> needs to feel automatic before Day 05.<br>3. Watch 3Blue1Brown's <a href="https://www.youtube.com/watch?v=IHZwWFHWa-w" target="_blank" rel="noopener">"Gradient descent, how neural networks learn"</a> (20 min); tomorrow's visual is that video, interactive.</p></div></div>
+  </div>
+</div></section>
+
+<script>
+/* ---------- Broadcasting visual ---------- */
+(function(){
+  const svg=document.getElementById('bcsvg');if(!svg)return;
+  const sel=document.getElementById('bcB'),msg=document.getElementById('bcMsg');
+  const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const A=[[1,2,3,4],[5,6,7,8],[9,10,11,12]];
+  const shapes={scalar:{r:1,c:1,label:'()',vals:[[10]],ok:true,txt:'A scalar has shape (). Missing dims count as 1 → (1,1) → stretched to (3,4). <b>Result (3,4): every cell + 10.</b>'},
+    '4':{r:1,c:4,label:'(4,)',vals:[[10,20,30,40]],ok:true,txt:'(4,) becomes (1,4). Align right: 4=4 ✓, 1 vs 3 → stretch. <b>Each row gets +[10,20,30,40].</b>'},
+    '31':{r:3,c:1,label:'(3,1)',vals:[[10],[20],[30]],ok:true,txt:'Align right: 1 vs 4 → stretch, 3=3 ✓. <b>Row i gets +B[i].</b> This is what <code>b[:, None]</code> gives you.'},
+    '14':{r:1,c:4,label:'(1,4)',vals:[[10,20,30,40]],ok:true,txt:'Explicit (1,4): same as (4,). <b>Each row gets +[10,20,30,40].</b>'},
+    '34':{r:3,c:4,label:'(3,4)',vals:[[10,20,30,40],[10,20,30,40],[10,20,30,40]],ok:true,txt:'Same shape: nothing to stretch. <b>Plain element-wise add.</b>'},
+    '3':{r:1,c:3,label:'(3,)',vals:[[10,20,30]],ok:false,txt:'<span class="err">ValueError: operands could not be broadcast together with shapes (3,4) (3,)</span> Align right: 4 vs 3, neither is 1. Fix: reshape to (3,1).'},
+    '2':{r:2,c:4,label:'(2,4)',vals:[[10,20,30,40],[50,60,70,80]],ok:false,txt:'<span class="err">ValueError: shapes (3,4) (2,4)</span> Align right: 4=4 ✓ but 3 vs 2, neither is 1.'}};
+  let anim=null,t=0;
+  function grid(ox,oy,vals,rows,cols,col,ink,alpha,ghost){let h='';for(let i=0;i<rows;i++)for(let j=0;j<cols;j++){const v=vals[Math.min(i,vals.length-1)][Math.min(j,vals[0].length-1)];h+=`<rect x="${ox+j*34}" y="${oy+i*34}" width="30" height="30" rx="6" fill="${ghost?'none':css('--panel')}" stroke="${col}" stroke-width="1.5" stroke-dasharray="${ghost?'3 3':'0'}" opacity="${alpha}"/><text x="${ox+j*34+15}" y="${oy+i*34+20}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="12" fill="${ink}" opacity="${alpha}">${v}</text>`;}return h;}
+  function draw(p){
+    const s=shapes[sel.value];const ink=css('--ink'),ink2=css('--ink2'),cyan=css('--cyan'),amber=css('--amber'),lime=css('--lime'),rose=css('--rose');
+    let h='';
+    h+=`<text x="20" y="22" font-family="JetBrains Mono,monospace" font-size="12" fill="${ink2}">A (3,4)</text>`+grid(20,32,A,3,4,cyan,ink,1,false);
+    h+=`<text x="180" y="80" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="22" fill="${ink2}">+</text>`;
+    h+=`<text x="210" y="22" font-family="JetBrains Mono,monospace" font-size="12" fill="${ink2}">B ${s.label}</text>`;
+    // stretched target rows/cols
+    const tr=s.ok?3:s.r,tc=s.ok?4:s.c;
+    if(p>0&&s.ok){h+=grid(210,32,s.vals,tr,tc,amber,ink,Math.min(1,p)*0.9,true);}
+    h+=grid(210,32,s.vals,s.r,s.c,amber,ink,1,false);
+    if(!s.ok){h+=`<text x="210" y="${32+s.r*34+22}" font-family="JetBrains Mono,monospace" font-size="12" fill="${rose}">✗ ${s.label} vs (3,4)</text>`;}
+    h+=`<text x="370" y="80" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="22" fill="${ink2}">=</text>`;
+    if(p>=1&&s.ok){const R=A.map((row,i)=>row.map((v,j)=>v+s.vals[Math.min(i,s.vals.length-1)][Math.min(j,s.vals[0].length-1)]));h+=`<text x="395" y="22" font-family="JetBrains Mono,monospace" font-size="12" fill="${ink2}">A+B (3,4)</text>`+grid(395,32,R,3,4,lime,ink,1,false);}
+    else if(p>=1){h+=`<text x="395" y="70" font-family="JetBrains Mono,monospace" font-size="13" fill="${rose}">ValueError</text>`;}
+    h+=`<text x="20" y="200" font-family="JetBrains Mono,monospace" font-size="11.5" fill="${ink2}">rule: align shapes from the RIGHT → each pair equal, or one of them is 1</text>`;
+    h+=`<text x="20" y="222" font-family="JetBrains Mono,monospace" font-size="11.5" fill="${ink2}">(3,4) vs ${s.label.padEnd(5)}: ${s.ok?'compatible ✓':'incompatible ✗'}</text>`;
+    svg.innerHTML=h;
+  }
+  function play(){cancelAnimationFrame(anim);t=0;const s=shapes[sel.value];msg.innerHTML=s.txt;
+    let t0=null;function step(ts){if(!t0)t0=ts;const p=Math.min(1.3,(ts-t0)/900);draw(p);if(p<1.3)anim=requestAnimationFrame(step);}anim=requestAnimationFrame(step);}
+  sel.onchange=()=>{cancelAnimationFrame(anim);msg.innerHTML='';draw(0);};
+  document.getElementById('bcPlay').onclick=play;
+  draw(0);
+})();
+
+/* ---------- Split-apply-combine ---------- */
+(function(){
+  const c=document.getElementById('sac');if(!c)return;const x=c.getContext('2d');
+  const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const rows=[{c:'First',s:'female',sv:1,f:71},{c:'Third',s:'male',sv:0,f:7},{c:'Second',s:'female',sv:1,f:30},{c:'Third',s:'female',sv:1,f:8},{c:'First',s:'male',sv:0,f:52},{c:'Third',s:'male',sv:0,f:8},{c:'Second',s:'male',sv:0,f:13},{c:'First',s:'female',sv:1,f:83},{c:'Third',s:'male',sv:1,f:9},{c:'Second',s:'female',sv:1,f:26},{c:'Third',s:'female',sv:0,f:7},{c:'First',s:'male',sv:1,f:61}];
+  const keyEl=document.getElementById('sacKey'),aggEl=document.getElementById('sacAgg');
+  let items=[],phase=0,raf=null,t0=0;
+  const W=900,H=320;
+  function groups(){return keyEl.value==='class'?['First','Second','Third']:['female','male'];}
+  function keyOf(r){return keyEl.value==='class'?r.c:r.s;}
+  function agg(list){const a=aggEl.value;if(a==='count')return list.length+' rows';if(a==='fare')return (list.reduce((s,r)=>s+r.f,0)/list.length).toFixed(1);return (list.reduce((s,r)=>s+r.sv,0)/list.length).toFixed(2);}
+  function colorOf(k){const m={First:'--amber',Second:'--cyan',Third:'--violet',female:'--rose',male:'--cyan'};return css(m[k]);}
+  function reset(){cancelAnimationFrame(raf);phase=0;items=rows.map((r,i)=>({r,x:20+(i%6)*70,y:44+Math.floor(i/6)*40,tx:0,ty:0}));draw();}
+  function layoutTargets(){const G=groups();const gw=(W-460)/G.length;const counts={};items.forEach(it=>{const k=keyOf(it.r);counts[k]=(counts[k]||0);const gi=G.indexOf(k);it.tx=440+gi*gw+(counts[k]%2)*62;it.ty=44+Math.floor(counts[k]/2)*36;counts[k]++;});}
+  function draw(p){
+    const ink=css('--ink'),ink2=css('--ink2'),lime=css('--lime'),panel=css('--panel'),line=css('--line2');
+    x.clearRect(0,0,W,H);x.font='12px JetBrains Mono,monospace';x.fillStyle=ink2;x.textAlign='left';
+    x.fillText('df  (12 rows: class, sex, survived, fare)',20,26);
+    const G=groups();const gw=(W-460)/G.length;
+    x.fillText('SPLIT by '+keyEl.value,440,26);
+    G.forEach((g,i)=>{x.strokeStyle=colorOf(g);x.lineWidth=1;x.setLineDash([4,4]);x.strokeRect(436+i*gw,32,gw-10,190);x.setLineDash([]);x.fillStyle=colorOf(g);x.fillText(g,442+i*gw,46+180);});
+    items.forEach(it=>{const k=keyOf(it.r);const col=colorOf(k);x.fillStyle=panel;x.strokeStyle=col;x.lineWidth=1.5;rr(it.x,it.y,58,28,7);x.fill();x.stroke();x.fillStyle=ink;x.font='10px JetBrains Mono,monospace';x.fillText(it.r.c[0]+'/'+it.r.s[0]+' '+it.r.sv+' ₹'+it.r.f,it.x+4,it.y+18);});
+    if(phase>=2){x.font='12px JetBrains Mono,monospace';x.fillStyle=ink2;x.fillText('APPLY: '+aggEl.options[aggEl.selectedIndex].text+'  →  COMBINE',20,140);
+      const G2=groups();G2.forEach((g,i)=>{const piles=items.filter(it=>keyOf(it.r)===g).map(it=>it.r);x.fillStyle=panel;x.strokeStyle=lime;x.lineWidth=1.5;rr(20,156+i*34,300,28,7);x.fill();x.stroke();x.fillStyle=colorOf(g);x.fillText(g.padEnd(8),30,175+i*34);x.fillStyle=ink;x.fillText(agg(piles),160,175+i*34);});
+      x.fillStyle=ink2;x.fillText('result: pd.Series indexed by '+keyEl.value,20,156+G2.length*34+18);}
+  }
+  function rr(px,py,w,h,r){x.beginPath();x.moveTo(px+r,py);x.arcTo(px+w,py,px+w,py+h,r);x.arcTo(px+w,py+h,px,py+h,r);x.arcTo(px,py+h,px,py,r);x.arcTo(px,py,px+w,py,r);x.closePath();}
+  function play(){cancelAnimationFrame(raf);reset();layoutTargets();phase=1;const starts=items.map(it=>({x:it.x,y:it.y}));t0=null;
+    function step(ts){if(!t0)t0=ts;const el=ts-t0;items.forEach((it,i)=>{const d=i*90;const p=Math.max(0,Math.min(1,(el-d)/500));const e=p<.5?2*p*p:-1+(4-2*p)*p;it.x=starts[i].x+(it.tx-starts[i].x)*e;it.y=starts[i].y+(it.ty-starts[i].y)*e;});
+      if(el>items.length*90+500)phase=2;draw();if(el<items.length*90+900)raf=requestAnimationFrame(step);}
+    raf=requestAnimationFrame(step);}
+  document.getElementById('sacPlay').onclick=play;document.getElementById('sacReset').onclick=reset;keyEl.onchange=reset;aggEl.onchange=()=>{if(phase>=2)draw();};
+  reset();
+})();
+
+/* ---------- Titanic chart ---------- */
+(function(){
+  const el=document.getElementById('titanicChart');if(!el||!window.Chart)return;
+  const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  new Chart(el,{type:'bar',data:{labels:['First','Second','Third'],datasets:[{label:'female',data:[96.8,92.1,50.0],backgroundColor:css('--rose'),borderRadius:6},{label:'male',data:[36.9,15.7,13.5],backgroundColor:css('--cyan'),borderRadius:6}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{title:{display:true,text:'Titanic: % survived by class and sex (891 passengers)'}},scales:{y:{beginAtZero:true,max:100,title:{display:true,text:'% survived'}}}}});
+})();
+
+/* ---------- Git flow ---------- */
+(function(){
+  const svg=document.getElementById('gitsvg');if(!svg)return;
+  const cmds=document.getElementById('gitcmds');const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  let step=-1;
+  const areas=[['Working dir',20],['Staging',160],['Local repo',300],['GitHub',440]];
+  function draw(){
+    const ink=css('--ink'),ink2=css('--ink2'),amber=css('--amber'),cyan=css('--cyan'),lime=css('--lime'),panel=css('--panel'),line=css('--line2');
+    let h='';
+    areas.forEach(([n,ax],i)=>{const active=(i===0&&step>=0)||(i===1&&step>=1)||(i===2&&step>=2)||(i===3&&step>=4);h+=`<rect x="${ax}" y="30" width="110" height="150" rx="12" fill="${panel}" stroke="${active?cyan:line}" stroke-width="${active?2:1}"/><text x="${ax+55}" y="52" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" fill="${ink2}">${n}</text>`;
+      if(i<3){h+=`<path d="M${ax+112} 105 H ${ax+138}" stroke="${ink2}" stroke-width="1.5" fill="none" class="${step>=i+1&&(i!==2||step>=4)?'flowline':''}" opacity="${step>=i+1&&(i!==2||step>=4)?1:.35}"/><text x="${ax+125}" y="92" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9.5" fill="${amber}">${['add','commit','push'][i]}</text>`;}});
+    const file=(ax,y,label,col)=>`<rect x="${ax+15}" y="${y}" width="80" height="26" rx="6" fill="${css('--bg2')}" stroke="${col}"/><text x="${ax+55}" y="${y+17}" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="9.5" fill="${ink}">${label}</text>`;
+    if(step>=0)h+=file(20,70,'Day_03.ipynb',step>=1?lime:amber);
+    if(step>=1&&step<2)h+=file(160,70,'Day_03.ipynb',amber);
+    if(step>=2)h+=file(300,70,'c1 "EDA on…"',lime);
+    if(step>=3)h+=`<text x="370" y="200" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="${ink2}">origin = github.com/you/ai-ml-45days</text>`;
+    if(step>=4)h+=file(440,70,'c1 "EDA on…"',lime);
+    if(step>=0)h+=`<text x="20" y="215" font-family="JetBrains Mono,monospace" font-size="10.5" fill="${ink2}">${['.git/ created. Empty history.','file staged: git status shows it in green.','snapshot c1 saved locally with a message.','remote named "origin" points at GitHub.','c1 uploaded. Anyone can open it now.'][step]}</text>`;
+    svg.innerHTML=h;
+    cmds.querySelectorAll('div[data-i]').forEach(d=>{const i=+d.dataset.i;d.classList.toggle('on',i===step);d.classList.toggle('done',i<step);});
+  }
+  document.getElementById('gitNext').onclick=()=>{if(step<4)step++;draw();};
+  document.getElementById('gitReset').onclick=()=>{step=-1;draw();};
+  cmds.querySelectorAll('div[data-i]').forEach(d=>d.onclick=()=>{step=+d.dataset.i;draw();});
+  draw();
+})();
+</script>
+
+<script>
+document.documentElement.classList.add('js');
+/* nav from sections */
+(function(){const nav=document.getElementById('nav');document.querySelectorAll('section.s[data-nav]').forEach((s,i)=>{const a=document.createElement('a');a.href='#'+s.id;a.innerHTML='<i>'+String(i+1).padStart(2,'0')+'</i>'+s.dataset.nav;nav.appendChild(a);});
+const links=[...nav.querySelectorAll('a')];const secs=[...document.querySelectorAll('section.s[data-nav]')];
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle('on',l.getAttribute('href')==='#'+e.target.id));}})},{rootMargin:'-40% 0px -55% 0px'});secs.forEach(s=>io.observe(s));
+window.addEventListener('scroll',()=>{const h=document.documentElement;document.getElementById('track').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';},{passive:true});})();
+/* reveal */
+(function(){const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:.1});document.querySelectorAll('.rv').forEach(el=>io.observe(el));})();
+/* class timer */
+(function(){let t=0,id=null;const el=document.getElementById('clk'),b=document.getElementById('clkbtn');b.onclick=()=>{if(id){clearInterval(id);id=null;b.textContent='Resume';return;}b.textContent='Pause';id=setInterval(()=>{t++;el.textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');if(t>=3600){clearInterval(id);el.textContent='60:00';b.textContent='Done';}},1000);};})();
+/* hero particles */
+(function(){const c=document.getElementById('bgc');if(!c)return;const x=c.getContext('2d');let w,h,P=[];function rs(){w=c.width=c.offsetWidth;h=c.height=c.offsetHeight;P=Array.from({length:Math.min(70,w/14)},()=>({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-.5)*.4,vy:(Math.random()-.5)*.4}));}rs();window.addEventListener('resize',rs);const col=()=>getComputedStyle(document.documentElement).getPropertyValue('--cyan').trim();function f(){x.clearRect(0,0,w,h);const cc=col();for(const p of P){p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>w)p.vx*=-1;if(p.y<0||p.y>h)p.vy*=-1;}for(let i=0;i<P.length;i++){for(let j=i+1;j<P.length;j++){const d=Math.hypot(P[i].x-P[j].x,P[i].y-P[j].y);if(d<120){x.strokeStyle=cc;x.globalAlpha=(1-d/120)*.35;x.beginPath();x.moveTo(P[i].x,P[i].y);x.lineTo(P[j].x,P[j].y);x.stroke();}}}x.globalAlpha=1;x.fillStyle=cc;for(const p of P){x.beginPath();x.arc(p.x,p.y,1.8,0,7);x.fill();}requestAnimationFrame(f);}if(!matchMedia('(prefers-reduced-motion:reduce)').matches)f();})();
+/* tabs */
+document.querySelectorAll('.tabs').forEach(t=>{const bs=t.querySelectorAll('.tb button'),ps=t.querySelectorAll('.tp');bs.forEach((b,i)=>b.onclick=()=>{bs.forEach(x=>x.classList.remove('on'));ps.forEach(x=>x.classList.remove('on'));b.classList.add('on');ps[i].classList.add('on');});});
+/* quiz: <div class="q" data-a="1"> with .opts buttons; index of correct answer in data-a */
+document.querySelectorAll('.q').forEach(q=>{const a=+q.dataset.a;q.querySelectorAll('.opts button').forEach((b,i)=>b.onclick=()=>{if(q.classList.contains('done'))return;q.classList.add('done');b.classList.add(i===a?'ok':'bad');if(i!==a)q.querySelectorAll('.opts button')[a].classList.add('ok');});});
+/* Chart.js theme defaults */
+if(window.Chart){const cs=getComputedStyle(document.documentElement);Chart.defaults.color=cs.getPropertyValue('--ink2').trim();Chart.defaults.borderColor=cs.getPropertyValue('--line').trim();Chart.defaults.font.family=cs.getPropertyValue('--mono').trim();}
+</script>
+</body></html>

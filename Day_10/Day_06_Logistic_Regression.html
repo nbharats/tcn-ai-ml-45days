@@ -1,0 +1,662 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Day 06: Classification: from yes/no to probabilities</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0A0E1A; --bg2:#111729; --panel:#161D33; --line:#243052; --line2:#2E3B62;
+  --ink:#EDF0FA; --ink2:#AEB7D3; --ink3:#7B86A8;
+  --amber:#FFB43A; --cyan:#4FD3F2; --rose:#FF6B8A; --lime:#9BE56B; --violet:#9D8CFF;
+  --glow:rgba(79,211,242,.18);
+  --display:'Syne',ui-sans-serif,system-ui,sans-serif;
+  --body:'Manrope',ui-sans-serif,system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#F3F5FB; --bg2:#FFFFFF; --panel:#FFFFFF; --line:#D7DDEE; --line2:#C3CBE3;
+    --ink:#0F1730; --ink2:#3B4666; --ink3:#6B7694;
+    --amber:#C97A00; --cyan:#0A8FB3; --rose:#D93A5D; --lime:#4E9A1E; --violet:#6A55E8;
+    --glow:rgba(10,143,179,.14);
+  }
+}
+:root[data-theme="light"]{
+  --bg:#F3F5FB; --bg2:#FFFFFF; --panel:#FFFFFF; --line:#D7DDEE; --line2:#C3CBE3;
+  --ink:#0F1730; --ink2:#3B4666; --ink3:#6B7694;
+  --amber:#C97A00; --cyan:#0A8FB3; --rose:#D93A5D; --lime:#4E9A1E; --violet:#6A55E8;
+  --glow:rgba(10,143,179,.14);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;padding-inline:clamp(16px,4vw,48px);padding-block:0 80px}
+a{color:var(--cyan)}
+h1,h2,h3,h4{font-family:var(--display);text-wrap:balance;line-height:1.08;margin:0}
+h2{font-size:clamp(30px,4.2vw,50px);font-weight:800;letter-spacing:-.01em}
+h3{font-size:clamp(20px,2.2vw,26px);font-weight:700}
+h4{font-size:17px;font-weight:700}
+p{max-width:68ch;margin:0}
+p+p{margin-top:12px}
+ul,ol{max-width:70ch}
+li{margin-bottom:6px}
+.wrap{max-width:1180px;margin:0 auto}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)}
+.eyebrow b{color:var(--amber);font-weight:600}
+code,.mono{font-family:var(--mono)}
+p code,li code,td code{font-size:.9em;background:var(--bg2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--cyan)}
+
+/* progress bar + nav */
+#bar{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);margin-inline:calc(-1*clamp(16px,4vw,48px));padding-inline:clamp(16px,4vw,48px)}
+#bar .wrap{display:flex;align-items:center;gap:14px;height:56px;overflow-x:auto;scrollbar-width:none}
+#bar .wrap::-webkit-scrollbar{display:none}
+#bar .brand{font-family:var(--display);font-weight:800;font-size:15px;white-space:nowrap}
+#bar .brand span{color:var(--amber)}
+#bar nav{display:flex;gap:4px;flex:1}
+#bar nav a{font-family:var(--mono);font-size:11.5px;text-decoration:none;color:var(--ink3);padding:6px 10px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+#bar nav a.on{color:var(--ink);border-color:var(--line2);background:var(--panel)}
+#bar nav a i{font-style:normal;color:var(--amber);margin-right:5px}
+#bar .clock{font-family:var(--mono);font-size:12px;color:var(--ink2);white-space:nowrap;display:flex;gap:8px;align-items:center}
+#bar .clock button{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line2);border-radius:6px;padding:4px 9px;cursor:pointer}
+#track{position:absolute;left:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--cyan),var(--amber));width:0}
+
+/* sections */
+section.s{padding-block:88px 40px;border-top:1px solid var(--line);position:relative}
+.head{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end;margin-bottom:38px}
+.time{font-family:var(--mono);font-size:12px;color:var(--ink3);text-align:right;line-height:1.5}
+.time b{display:block;font-size:22px;color:var(--amber);font-weight:600}
+.lead{font-size:clamp(18px,1.6vw,21px);color:var(--ink2);max-width:62ch;margin-top:16px}
+
+/* hero */
+#hero{padding-block:70px 60px;position:relative;overflow:hidden;margin-inline:calc(-1*clamp(16px,4vw,48px));padding-inline:clamp(16px,4vw,48px)}
+#hero canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.55;pointer-events:none}
+#hero .wrap{position:relative}
+#hero h1{font-size:clamp(40px,7vw,96px);font-weight:800;letter-spacing:-.03em;line-height:.98}
+#hero h1 em{font-style:normal;color:var(--amber)}
+#hero h1 .c{color:var(--cyan)}
+.hero-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:40px;align-items:end;margin-top:30px}
+.agenda{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
+.agenda h3{font-size:14px;font-family:var(--mono);font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-bottom:12px}
+.agenda ol{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.agenda li{display:grid;grid-template-columns:52px 1fr;gap:12px;font-size:15px;align-items:baseline;margin:0}
+.agenda li span{font-family:var(--mono);font-size:12px;color:var(--amber)}
+.agenda li a{color:var(--ink);text-decoration:none}
+.agenda li a:hover{color:var(--cyan)}
+
+/* generic blocks */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;transition:transform .25s,border-color .25s}
+.card:hover{border-color:var(--cyan)}
+.card h3{margin-bottom:8px}
+.card h4{margin-bottom:6px}
+.card p{font-size:15.5px;color:var(--ink2)}
+.card.amber{border-color:var(--amber)} .card.violet{border-color:var(--violet)} .card.lime{border-color:var(--lime)} .card.rose{border-color:var(--rose)}
+.tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid var(--line2);color:var(--ink3);margin-bottom:12px}
+.pill{display:inline-flex;gap:6px;align-items:center;font-family:var(--mono);font-size:12px;padding:5px 11px;border-radius:999px;background:var(--bg2);border:1px solid var(--line);color:var(--ink2);text-decoration:none;margin:4px 6px 4px 0}
+.pill:hover{border-color:var(--cyan);color:var(--ink)}
+.callout{border-left:4px solid var(--amber);background:var(--panel);border-radius:0 14px 14px 0;padding:16px 20px;margin-block:18px}
+.callout.cy{border-left-color:var(--cyan)} .callout.ro{border-left-color:var(--rose)} .callout.li{border-left-color:var(--lime)} .callout.vi{border-left-color:var(--violet)}
+.callout b.t{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);display:block;margin-bottom:6px}
+.callout.cy b.t{color:var(--cyan)} .callout.ro b.t{color:var(--rose)} .callout.li b.t{color:var(--lime)} .callout.vi b.t{color:var(--violet)}
+.callout p{font-size:15.5px;color:var(--ink2)}
+
+/* analogy strip */
+.analogy{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start;background:linear-gradient(135deg,color-mix(in srgb,var(--amber) 10%,var(--panel)),var(--panel));border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-block:22px}
+.analogy .em{font-size:38px;line-height:1}
+.analogy h4{margin-bottom:4px}
+.analogy p{font-size:15.5px;color:var(--ink2)}
+
+/* code */
+pre{background:var(--bg2);border:1px solid var(--line2);border-radius:12px;padding:16px 18px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.55;margin:0;color:var(--ink)}
+pre .c{color:var(--ink3)} pre .k{color:var(--violet)} pre .s{color:var(--lime)} pre .n{color:var(--amber)} pre .f{color:var(--cyan)}
+.codewrap{position:relative;margin-block:14px}
+.codewrap .lbl{position:absolute;top:8px;right:12px;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+
+/* tabs */
+.tabs{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel)}
+.tabs .tb{display:flex;gap:2px;border-bottom:1px solid var(--line);background:var(--bg2);overflow-x:auto}
+.tabs .tb button{font:600 13px var(--body);background:transparent;color:var(--ink3);border:0;padding:11px 16px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.tabs .tb button.on{color:var(--ink);border-bottom-color:var(--amber)}
+.tabs .tp{display:none;padding:18px}
+.tabs .tp.on{display:block}
+
+/* figures / charts */
+figure{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;overflow:hidden}
+figure svg{width:100%;height:auto;display:block}
+figcaption{font-family:var(--mono);font-size:11.5px;color:var(--ink3);margin-top:8px}
+.chart{position:relative;height:300px}
+.chart canvas{width:100%!important;height:100%!important}
+canvas.demo{width:100%;height:auto;background:var(--bg2);border:1px solid var(--line2);border-radius:14px;display:block;touch-action:none}
+.ctl{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.ctl label{font-family:var(--mono);font-size:12px;color:var(--ink2);display:flex;gap:8px;align-items:center}
+.ctl input[type=range]{accent-color:var(--amber)}
+.btn{font:600 14px var(--body);color:var(--bg);background:var(--amber);border:0;border-radius:9px;padding:10px 16px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line2)}
+.btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.stats{font-family:var(--mono);font-size:13px;color:var(--ink2);display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin-top:14px;font-variant-numeric:tabular-nums}
+.stats b{color:var(--cyan);font-weight:600}
+
+/* steps */
+.steps{display:grid;gap:10px;counter-reset:st}
+.steps>div{display:grid;grid-template-columns:32px 1fr;gap:12px;align-items:start;font-size:15px;color:var(--ink2)}
+.steps>div::before{counter-increment:st;content:counter(st);font-family:var(--mono);font-size:12px;color:var(--amber);border:1px solid var(--line2);border-radius:50%;width:26px;height:26px;display:grid;place-items:center}
+.steps b{color:var(--ink)}
+
+/* table */
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+th,td{padding:10px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);background:var(--bg2)}
+tr:last-child td{border-bottom:0}
+
+/* tools + career */
+.tools{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.tool{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:6px}
+.tool b{font-family:var(--display);font-size:16px}
+.tool span{font-size:14px;color:var(--ink2)}
+.tool a{font-family:var(--mono);font-size:12px;text-decoration:none}
+.career{border:1px solid var(--violet);background:linear-gradient(135deg,color-mix(in srgb,var(--violet) 12%,var(--panel)),var(--panel));border-radius:14px;padding:22px}
+.career .tag{border-color:var(--violet);color:var(--violet)}
+
+/* homework */
+.hw{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.hw .card{border-color:var(--line2)}
+.hw .lvl{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--lime);margin-bottom:6px;display:block}
+
+/* quiz */
+.quiz{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.q{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.q p{font-size:15px;margin-bottom:12px;color:var(--ink)}
+.q .opts{display:flex;gap:8px;flex-wrap:wrap}
+.q button{font:600 13px var(--body);padding:7px 12px;border-radius:8px;border:1px solid var(--line2);background:var(--bg2);color:var(--ink);cursor:pointer}
+.q button.ok{border-color:var(--lime);color:var(--lime)} .q button.bad{border-color:var(--rose);color:var(--rose)}
+.q .why{font-size:13.5px;color:var(--ink2);margin-top:10px;display:none}
+.q.done .why{display:block}
+
+/* details */
+details{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:0 18px;margin-block:10px}
+summary{cursor:pointer;padding:14px 0;font-family:var(--display);font-weight:700;font-size:16px}
+details[open] summary{border-bottom:1px solid var(--line);margin-bottom:12px}
+details>*:not(summary){padding-bottom:14px}
+
+/* footer */
+.fin{text-align:center;padding-block:60px 20px}
+.fin h2{font-size:clamp(28px,4vw,44px)}
+.fin p{margin:14px auto 0}
+
+/* reveal */
+.rv{opacity:1;transform:none;transition:opacity .6s ease,transform .6s ease}
+.js .rv:not(.in){opacity:.001;transform:translateY(18px)}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+@keyframes dash{to{stroke-dashoffset:0}}
+.flowline{stroke-dasharray:6 6;animation:flow 1.2s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-24}}
+@media (prefers-reduced-motion:reduce){.js .rv:not(.in){opacity:1;transform:none}.rv{transition:none}*{animation:none!important}}
+
+@media (max-width:980px){
+  .grid4,.tools,.hw{grid-template-columns:1fr 1fr}
+  .grid3,.quiz{grid-template-columns:1fr 1fr}
+}
+@media (max-width:720px){
+  .hero-grid,.grid2,.grid3,.grid4,.tools,.hw,.quiz,.analogy{grid-template-columns:1fr}
+  .head{grid-template-columns:1fr}.time{text-align:left}
+}
+</style></head><body>
+
+<div id="bar"><div class="wrap">
+  <div class="brand">AI <span>&amp;</span> ML Engineering · Day 06</div>
+  <nav id="nav"><!-- filled by JS from section[data-nav] --></nav>
+  <div class="clock"><span id="clk">00:00</span><button id="clkbtn" type="button">Start 60 min</button></div>
+</div><div id="track"></div></div>
+
+<!-- ============ HERO ============ -->
+<header id="hero"><canvas id="bgc"></canvas><div class="wrap">
+  <div class="eyebrow"><b>Day 06</b> · Phase 2 · Supervised ML · 60 minutes</div>
+  <h1 style="margin-top:18px">Classification: from <em>yes/no</em> to <span class="c">probabilities</span>.</h1>
+  <div class="hero-grid">
+    <p class="lead">Regression answered "how much?". Today's question is "which one?": will this student get placed, is this UPI transaction fraud, will this loan default. You will take yesterday's straight line, squeeze it through an S-shaped curve so it outputs a probability, learn the cost function that makes that work, draw your first decision boundary, and discover that the threshold you choose is a business decision, not a maths one.</p>
+    <div class="agenda"><h3>Today's route</h3><ol>
+      <li><span>00–05</span><a href="#hook">Hook: the 100-millisecond decision</a></li>
+      <li><span>05–23</span><a href="#concept">Concept: sigmoid, boundary, threshold</a></li>
+      <li><span>23–33</span><a href="#deeper">Deeper: log-odds, log-loss, softmax</a></li>
+      <li><span>33–45</span><a href="#code">Code: scratch and sklearn</a></li>
+      <li><span>45–50</span><a href="#realworld">Real world &amp; tools</a></li>
+      <li><span>50–53</span><a href="#career">Career corner</a></li>
+      <li><span>53–56</span><a href="#quiz">Quiz</a></li>
+      <li><span>56–58</span><a href="#homework">Homework</a></li>
+      <li><span>58–60</span><a href="#next">Next</a></li>
+    </ol></div>
+  </div>
+</div></header>
+
+<!-- ============ HOOK ============ -->
+<section class="s" id="hook" data-nav="Hook"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">01 · Hook</div><h2>The decision that happens before your UPI "Pay" button finishes animating</h2><p class="lead">Every UPI payment in India, roughly 500 million a day, passes through a fraud model before the money moves. It has about 100 milliseconds. It does not answer "fraud or not". It answers "0.03".</p></div><div class="time"><b>5</b>min</div></div>
+  <div class="grid2">
+    <div>
+      <p>That number is a probability, and the bank decides what to do with it: below 0.02 let it through silently, between 0.02 and 0.3 ask for a second OTP, above 0.3 block and call. Three different actions from one model, decided by <b>thresholds</b> the risk team sets, and can change on a festival weekend when fraud spikes. The model's job is only to produce a calibrated, trustworthy probability. That separation, <em>model gives probability, humans choose the threshold</em>, is the whole design philosophy of classification, and by the end of today you will have built it.</p>
+      <p style="margin-top:14px">The same machine sits inside a placement cell's shortlist filter (CGPA, aptitude score, internships → "likely to be placed: 0.81"), inside every loan app's approval flow, inside Gmail's spam folder, and, in a slightly bigger costume, inside the last layer of every neural network you will train in Week 3. Logistic regression is the small model you must fully understand because the big ones are built out of it.</p>
+      <div class="callout cy" style="margin-top:18px"><b class="t">Open on the projector</b><p><a href="https://playground.tensorflow.org/" target="_blank" rel="noopener">TensorFlow Playground ↗</a>. Choose the two-blob dataset (bottom-left), set hidden layers to <b>0</b> and activation to <b>Sigmoid</b>, press play. That is logistic regression learning live: a straight boundary rotating into place. Then switch to the spiral dataset and watch it fail; that failure is the reason Days 7–11 exist.</p></div>
+    </div>
+    <figure class="rv"><svg viewBox="0 0 520 300" role="img" aria-label="Payment features flow into a probability, then into threshold-based actions">
+      <defs><marker id="ah6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--ink3)"/></marker></defs>
+      <g font-family="JetBrains Mono,monospace" font-size="11" fill="var(--ink2)">
+        <rect x="10" y="30" width="140" height="28" rx="8" fill="var(--bg2)" stroke="var(--line2)"/><text x="80" y="48" text-anchor="middle">amount ₹18,400</text>
+        <rect x="10" y="70" width="140" height="28" rx="8" fill="var(--bg2)" stroke="var(--line2)"/><text x="80" y="88" text-anchor="middle">time 02:47 am</text>
+        <rect x="10" y="110" width="140" height="28" rx="8" fill="var(--bg2)" stroke="var(--line2)"/><text x="80" y="128" text-anchor="middle">new payee: yes</text>
+        <rect x="10" y="150" width="140" height="28" rx="8" fill="var(--bg2)" stroke="var(--line2)"/><text x="80" y="168" text-anchor="middle">device changed: no</text>
+        <rect x="10" y="190" width="140" height="28" rx="8" fill="var(--bg2)" stroke="var(--line2)"/><text x="80" y="208" text-anchor="middle">txns last hour: 7</text>
+      </g>
+      <g stroke="var(--cyan)" stroke-width="1.5" fill="none" marker-end="url(#ah6)">
+        <path class="flowline" d="M150 44 C 200 44, 200 124, 240 124"/>
+        <path class="flowline" d="M150 84 C 200 84, 200 124, 240 124"/>
+        <path class="flowline" d="M150 124 L 240 124"/>
+        <path class="flowline" d="M150 164 C 200 164, 200 124, 240 124"/>
+        <path class="flowline" d="M150 204 C 200 204, 200 124, 240 124"/>
+      </g>
+      <rect x="240" y="94" width="110" height="60" rx="12" fill="var(--panel)" stroke="var(--amber)" stroke-width="1.5"/>
+      <text x="295" y="119" text-anchor="middle" font-family="Syne,sans-serif" font-weight="700" font-size="13" fill="var(--ink)">σ(θ·x)</text>
+      <text x="295" y="140" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="var(--ink3)">→ p = 0.27</text>
+      <g stroke="var(--amber)" stroke-width="1.5" fill="none" marker-end="url(#ah6)">
+        <path class="flowline" d="M350 124 C 390 124, 390 50, 420 50"/>
+        <path class="flowline" d="M350 124 L 420 124"/>
+        <path class="flowline" d="M350 124 C 390 124, 390 198, 420 198"/>
+      </g>
+      <g font-family="JetBrains Mono,monospace" font-size="10.5">
+        <rect x="420" y="36" width="92" height="28" rx="8" fill="var(--bg2)" stroke="var(--lime)"/><text x="466" y="54" text-anchor="middle" fill="var(--lime)">p&lt;.02 allow</text>
+        <rect x="420" y="110" width="92" height="28" rx="8" fill="var(--bg2)" stroke="var(--amber)"/><text x="466" y="128" text-anchor="middle" fill="var(--amber)">.02–.3 OTP</text>
+        <rect x="420" y="184" width="92" height="28" rx="8" fill="var(--bg2)" stroke="var(--rose)"/><text x="466" y="202" text-anchor="middle" fill="var(--rose)">p&gt;.3 block</text>
+      </g>
+      <text x="260" y="270" font-family="JetBrains Mono,monospace" font-size="10.5" fill="var(--ink3)" text-anchor="middle">model = probability · business = thresholds</text>
+    </svg><figcaption>One model, one probability, three actions. The thresholds are not learned; the risk team owns them. Today you will move them with your own hands.</figcaption></figure>
+  </div>
+</div></section>
+
+<!-- ============ CONCEPT ============ -->
+<section class="s" id="concept" data-nav="Concept"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">02 · Concept</div><h2>Squeeze the line, draw the boundary, choose the threshold</h2><p class="lead">Three ideas, one demo each. Every slider below is recomputed live in your browser.</p></div><div class="time"><b>18</b>min</div></div>
+
+  <h3>Idea 1 · Why not just use linear regression for yes/no?</h3>
+  <p style="margin-top:10px">Try it: label placed = 1, not placed = 0, fit a line to CGPA. The line happily predicts 1.4 for a 9.8 CGPA student and −0.3 for a 5.0 student. Probabilities outside 0–1 are meaningless, and worse, one star student with a huge CGPA drags the whole line and moves the cut-off for everyone. We need the line's output to be <em>squashed</em> into (0, 1), gently, so that far-away points stop pulling. That squasher is the <b>sigmoid</b>: <span class="mono">σ(z) = 1 / (1 + e<sup>−z</sup>)</span>. Feed it the linear score <span class="mono">z = θ·x</span>, and you get a probability.</p>
+
+  <div class="analogy rv"><div class="em">🚰</div><div><h4>The sigmoid is a tap, not a switch</h4><p>A light switch is 0 or 1: nothing in between. A water tap goes smoothly from a trickle to full flow. The linear score z is how far you have turned the handle: at z = 0 the tap is exactly half open (p = 0.5); at z = +4 it is 98% open; at z = −4, 2%. Turning the handle further past +6 changes almost nothing, which is exactly why one extreme student no longer drags the whole model. Logistic regression is linear regression with a tap on the output.</p></div></div>
+
+  <figure class="rv" style="margin-top:14px">
+    <canvas id="sigc" class="demo" width="900" height="400" aria-label="Sigmoid fit to placement data with adjustable weights and threshold"></canvas>
+    <div class="ctl">
+      <label>steepness w <input id="sw" type="range" min="0.2" max="6" step="0.05" value="1"> <b id="swv" class="mono">1.0</b></label>
+      <label>shift b (cut-off CGPA) <input id="sb" type="range" min="5" max="9" step="0.05" value="7"> <b id="sbv" class="mono">7.0</b></label>
+      <label>threshold <input id="sth" type="range" min="0.05" max="0.95" step="0.01" value="0.5"> <b id="sthv" class="mono">0.50</b></label>
+      <button class="btn" id="sfit" type="button">Fit with gradient descent</button>
+      <button class="btn ghost" id="sreset" type="button">Reset</button>
+    </div>
+    <div class="stats"><div>log-loss <b id="sll">–</b></div><div>accuracy <b id="sacc">–</b></div><div>TP / FP <b id="stpfp">–</b></div><div>FN / TN <b id="sfntn">–</b></div><div>precision <b id="sprec">–</b></div><div>recall <b id="srec">–</b></div></div>
+    <figcaption>60 students. Dots at the top were placed (1), at the bottom not (0), positioned by CGPA. The curve is p = σ(w·(CGPA − b)). Move <b>w</b> and <b>b</b> by hand and watch log-loss; then press <b>Fit</b> to watch gradient descent find the minimum on its own. The dashed vertical line is where the curve crosses your <b>threshold</b>: everyone to its right is predicted "placed". Slide the threshold and watch the confusion counts trade FP for FN.</figcaption>
+  </figure>
+
+  <div class="callout"><b class="t">Key idea</b><p>Gradient descent on log-loss found the same kind of minimum you saw on Day 04, with the same update rule shape <span class="mono">θ ← θ − α · (1/m) Xᵀ(ŷ − y)</span>. The only thing that changed is that ŷ now passes through the sigmoid. Everything you know about learning rate and convergence carries over untouched.</p></div>
+
+  <h3 style="margin-top:34px">Idea 2 · The decision boundary is a straight line (in 2-D)</h3>
+  <p style="margin-top:10px">With two features the score is <span class="mono">z = θ₀ + θ₁·x₁ + θ₂·x₂</span>. The model says "yes" where z &gt; 0, "no" where z &lt; 0, and the frontier <span class="mono">z = 0</span> is a straight line: the <b>decision boundary</b>. Points far from the line get confident probabilities (near 0 or 1); points near it get ≈ 0.5. Changing the threshold from 0.5 to something else simply <em>slides the line</em> parallel to itself, because p = 0.7 corresponds to z = log(0.7/0.3) ≈ 0.85 instead of z = 0.</p>
+  <figure class="rv" style="margin-top:14px">
+    <canvas id="bdc" class="demo" width="900" height="440" aria-label="2-D decision boundary for loan approval with threshold slider"></canvas>
+    <div class="ctl">
+      <label>threshold <input id="bth" type="range" min="0.05" max="0.95" step="0.01" value="0.5"> <b id="bthv" class="mono">0.50</b></label>
+      <label><input id="bprob" type="checkbox" checked> show probability shading</label>
+    </div>
+    <div class="stats"><div>predicted "approve" <b id="bapp">–</b></div><div>TP / FP <b id="btpfp">–</b></div><div>FN / TN <b id="bfntn">–</b></div><div>approved but defaulted (FP cost) <b id="bcost">–</b></div></div>
+    <figcaption>Loan approval on two features: monthly income and credit score. Green = repaid, red = defaulted. The model was fit once (weights fixed); only the threshold moves. Shading is the model's probability. Raise the threshold: fewer approvals, fewer costly defaults, but more good customers turned away (FN). A bank picks the threshold that minimises rupees lost, not the one that maximises accuracy.</figcaption>
+  </figure>
+
+  <div class="callout ro"><b class="t">Common confusion</b><p>"Logistic regression is a linear model, so it can only draw straight boundaries." True <em>in the original features</em>. Feed it polynomial features (Day 05's trick) and the boundary becomes a curve or a circle. It is still called linear because it is linear in θ. The spiral on TensorFlow Playground fails only because we gave it raw x₁, x₂; tick the x₁², x₂², x₁x₂ boxes and watch it succeed.</p></div>
+
+  <h3 style="margin-top:34px">Idea 3 · The cost function that punishes confident mistakes</h3>
+  <div class="grid2" style="margin-top:12px">
+    <div>
+      <p>MSE would work badly here: with a sigmoid inside, the squared-error surface has flat plateaus where gradient descent stalls. Instead we use <b>log-loss</b> (also called binary cross-entropy). For one example it is <span class="mono">−log(p)</span> if the true label is 1 and <span class="mono">−log(1 − p)</span> if the label is 0. Read the chart: predicting p = 0.9 for a true "placed" costs 0.1; predicting 0.01 for that same student costs 4.6. Confident and wrong is punished brutally, honest uncertainty (p ≈ 0.5) costs about 0.69 either way. That asymmetry is what pushes the model to be calibrated rather than merely correct.</p>
+      <div class="analogy" style="margin-top:16px"><div class="em">🏏</div><div><h4>DRS review, not the umpire's finger</h4><p>An umpire's "out / not out" is a hard label. The DRS ball-tracker gives "hitting the stumps: 61%". Log-loss is the scorer that rewards the ball-tracker for being honest about that 61%, and would savage it for saying 99% on a ball that missed. Classification models are trained to be ball-trackers, and the umpire's finger (the threshold) is applied afterwards.</p></div></div>
+    </div>
+    <figure class="rv"><div class="chart"><canvas id="llchart"></canvas></div><figcaption>Log-loss for one example as a function of the predicted probability p. Amber: true label 1, cost −log(p). Cyan: true label 0, cost −log(1−p). Both curves go to infinity at the wrong end.</figcaption></figure>
+  </div>
+
+  <h3 style="margin-top:34px">Idea 4 · More than two classes: softmax and one-vs-rest</h3>
+  <p style="margin-top:10px">Sigmoid handles yes/no. For "which of K classes" (cat/dog/cow, or which of 10 digits) we give the model K linear scores z₁…z<sub>K</sub> and normalise them with <b>softmax</b>: <span class="mono">p<sub>k</sub> = e<sup>z<sub>k</sub></sup> / Σ<sub>j</sub> e<sup>z<sub>j</sub></sup></span>. The probabilities are positive and sum to 1; the biggest score wins, but the others keep an honest share. Drag the three scores below and watch. The alternative, <b>one-vs-rest (OvR)</b>, trains K separate yes/no models ("cat vs everything else", …) and picks the most confident one; simpler, slightly less principled, still common.</p>
+  <figure class="rv" style="margin-top:12px">
+    <div class="ctl" style="margin-top:0">
+      <label>z<sub>placed</sub> <input id="z1" type="range" min="-4" max="4" step="0.1" value="2"></label>
+      <label>z<sub>higher studies</sub> <input id="z2" type="range" min="-4" max="4" step="0.1" value="0.5"></label>
+      <label>z<sub>startup</sub> <input id="z3" type="range" min="-4" max="4" step="0.1" value="-1"></label>
+    </div>
+    <div id="smx" style="display:grid;gap:8px;margin-top:14px;font-family:var(--mono);font-size:13px"></div>
+    <figcaption>Softmax over three raw scores. Note: adding the same number to all three scores changes nothing (only differences matter), and doubling all of them makes the winner more confident. Softmax is the sigmoid's big sibling; with K = 2 they are identical.</figcaption>
+  </figure>
+
+  <div class="callout vi"><b class="t">Interview answer · "Why is it called regression if it classifies?"</b><p>"Because it regresses the <em>log-odds</em> of the positive class as a linear function of the features. The output is a continuous probability; classification only happens when we apply a threshold to it. That is also why you should tune the threshold to the business cost, not always use 0.5."</p></div>
+</div></section>
+
+<!-- ============ DEEPER ============ -->
+<section class="s" id="deeper" data-nav="Deeper"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">03 · Deeper</div><h2>The mechanics: odds, loss, gradient, softmax</h2><p class="lead">Four short formulas. Each one decoded, and one surprising fact: the gradient is the same as linear regression's.</p></div><div class="time"><b>10</b>min</div></div>
+
+  <h3>1 · Sigmoid and log-odds</h3>
+  <p style="margin-top:8px"><span class="mono">p = σ(z) = 1 / (1 + e<sup>−z</sup>)</span> &nbsp;⟺&nbsp; <span class="mono">log( p / (1 − p) ) = z = θᵀx</span></p>
+  <p><b>p</b> is the predicted probability of class 1, <b>z</b> the linear score, <b>e</b> Euler's number. The right-hand form is the important one: the <em>log-odds</em> (logit) is a straight line in the features. So a coefficient θ<sub>j</sub> = 0.7 means "one unit more of feature j multiplies the odds of the positive class by e<sup>0.7</sup> ≈ 2". That sentence is how bankers and doctors read these models, and it is why logistic regression still dominates credit scoring and clinical risk: every weight has a meaning.</p>
+
+  <h3 style="margin-top:26px">2 · Log-loss (binary cross-entropy)</h3>
+  <p style="margin-top:8px"><span class="mono">J(θ) = −(1/m) Σ<sub>i</sub> [ y<sub>i</sub> · log(p<sub>i</sub>) + (1 − y<sub>i</sub>) · log(1 − p<sub>i</sub>) ]</span></p>
+  <p><b>m</b> examples, <b>y<sub>i</sub></b> ∈ {0, 1} the true label, <b>p<sub>i</sub></b> the model's probability for example i. Only one of the two terms is alive per example (the other is multiplied by zero). It is the negative log-likelihood of the data under the model, so minimising it is the same as maximum likelihood estimation; and unlike MSE-with-sigmoid it is <b>convex</b>, so gradient descent reaches the single global minimum.</p>
+
+  <h3 style="margin-top:26px">3 · The gradient (memorise this one)</h3>
+  <p style="margin-top:8px"><span class="mono">∂J/∂θ = (1/m) · Xᵀ (p − y)</span> &nbsp; so &nbsp; <span class="mono">θ ← θ − α · (1/m) · Xᵀ (σ(Xθ) − y)</span></p>
+  <p>Identical in shape to Day 04's linear regression update; the prediction just goes through σ first. The derivative of the sigmoid, <span class="mono">σ′(z) = σ(z)(1 − σ(z))</span>, cancels neatly against the log in the loss to give this clean form. In an interview, being able to write this line and say "same as linear regression, sigmoid inside" is a strong signal.</p>
+
+  <h3 style="margin-top:26px">4 · Softmax and the multiclass loss</h3>
+  <p style="margin-top:8px"><span class="mono">p<sub>k</sub> = e<sup>z<sub>k</sub></sup> / Σ<sub>j=1..K</sub> e<sup>z<sub>j</sub></sup></span> &nbsp; and &nbsp; <span class="mono">J = −(1/m) Σ<sub>i</sub> log( p<sub>i, y<sub>i</sub></sub> )</span></p>
+  <p><b>K</b> classes, each with its own weight vector θ<sub>k</sub> giving score z<sub>k</sub>; <b>p<sub>i,y<sub>i</sub></sub></b> is the probability the model assigned to the <em>correct</em> class of example i. The loss just says "make the correct class's probability large", and it is exactly the loss at the output of every image classifier and every language model (predicting the next token = a softmax over 100k+ classes). In sklearn, <code>LogisticRegression</code> uses this multinomial form by default with the <code>lbfgs</code> solver; <code>OneVsRestClassifier</code> gives you OvR when you want it.</p>
+
+  <div class="tbl rv" style="margin-top:22px"><table>
+    <thead><tr><th></th><th>Linear regression (Day 04–05)</th><th>Logistic regression (today)</th></tr></thead>
+    <tbody>
+      <tr><td>Predicts</td><td>a number (₹, °C, minutes)</td><td>a probability of a class</td></tr>
+      <tr><td>Output layer</td><td>z = θᵀx</td><td>σ(θᵀx), or softmax for K classes</td></tr>
+      <tr><td>Loss</td><td>MSE</td><td>log-loss / cross-entropy</td></tr>
+      <tr><td>Gradient</td><td>(1/m) Xᵀ(ŷ − y)</td><td>(1/m) Xᵀ(ŷ − y) (same!)</td></tr>
+      <tr><td>Closed form?</td><td>yes (normal equation)</td><td>no; iterative (lbfgs, GD, newton)</td></tr>
+      <tr><td>Regularization</td><td><code>alpha</code> (bigger = stronger)</td><td><code>C</code> (bigger = <b>weaker</b>; C = 1/α)</td></tr>
+      <tr><td>Reading a weight</td><td>Δy per unit of x</td><td>Δ log-odds per unit of x (e<sup>θ</sup> = odds ratio)</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout vi" style="margin-top:22px"><b class="t">How to say this in an interview</b><p>"Logistic regression models the log-odds of the positive class as a linear function of the features and passes it through a sigmoid to get a probability. It is trained by minimising log-loss, which is convex, using gradient-based solvers; the gradient has the same form as linear regression's. I choose the classification threshold from the business cost of false positives versus false negatives, and I regularise with C, where smaller C means stronger regularisation."</p></div>
+</div></section>
+
+<!-- ============ CODE ============ -->
+<section class="s" id="code" data-nav="Code"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">04 · Code</div><h2>From scratch in 15 lines, then sklearn</h2><p class="lead">Full runnable version with plots and the exercise: open <code>Day_06_Logistic_Regression.ipynb</code> in Google Colab.</p></div><div class="time"><b>12</b>min</div></div>
+
+  <h3>1 · The model, the loss, the gradient, by hand</h3>
+  <div class="tabs rv" style="margin-top:12px">
+    <div class="tb"><button class="on" type="button">NumPy from scratch</button><button type="button">sklearn equivalent</button></div>
+    <div class="tp on"><pre><span class="k">import</span> numpy <span class="k">as</span> np
+
+<span class="k">def</span> <span class="f">sigmoid</span>(z):
+    <span class="k">return</span> <span class="n">1</span> / (<span class="n">1</span> + np.exp(-z))
+
+<span class="k">def</span> <span class="f">log_loss</span>(y, p, eps=<span class="n">1e-12</span>):
+    p = np.clip(p, eps, <span class="n">1</span> - eps)                     <span class="c"># never take log(0)</span>
+    <span class="k">return</span> -np.mean(y * np.log(p) + (<span class="n">1</span> - y) * np.log(<span class="n">1</span> - p))
+
+<span class="k">def</span> <span class="f">fit_logreg</span>(X, y, lr=<span class="n">0.1</span>, epochs=<span class="n">2000</span>):
+    Xb = np.c_[np.ones(len(X)), X]                    <span class="c"># prepend the bias column of 1s</span>
+    theta = np.zeros(Xb.shape[<span class="n">1</span>])
+    <span class="k">for</span> _ <span class="k">in</span> range(epochs):
+        p = sigmoid(Xb @ theta)
+        grad = Xb.T @ (p - y) / len(y)                <span class="c"># same shape as linear regression's gradient</span>
+        theta -= lr * grad
+    <span class="k">return</span> theta
+
+theta = fit_logreg(X_train_scaled, y_train)          <span class="c"># scale features first: GD converges much faster</span>
+p_test = sigmoid(np.c_[np.ones(len(X_test_scaled)), X_test_scaled] @ theta)
+<span class="k">print</span>(<span class="s">"log-loss:"</span>, log_loss(y_test, p_test), <span class="s">" accuracy:"</span>, ((p_test &gt; <span class="n">0.5</span>) == y_test).mean())</pre></div>
+    <div class="tp"><pre><span class="k">from</span> sklearn.linear_model <span class="k">import</span> LogisticRegression
+<span class="k">from</span> sklearn.preprocessing <span class="k">import</span> StandardScaler
+<span class="k">from</span> sklearn.pipeline <span class="k">import</span> make_pipeline
+
+<span class="c"># C is INVERSE regularization strength: C=1.0 default, smaller C = stronger L2 penalty</span>
+clf = make_pipeline(StandardScaler(), <span class="f">LogisticRegression</span>(C=<span class="n">1.0</span>, max_iter=<span class="n">1000</span>))
+clf.fit(X_train, y_train)
+
+<span class="k">print</span>(<span class="s">"accuracy:"</span>, clf.score(X_test, y_test))
+<span class="k">print</span>(<span class="s">"weights :"</span>, clf[-<span class="n">1</span>].coef_, <span class="s">"bias:"</span>, clf[-<span class="n">1</span>].intercept_)
+<span class="k">print</span>(<span class="s">"odds ratios:"</span>, np.exp(clf[-<span class="n">1</span>].coef_))     <span class="c"># e^θ: how much each (scaled) feature multiplies the odds</span></pre></div>
+  </div>
+
+  <h3 style="margin-top:22px">2 · Probabilities, not labels</h3>
+  <div class="codewrap"><span class="lbl">python</span><pre>proba = clf.predict_proba(X_test)[:, <span class="n">1</span>]     <span class="c"># column 1 = P(class 1); column 0 = P(class 0)</span>
+scores = clf.decision_function(X_test)      <span class="c"># raw z = θᵀx (log-odds); proba == sigmoid(scores)</span>
+
+<span class="k">print</span>(proba[:<span class="n">5</span>].round(<span class="n">3</span>))                      <span class="c"># e.g. [0.91 0.08 0.55 0.73 0.02]</span>
+<span class="k">print</span>(clf.predict(X_test)[:<span class="n">5</span>])                <span class="c"># same thing thresholded at 0.5 → [1 0 1 1 0]</span>
+<span class="k">print</span>(clf.classes_)                           <span class="c"># [0 1]: tells you which column is which</span></pre></div>
+
+  <h3 style="margin-top:22px">3 · Tune the threshold to the business cost</h3>
+  <div class="codewrap"><span class="lbl">python</span><pre><span class="k">from</span> sklearn.metrics <span class="k">import</span> confusion_matrix, precision_score, recall_score
+
+<span class="k">for</span> t <span class="k">in</span> [<span class="n">0.3</span>, <span class="n">0.5</span>, <span class="n">0.7</span>]:
+    y_hat = (proba &gt;= t).astype(<span class="k">int</span>)          <span class="c"># predict() is just this with t = 0.5</span>
+    tn, fp, fn, tp = confusion_matrix(y_test, y_hat).ravel()
+    <span class="k">print</span>(<span class="s">f"t={t}: TP={tp} FP={fp} FN={fn} TN={tn} "</span>
+          <span class="s">f"precision={precision_score(y_test, y_hat):.2f} recall={recall_score(y_test, y_hat):.2f}"</span>)
+
+<span class="c"># fraud / medical screening: low threshold (catch everything, accept false alarms)</span>
+<span class="c"># loan approval / spam-to-trash: higher threshold (a false positive is expensive)</span></pre></div>
+
+  <h3 style="margin-top:22px">4 · Multiclass: softmax vs one-vs-rest</h3>
+  <div class="codewrap"><span class="lbl">python</span><pre><span class="k">from</span> sklearn.datasets <span class="k">import</span> load_iris
+<span class="k">from</span> sklearn.multiclass <span class="k">import</span> OneVsRestClassifier
+
+Xi, yi = load_iris(return_X_y=<span class="k">True</span>)                       <span class="c"># 3 flower species, 4 features</span>
+softmax_clf = LogisticRegression(max_iter=<span class="n">1000</span>).fit(Xi, yi)          <span class="c"># multinomial (softmax) by default with lbfgs</span>
+ovr_clf = <span class="f">OneVsRestClassifier</span>(LogisticRegression(max_iter=<span class="n">1000</span>)).fit(Xi, yi)   <span class="c"># 3 separate yes/no models</span>
+
+<span class="k">print</span>(softmax_clf.predict_proba(Xi[:<span class="n">1</span>]).round(<span class="n">3</span>))    <span class="c"># [[0.98 0.02 0.  ]] sums to 1</span>
+<span class="k">print</span>(softmax_clf.coef_.shape)                        <span class="c"># (3, 4): one weight row per class</span>
+<span class="k">print</span>(ovr_clf.predict_proba(Xi[:<span class="n">1</span>]).round(<span class="n">3</span>))        <span class="c"># OvR normalises 3 independent sigmoids</span></pre></div>
+
+  <h3 style="margin-top:22px">5 · Draw the decision boundary</h3>
+  <div class="codewrap"><span class="lbl">python</span><pre><span class="k">import</span> matplotlib.pyplot <span class="k">as</span> plt
+<span class="k">from</span> sklearn.inspection <span class="k">import</span> DecisionBoundaryDisplay
+
+<span class="c"># works for any 2-feature classifier; response_method="predict_proba" shades by probability</span>
+disp = DecisionBoundaryDisplay.from_estimator(clf, X_train, response_method=<span class="s">"predict_proba"</span>,
+                                              cmap=<span class="s">"RdYlGn"</span>, alpha=<span class="n">.5</span>, xlabel=<span class="s">"income"</span>, ylabel=<span class="s">"credit score"</span>)
+disp.ax_.scatter(X_train.iloc[:, <span class="n">0</span>], X_train.iloc[:, <span class="n">1</span>], c=y_train, cmap=<span class="s">"RdYlGn"</span>, edgecolor=<span class="s">"k"</span>, s=<span class="n">25</span>)
+plt.title(<span class="s">"P(repay) — the 0.5 contour is the decision boundary"</span>); plt.show()</pre></div>
+
+  <div class="callout cy"><b class="t">Gotchas you will hit</b><p><b>ConvergenceWarning</b>: scale your features (put <code>StandardScaler</code> in the pipeline) and/or raise <code>max_iter</code>. <b>Imbalanced classes</b> (2% fraud): accuracy of 98% is worthless; look at recall, and try <code>class_weight="balanced"</code>. Day 12 is entirely about this. <b><code>multi_class=</code></b> parameter: deprecated since sklearn 1.5; do not pass it, the default is already multinomial.</p></div>
+</div></section>
+
+<!-- ============ REAL WORLD ============ -->
+<section class="s" id="realworld" data-nav="Real world"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">05 · Real world &amp; tools</div><h2>Where logistic regression still wins in 2026</h2><p class="lead">It is the baseline every team fits first, the model regulators can audit, and the last layer of every deep net.</p></div><div class="time"><b>5</b>min</div></div>
+  <div class="grid3">
+    <div class="card rv"><span class="tag">Interactive</span><h4>MLU-Explain: Logistic Regression</h4><p>Amazon ML University's scrollable visual of the sigmoid, log-loss and the boundary, with a live playground. Pairs perfectly with today's demos.</p><a class="pill" href="https://mlu-explain.github.io/logistic-regression/" target="_blank" rel="noopener">mlu-explain.github.io ↗</a></div>
+    <div class="card rv"><span class="tag">Interactive</span><h4>TensorFlow Playground</h4><p>Zero hidden layers + sigmoid = logistic regression. Watch the boundary learn; add x² features and watch it curve.</p><a class="pill" href="https://playground.tensorflow.org/" target="_blank" rel="noopener">playground.tensorflow.org ↗</a></div>
+    <div class="card rv"><span class="tag">Dataset · fintech</span><h4>Give Me Some Credit (Kaggle)</h4><p>150k borrowers, "will default within 2 years". The classic credit-scoring competition; a regularised logistic regression is the industry baseline here.</p><a class="pill" href="https://www.kaggle.com/c/GiveMeSomeCredit" target="_blank" rel="noopener">kaggle.com ↗</a></div>
+    <div class="card rv"><span class="tag">Dataset · fraud</span><h4>Credit Card Fraud Detection</h4><p>284k European card transactions, 0.17% fraud. The dataset where you learn why accuracy lies and thresholds matter.</p><a class="pill" href="https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud" target="_blank" rel="noopener">kaggle.com ↗</a></div>
+    <div class="card rv"><span class="tag">Reference</span><h4>scikit-learn: LogisticRegression</h4><p>The docs page for <code>C</code>, <code>penalty</code>, solvers and <code>class_weight</code>. Read the "Notes" section once; it answers most interview follow-ups.</p><a class="pill" href="https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LogisticRegression.html" target="_blank" rel="noopener">scikit-learn.org ↗</a></div>
+    <div class="card rv"><span class="tag">Textbook · free</span><h4>ISLR, Chapter 4</h4><p>Classification: logistic regression, odds, multinomial, and why not linear regression. 30 pages, worth every one.</p><a class="pill" href="https://www.statlearning.com/" target="_blank" rel="noopener">statlearning.com ↗</a></div>
+  </div>
+  <h3 style="margin-top:34px">Modern AI tools for today's work</h3>
+  <div class="tools" style="margin-top:12px">
+    <div class="tool"><b>Google Colab</b><span>Run the notebook; every cell today finishes in under a second.</span><a href="https://colab.research.google.com/" target="_blank" rel="noopener">colab.research.google.com</a></div>
+    <div class="tool"><b>Kaggle</b><span>Give Me Some Credit and the fraud dataset live here; so do 1,000 notebooks to learn from.</span><a href="https://www.kaggle.com/" target="_blank" rel="noopener">kaggle.com</a></div>
+    <div class="tool"><b>Streamlit</b><span>Wrap your placement model in a form: "enter CGPA, aptitude, internships → probability".</span><a href="https://streamlit.io/" target="_blank" rel="noopener">streamlit.io</a></div>
+    <div class="tool"><b>GitHub Copilot</b><span>Autocomplete the boilerplate (imports, confusion matrix printing) so you spend time on thresholds.</span><a href="https://github.com/features/copilot" target="_blank" rel="noopener">github.com/features/copilot</a></div>
+    <div class="tool"><b>Claude / ChatGPT</b><span>Paste your confusion matrices at three thresholds and ask it to argue for one as a bank's risk head; then argue back.</span><a href="https://claude.ai/" target="_blank" rel="noopener">claude.ai</a></div>
+    <div class="tool"><b>Weights &amp; Biases</b><span>Log precision/recall per threshold across runs; the PR-curve panel is built in.</span><a href="https://wandb.ai/" target="_blank" rel="noopener">wandb.ai</a></div>
+  </div>
+</div></section>
+
+<!-- ============ CAREER ============ -->
+<section class="s" id="career" data-nav="Career"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">06 · Career corner</div><h2>How today shows up in a job</h2></div><div class="time"><b>3</b>min</div></div>
+  <div class="career rv">
+    <span class="tag">In job descriptions</span>
+    <p><b>Risk / Credit Analyst</b> (fintech: Paytm, PhonePe, Navi, Slice; banks: HDFC, ICICI analytics), <b>Data Scientist</b> (churn, conversion, fraud) and <b>ML Engineer</b> postings ask for "classification models", "logistic regression", "probability calibration", "threshold optimisation" and "scorecard development". Logistic regression is the model behind almost every credit scorecard in India because the RBI-regulated world needs weights it can explain.</p>
+    <h4 style="margin-top:18px">Real interview questions</h4>
+    <ul>
+      <li><b>"Why log-loss instead of MSE for classification?"</b> → MSE through a sigmoid is non-convex with flat regions; log-loss is convex, is the negative log-likelihood, and punishes confident mistakes heavily, which yields calibrated probabilities.</li>
+      <li><b>"What does a coefficient of 0.7 mean in logistic regression?"</b> → One unit increase in that feature multiplies the odds of the positive class by e<sup>0.7</sup> ≈ 2, holding other features fixed.</li>
+      <li><b>"Your fraud model has 99.8% accuracy. Are you happy?"</b> → No: fraud is 0.2% of data, so predicting "never fraud" scores 99.8%. Look at recall/precision at a chosen threshold, and use class weights or resampling.</li>
+    </ul>
+    <h4 style="margin-top:18px">Job-hunt action for today</h4>
+    <p>Add "Classification (Logistic Regression), Probability Calibration, Threshold Tuning" to your LinkedIn skills. Then star the <a href="https://github.com/scikit-learn/scikit-learn" target="_blank" rel="noopener">scikit-learn repo ↗</a> and read one open issue tagged <em>LogisticRegression</em>: you will learn how real engineers talk about this model, and "follows the sklearn issue tracker" is a genuinely good line in a fresher interview.</p>
+  </div>
+</div></section>
+
+<!-- ============ QUIZ ============ -->
+<section class="s" id="quiz" data-nav="Quiz"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">07 · Quiz</div><h2>Three quick checks</h2></div><div class="time"><b>3</b>min</div></div>
+  <div class="quiz">
+    <div class="q rv" data-a="1"><p>A model outputs z = θᵀx = 0 for a student. What is its predicted probability of placement?</p><div class="opts"><button type="button">0</button><button type="button">0.5</button><button type="button">1</button></div><div class="why">σ(0) = 1/(1+e⁰) = 1/2. The decision boundary is exactly the set of points where z = 0, i.e. p = 0.5.</div></div>
+    <div class="q rv" data-a="2"><p>A cancer-screening model must miss as few real cases as possible. Compared to 0.5, its threshold should be…</p><div class="opts"><button type="button">Higher (e.g. 0.8)</button><button type="button">Exactly 0.5, always</button><button type="button">Lower (e.g. 0.2)</button></div><div class="why">Lowering the threshold predicts "positive" more often: recall goes up (fewer missed cases), at the cost of more false alarms that a follow-up test can clear.</div></div>
+    <div class="q rv" data-a="0"><p>In sklearn's <code>LogisticRegression</code>, setting <code>C=0.01</code> instead of the default <code>C=1.0</code> gives…</p><div class="opts"><button type="button">Stronger regularisation, smaller weights</button><button type="button">Weaker regularisation, larger weights</button><button type="button">No change; C is the learning rate</button></div><div class="why">C is the inverse of the penalty strength (C = 1/α). Smaller C = bigger penalty = weights shrink toward zero. Easy to get backwards; interviewers know it.</div></div>
+  </div>
+</div></section>
+
+<!-- ============ HOMEWORK ============ -->
+<section class="s" id="homework" data-nav="Homework"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">08 · Homework</div><h2>Tonight, 30–40 minutes</h2></div><div class="time"><b>2</b>min</div></div>
+  <div class="hw">
+    <div class="card rv"><span class="lvl">Easy · 10 min</span><h4>Odds you can feel</h4><p>Take the placement model from the notebook. For each of the three features, write one sentence of the form "one more internship multiplies the odds of placement by ___". Then: what CGPA gives p = 0.5 when the other features are average?</p></div>
+    <div class="card rv"><span class="lvl">Medium · 20 min</span><h4>Churn with a business threshold</h4><p>Load the Telco churn CSV (link in the notebook's homework starter), fit a scaled logistic regression on the numeric columns + <code>Contract</code>. If a retention call costs ₹200 and a lost customer costs ₹3,000, which threshold minimises total cost on the test set?</p></div>
+    <div class="card rv"><span class="lvl">Stretch · job hunt</span><h4>Will I get a callback?</h4><p>Build a tiny dataset from your own applications (rows = jobs applied; features = referral yes/no, skills-match %, company size; label = callback). Fit logistic regression, print odds ratios. Post the one insight on LinkedIn. Even 20 rows teach you something about your own funnel.</p></div>
+  </div>
+</div></section>
+
+<!-- ============ NEXT ============ -->
+<section class="s" id="next" data-nav="Next"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">09 · Next</div><h2>Tomorrow</h2></div><div class="time"><b>2</b>min</div></div>
+  <div class="fin rv">
+    <h2>Day 07 · Lazy learners and probabilistic learners</h2>
+    <p>Logistic regression draws one straight line. Tomorrow we meet a model that draws no line at all and just asks its neighbours (KNN), and a model that reasons like a detective with Bayes' theorem (Naive Bayes), and we build a real spam filter.</p>
+    <div style="margin-top:26px;text-align:left;max-width:560px;margin-inline:auto">
+      <div class="steps">
+        <div><div><b>Run the notebook</b> and note the threshold that gave the highest recall on the placement data.</div></div>
+        <div><div><b>Do the Easy homework</b>; bring your "odds" sentences to class.</div></div>
+        <div><div><b>Watch</b> 3Blue1Brown's "Bayes theorem" (15 min, <a href="https://www.youtube.com/watch?v=HZGCoVF3YvM" target="_blank" rel="noopener">youtube ↗</a>) so tomorrow's second half is a review, not a shock.</div></div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+
+<script>
+document.documentElement.classList.add('js');
+/* nav from sections */
+(function(){const nav=document.getElementById('nav');document.querySelectorAll('section.s[data-nav]').forEach((s,i)=>{const a=document.createElement('a');a.href='#'+s.id;a.innerHTML='<i>'+String(i+1).padStart(2,'0')+'</i>'+s.dataset.nav;nav.appendChild(a);});
+const links=[...nav.querySelectorAll('a')];const secs=[...document.querySelectorAll('section.s[data-nav]')];
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle('on',l.getAttribute('href')==='#'+e.target.id));}})},{rootMargin:'-40% 0px -55% 0px'});secs.forEach(s=>io.observe(s));
+window.addEventListener('scroll',()=>{const h=document.documentElement;document.getElementById('track').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';},{passive:true});})();
+/* reveal */
+(function(){const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:.1});document.querySelectorAll('.rv').forEach(el=>io.observe(el));})();
+/* class timer */
+(function(){let t=0,id=null;const el=document.getElementById('clk'),b=document.getElementById('clkbtn');b.onclick=()=>{if(id){clearInterval(id);id=null;b.textContent='Resume';return;}b.textContent='Pause';id=setInterval(()=>{t++;el.textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');if(t>=3600){clearInterval(id);el.textContent='60:00';b.textContent='Done';}},1000);};})();
+/* hero particles */
+(function(){const c=document.getElementById('bgc');if(!c)return;const x=c.getContext('2d');let w,h,P=[];function rs(){w=c.width=c.offsetWidth;h=c.height=c.offsetHeight;P=Array.from({length:Math.min(70,w/14)},()=>({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-.5)*.4,vy:(Math.random()-.5)*.4}));}rs();window.addEventListener('resize',rs);const col=()=>getComputedStyle(document.documentElement).getPropertyValue('--cyan').trim();function f(){x.clearRect(0,0,w,h);const cc=col();for(const p of P){p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>w)p.vx*=-1;if(p.y<0||p.y>h)p.vy*=-1;}for(let i=0;i<P.length;i++){for(let j=i+1;j<P.length;j++){const d=Math.hypot(P[i].x-P[j].x,P[i].y-P[j].y);if(d<120){x.strokeStyle=cc;x.globalAlpha=(1-d/120)*.35;x.beginPath();x.moveTo(P[i].x,P[i].y);x.lineTo(P[j].x,P[j].y);x.stroke();}}}x.globalAlpha=1;x.fillStyle=cc;for(const p of P){x.beginPath();x.arc(p.x,p.y,1.8,0,7);x.fill();}requestAnimationFrame(f);}if(!matchMedia('(prefers-reduced-motion:reduce)').matches)f();})();
+/* tabs */
+document.querySelectorAll('.tabs').forEach(t=>{const bs=t.querySelectorAll('.tb button'),ps=t.querySelectorAll('.tp');bs.forEach((b,i)=>b.onclick=()=>{bs.forEach(x=>x.classList.remove('on'));ps.forEach(x=>x.classList.remove('on'));b.classList.add('on');ps[i].classList.add('on');});});
+/* quiz: <div class="q" data-a="1"> with .opts buttons; index of correct answer in data-a */
+document.querySelectorAll('.q').forEach(q=>{const a=+q.dataset.a;q.querySelectorAll('.opts button').forEach((b,i)=>b.onclick=()=>{if(q.classList.contains('done'))return;q.classList.add('done');b.classList.add(i===a?'ok':'bad');if(i!==a)q.querySelectorAll('.opts button')[a].classList.add('ok');});});
+/* Chart.js theme defaults */
+if(window.Chart){const cs=getComputedStyle(document.documentElement);Chart.defaults.color=cs.getPropertyValue('--ink2').trim();Chart.defaults.borderColor=cs.getPropertyValue('--line').trim();Chart.defaults.font.family=cs.getPropertyValue('--mono').trim();}
+</script>
+<script>
+/* ===== Day 06 page visuals ===== */
+(function(){
+  const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  function rng(seed){let s=seed>>>0;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
+  function gauss(r){let u=0,v=0;while(u===0)u=r();while(v===0)v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+  const sig=z=>1/(1+Math.exp(-z));
+
+  /* ---------- 1-D sigmoid / threshold / GD demo ---------- */
+  (function(){
+    const c=document.getElementById('sigc');if(!c)return;const ctx=c.getContext('2d');
+    const r=rng(21),N=60,cg=[],y=[];
+    for(let i=0;i<N;i++){const g=5.2+4.6*r();cg.push(g);const p=sig(2.2*(g-7.1));y.push(r()<p?1:0);}
+    const swEl=document.getElementById('sw'),sbEl=document.getElementById('sb'),thEl=document.getElementById('sth');
+    const W=c.width,H=c.height,pad={l:56,r:20,t:22,b:40};
+    const sx=g=>pad.l+(g-5)/5*(W-pad.l-pad.r), sy=p=>pad.t+(1.08-p)/1.16*(H-pad.t-pad.b);
+    let anim=null;
+    function stats(w,b,t){let ll=0,tp=0,fp=0,fn=0,tn=0;for(let i=0;i<N;i++){const p=Math.min(1-1e-9,Math.max(1e-9,sig(w*(cg[i]-b))));ll+=-(y[i]*Math.log(p)+(1-y[i])*Math.log(1-p));const yh=p>=t?1:0;if(yh&&y[i])tp++;else if(yh&&!y[i])fp++;else if(!yh&&y[i])fn++;else tn++;}return{ll:ll/N,tp,fp,fn,tn};}
+    function draw(){
+      const w=+swEl.value,b=+sbEl.value,t=+thEl.value;
+      document.getElementById('swv').textContent=w.toFixed(1);document.getElementById('sbv').textContent=b.toFixed(2);document.getElementById('sthv').textContent=t.toFixed(2);
+      ctx.clearRect(0,0,W,H);
+      /* grid + axes */
+      ctx.strokeStyle=css('--line');ctx.lineWidth=1;for(const p of [0,0.25,0.5,0.75,1]){ctx.beginPath();ctx.moveTo(pad.l,sy(p));ctx.lineTo(W-pad.r,sy(p));ctx.stroke();ctx.fillStyle=css('--ink3');ctx.font='11px JetBrains Mono,monospace';ctx.fillText(p.toFixed(2),pad.l-40,sy(p)+4);}
+      for(let g=5;g<=10;g++){ctx.fillStyle=css('--ink3');ctx.fillText(g.toFixed(1),sx(g)-10,H-12);}
+      ctx.fillText('CGPA →',W-pad.r-60,H-12);
+      /* threshold line */
+      ctx.strokeStyle=css('--lime');ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(pad.l,sy(t));ctx.lineTo(W-pad.r,sy(t));ctx.stroke();
+      const gcut=b+Math.log(t/(1-t))/w; /* where sigmoid == t */
+      if(gcut>5&&gcut<10){ctx.strokeStyle=css('--rose');ctx.beginPath();ctx.moveTo(sx(gcut),pad.t);ctx.lineTo(sx(gcut),H-pad.b);ctx.stroke();ctx.fillStyle=css('--rose');ctx.fillText('boundary '+gcut.toFixed(2),sx(gcut)+6,pad.t+12);}
+      ctx.setLineDash([]);
+      /* sigmoid */
+      ctx.strokeStyle=css('--amber');ctx.lineWidth=2.5;ctx.beginPath();for(let i=0;i<=200;i++){const g=5+5*i/200;const p=[sx(g),sy(sig(w*(g-b)))];i?ctx.lineTo(...p):ctx.moveTo(...p);}ctx.stroke();ctx.lineWidth=1;
+      /* points, coloured by correctness */
+      for(let i=0;i<N;i++){const p=sig(w*(cg[i]-b));const yh=p>=t?1:0;const jitter=((i*37)%7-3)*0.012;ctx.fillStyle=yh===y[i]?css('--cyan'):css('--rose');ctx.beginPath();ctx.arc(sx(cg[i]),sy(y[i]+jitter),5,0,7);ctx.fill();}
+      ctx.fillStyle=css('--ink2');ctx.font='12px JetBrains Mono,monospace';ctx.fillText('● correct   ● wrong   — p = σ(w·(CGPA − b))   – – threshold',pad.l+6,pad.t-8);
+      const s=stats(w,b,t);
+      document.getElementById('sll').textContent=s.ll.toFixed(3);document.getElementById('sacc').textContent=((s.tp+s.tn)/N*100).toFixed(0)+'%';
+      document.getElementById('stpfp').textContent=s.tp+' / '+s.fp;document.getElementById('sfntn').textContent=s.fn+' / '+s.tn;
+      document.getElementById('sprec').textContent=(s.tp+s.fp)?(s.tp/(s.tp+s.fp)).toFixed(2):'–';document.getElementById('srec').textContent=(s.tp+s.fn)?(s.tp/(s.tp+s.fn)).toFixed(2):'–';
+    }
+    [swEl,sbEl,thEl].forEach(e=>e.addEventListener('input',()=>{if(anim){cancelAnimationFrame(anim);anim=null;}draw();}));
+    document.getElementById('sreset').onclick=()=>{if(anim){cancelAnimationFrame(anim);anim=null;}swEl.value=1;sbEl.value=7;thEl.value=0.5;draw();};
+    /* gradient descent on (w, b) with features centred: z = w*(g - b). Parametrise as theta1 = w, theta0 = -w*b on standardised g */
+    document.getElementById('sfit').onclick=()=>{
+      if(anim){cancelAnimationFrame(anim);anim=null;}
+      const mu=cg.reduce((a,b)=>a+b,0)/N;const sd=Math.sqrt(cg.reduce((a,g)=>a+(g-mu)**2,0)/N);
+      const gs=cg.map(g=>(g-mu)/sd);
+      let w=+swEl.value*sd, b0=(+swEl.value)*(mu-(+sbEl.value)); /* start from current sliders, in standardised space */
+      const lr=0.5;let step=0;
+      const tick=()=>{for(let k=0;k<6;k++){let gw=0,gb=0;for(let i=0;i<N;i++){const e=sig(w*gs[i]+b0)-y[i];gw+=e*gs[i];gb+=e;}w-=lr*gw/N;b0-=lr*gb/N;step++;}
+        const wr=w/sd, br=mu-b0*sd/w; swEl.value=Math.min(6,Math.max(0.2,wr));sbEl.value=Math.min(9,Math.max(5,br));draw();
+        ctx.fillStyle=css('--amber');ctx.font='12px JetBrains Mono,monospace';ctx.fillText('gradient descent step '+step,W-240,pad.t+30);
+        if(step<600){anim=requestAnimationFrame(tick);}else anim=null;};
+      anim=requestAnimationFrame(tick);
+    };
+    draw();
+  })();
+
+  /* ---------- 2-D decision boundary demo ---------- */
+  (function(){
+    const c=document.getElementById('bdc');if(!c)return;const ctx=c.getContext('2d');
+    const r=rng(5),N=140,pts=[];
+    /* income (k₹/month) 15..150, credit score 450..850 ; true model on standardised features */
+    for(let i=0;i<N;i++){const inc=15+135*r(),cs=450+400*r();const z=1.6*((cs-650)/120)+1.1*((inc-80)/40)-0.2;pts.push({inc,cs,y:r()<sig(z)?1:0});}
+    /* fit logistic regression by GD (fixed once) */
+    const mi=80,si=40,mc=650,sc=120;let th=[0,0,0];
+    for(let it=0;it<3000;it++){const g=[0,0,0];for(const p of pts){const x1=(p.inc-mi)/si,x2=(p.cs-mc)/sc;const e=sig(th[0]+th[1]*x1+th[2]*x2)-p.y;g[0]+=e;g[1]+=e*x1;g[2]+=e*x2;}for(let k=0;k<3;k++)th[k]-=0.3*g[k]/N;}
+    const prob=(inc,cs)=>sig(th[0]+th[1]*(inc-mi)/si+th[2]*(cs-mc)/sc);
+    const W=c.width,H=c.height,pad={l:60,r:20,t:20,b:44};
+    const sx=v=>pad.l+(v-15)/135*(W-pad.l-pad.r), sy=v=>pad.t+(850-v)/400*(H-pad.t-pad.b);
+    const thEl=document.getElementById('bth'),shEl=document.getElementById('bprob');
+    function draw(){
+      const t=+thEl.value;document.getElementById('bthv').textContent=t.toFixed(2);
+      ctx.clearRect(0,0,W,H);
+      if(shEl.checked){const cell=12;for(let px=pad.l;px<W-pad.r;px+=cell)for(let py=pad.t;py<H-pad.b;py+=cell){const inc=15+(px-pad.l)/(W-pad.l-pad.r)*135,cs=850-(py-pad.t)/(H-pad.t-pad.b)*400;const p=prob(inc,cs);ctx.fillStyle=p>=t?'rgba(155,229,107,'+(0.06+0.22*p)+')':'rgba(255,107,138,'+(0.06+0.22*(1-p))+')';ctx.fillRect(px,py,cell,cell);}}
+      /* axes */
+      ctx.strokeStyle=css('--line2');ctx.strokeRect(pad.l,pad.t,W-pad.l-pad.r,H-pad.t-pad.b);
+      ctx.fillStyle=css('--ink3');ctx.font='11px JetBrains Mono,monospace';for(const v of [25,50,75,100,125,150])ctx.fillText(v,sx(v)-8,H-pad.b+16);for(const v of [500,600,700,800])ctx.fillText(v,pad.l-36,sy(v)+4);
+      ctx.fillText('monthly income (₹ thousand) →',W/2-90,H-8);ctx.save();ctx.translate(14,H/2+50);ctx.rotate(-Math.PI/2);ctx.fillText('credit score →',0,0);ctx.restore();
+      /* boundary line: th0 + th1 x1 + th2 x2 = logit(t) */
+      const L=Math.log(t/(1-t));ctx.strokeStyle=css('--amber');ctx.lineWidth=2.5;ctx.beginPath();let first=true;
+      for(let inc=15;inc<=150;inc+=1){const x1=(inc-mi)/si;const x2=(L-th[0]-th[1]*x1)/th[2];const cs=x2*sc+mc;if(cs<450||cs>850){first=true;continue;}const p=[sx(inc),sy(cs)];first?ctx.moveTo(...p):ctx.lineTo(...p);first=false;}ctx.stroke();ctx.lineWidth=1;
+      let tp=0,fp=0,fn=0,tn=0;
+      for(const p of pts){const yh=prob(p.inc,p.cs)>=t?1:0;if(yh&&p.y)tp++;else if(yh&&!p.y)fp++;else if(!yh&&p.y)fn++;else tn++;
+        ctx.fillStyle=p.y?css('--lime'):css('--rose');ctx.strokeStyle=css('--bg');ctx.beginPath();ctx.arc(sx(p.inc),sy(p.cs),5,0,7);ctx.fill();ctx.stroke();
+        if(yh!==p.y){ctx.strokeStyle=css('--ink');ctx.beginPath();ctx.arc(sx(p.inc),sy(p.cs),8,0,7);ctx.stroke();}}
+      ctx.fillStyle=css('--ink2');ctx.font='12px JetBrains Mono,monospace';ctx.fillText('● repaid   ● defaulted   ○ misclassified   — boundary at p = '+t.toFixed(2),pad.l+8,pad.t+16);
+      document.getElementById('bapp').textContent=(tp+fp)+' / '+N;document.getElementById('btpfp').textContent=tp+' / '+fp;document.getElementById('bfntn').textContent=fn+' / '+tn;document.getElementById('bcost').textContent=fp+' loans';
+    }
+    thEl.addEventListener('input',draw);shEl.addEventListener('change',draw);draw();
+  })();
+
+  /* ---------- log-loss chart ---------- */
+  if(window.Chart&&document.getElementById('llchart')){const ps=[],a=[],b=[];for(let i=1;i<100;i++){const p=i/100;ps.push(p.toFixed(2));a.push(+(-Math.log(p)).toFixed(3));b.push(+(-Math.log(1-p)).toFixed(3));}
+    new Chart(document.getElementById('llchart'),{type:'line',data:{labels:ps,datasets:[{label:'y = 1: −log(p)',data:a,borderColor:css('--amber'),backgroundColor:css('--amber'),pointRadius:0,tension:.2},{label:'y = 0: −log(1−p)',data:b,borderColor:css('--cyan'),backgroundColor:css('--cyan'),pointRadius:0,tension:.2}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{title:{display:true,text:'predicted probability p'},ticks:{maxTicksLimit:11}},y:{title:{display:true,text:'loss for this example'},min:0,max:5}},plugins:{legend:{position:'top'}}}});}
+
+  /* ---------- softmax bars ---------- */
+  (function(){
+    const box=document.getElementById('smx');if(!box)return;const ids=['z1','z2','z3'],names=['placed','higher studies','startup'],cols=['--cyan','--amber','--violet'];
+    function draw(){const z=ids.map(i=>+document.getElementById(i).value);const m=Math.max(...z);const e=z.map(v=>Math.exp(v-m));const s=e.reduce((a,b)=>a+b,0);const p=e.map(v=>v/s);
+      box.innerHTML=p.map((v,i)=>'<div style="display:grid;grid-template-columns:150px 1fr 70px;gap:10px;align-items:center"><span>'+names[i]+' (z='+z[i].toFixed(1)+')</span><div style="height:18px;background:var(--bg2);border:1px solid var(--line);border-radius:6px;overflow:hidden"><div style="height:100%;width:'+(v*100).toFixed(1)+'%;background:var('+cols[i]+');transition:width .25s"></div></div><b style="color:var('+cols[i]+')">'+(v*100).toFixed(1)+'%</b></div>').join('')+'<div style="color:var(--ink3)">sum = '+(p.reduce((a,b)=>a+b,0)*100).toFixed(0)+'%</div>';}
+    ids.forEach(i=>document.getElementById(i).addEventListener('input',draw));draw();
+  })();
+})();
+
+</script>
+</body></html>

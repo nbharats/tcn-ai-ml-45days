@@ -1,0 +1,606 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Day 11: Support Vector Machines</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0A0E1A; --bg2:#111729; --panel:#161D33; --line:#243052; --line2:#2E3B62;
+  --ink:#EDF0FA; --ink2:#AEB7D3; --ink3:#7B86A8;
+  --amber:#FFB43A; --cyan:#4FD3F2; --rose:#FF6B8A; --lime:#9BE56B; --violet:#9D8CFF;
+  --glow:rgba(79,211,242,.18);
+  --display:'Syne',ui-sans-serif,system-ui,sans-serif;
+  --body:'Manrope',ui-sans-serif,system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#F3F5FB; --bg2:#FFFFFF; --panel:#FFFFFF; --line:#D7DDEE; --line2:#C3CBE3;
+    --ink:#0F1730; --ink2:#3B4666; --ink3:#6B7694;
+    --amber:#C97A00; --cyan:#0A8FB3; --rose:#D93A5D; --lime:#4E9A1E; --violet:#6A55E8;
+    --glow:rgba(10,143,179,.14);
+  }
+}
+:root[data-theme="light"]{
+  --bg:#F3F5FB; --bg2:#FFFFFF; --panel:#FFFFFF; --line:#D7DDEE; --line2:#C3CBE3;
+  --ink:#0F1730; --ink2:#3B4666; --ink3:#6B7694;
+  --amber:#C97A00; --cyan:#0A8FB3; --rose:#D93A5D; --lime:#4E9A1E; --violet:#6A55E8;
+  --glow:rgba(10,143,179,.14);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;padding-inline:clamp(16px,4vw,48px);padding-block:0 80px}
+a{color:var(--cyan)}
+h1,h2,h3,h4{font-family:var(--display);text-wrap:balance;line-height:1.08;margin:0}
+h2{font-size:clamp(30px,4.2vw,50px);font-weight:800;letter-spacing:-.01em}
+h3{font-size:clamp(20px,2.2vw,26px);font-weight:700}
+h4{font-size:17px;font-weight:700}
+p{max-width:68ch;margin:0}
+p+p{margin-top:12px}
+ul,ol{max-width:70ch}
+li{margin-bottom:6px}
+.wrap{max-width:1180px;margin:0 auto}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)}
+.eyebrow b{color:var(--amber);font-weight:600}
+code,.mono{font-family:var(--mono)}
+p code,li code,td code{font-size:.9em;background:var(--bg2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--cyan)}
+
+/* progress bar + nav */
+#bar{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);margin-inline:calc(-1*clamp(16px,4vw,48px));padding-inline:clamp(16px,4vw,48px)}
+#bar .wrap{display:flex;align-items:center;gap:14px;height:56px;overflow-x:auto;scrollbar-width:none}
+#bar .wrap::-webkit-scrollbar{display:none}
+#bar .brand{font-family:var(--display);font-weight:800;font-size:15px;white-space:nowrap}
+#bar .brand span{color:var(--amber)}
+#bar nav{display:flex;gap:4px;flex:1}
+#bar nav a{font-family:var(--mono);font-size:11.5px;text-decoration:none;color:var(--ink3);padding:6px 10px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+#bar nav a.on{color:var(--ink);border-color:var(--line2);background:var(--panel)}
+#bar nav a i{font-style:normal;color:var(--amber);margin-right:5px}
+#bar .clock{font-family:var(--mono);font-size:12px;color:var(--ink2);white-space:nowrap;display:flex;gap:8px;align-items:center}
+#bar .clock button{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line2);border-radius:6px;padding:4px 9px;cursor:pointer}
+#track{position:absolute;left:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--cyan),var(--amber));width:0}
+
+/* sections */
+section.s{padding-block:88px 40px;border-top:1px solid var(--line);position:relative}
+.head{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end;margin-bottom:38px}
+.time{font-family:var(--mono);font-size:12px;color:var(--ink3);text-align:right;line-height:1.5}
+.time b{display:block;font-size:22px;color:var(--amber);font-weight:600}
+.lead{font-size:clamp(18px,1.6vw,21px);color:var(--ink2);max-width:62ch;margin-top:16px}
+
+/* hero */
+#hero{padding-block:70px 60px;position:relative;overflow:hidden;margin-inline:calc(-1*clamp(16px,4vw,48px));padding-inline:clamp(16px,4vw,48px)}
+#hero canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.55;pointer-events:none}
+#hero .wrap{position:relative}
+#hero h1{font-size:clamp(40px,7vw,96px);font-weight:800;letter-spacing:-.03em;line-height:.98}
+#hero h1 em{font-style:normal;color:var(--amber)}
+#hero h1 .c{color:var(--cyan)}
+.hero-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:40px;align-items:end;margin-top:30px}
+.agenda{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
+.agenda h3{font-size:14px;font-family:var(--mono);font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-bottom:12px}
+.agenda ol{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.agenda li{display:grid;grid-template-columns:52px 1fr;gap:12px;font-size:15px;align-items:baseline;margin:0}
+.agenda li span{font-family:var(--mono);font-size:12px;color:var(--amber)}
+.agenda li a{color:var(--ink);text-decoration:none}
+.agenda li a:hover{color:var(--cyan)}
+
+/* generic blocks */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;transition:transform .25s,border-color .25s}
+.card:hover{border-color:var(--cyan)}
+.card h3{margin-bottom:8px}
+.card h4{margin-bottom:6px}
+.card p{font-size:15.5px;color:var(--ink2)}
+.card.amber{border-color:var(--amber)} .card.violet{border-color:var(--violet)} .card.lime{border-color:var(--lime)} .card.rose{border-color:var(--rose)}
+.tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid var(--line2);color:var(--ink3);margin-bottom:12px}
+.pill{display:inline-flex;gap:6px;align-items:center;font-family:var(--mono);font-size:12px;padding:5px 11px;border-radius:999px;background:var(--bg2);border:1px solid var(--line);color:var(--ink2);text-decoration:none;margin:4px 6px 4px 0}
+.pill:hover{border-color:var(--cyan);color:var(--ink)}
+.callout{border-left:4px solid var(--amber);background:var(--panel);border-radius:0 14px 14px 0;padding:16px 20px;margin-block:18px}
+.callout.cy{border-left-color:var(--cyan)} .callout.ro{border-left-color:var(--rose)} .callout.li{border-left-color:var(--lime)} .callout.vi{border-left-color:var(--violet)}
+.callout b.t{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);display:block;margin-bottom:6px}
+.callout.cy b.t{color:var(--cyan)} .callout.ro b.t{color:var(--rose)} .callout.li b.t{color:var(--lime)} .callout.vi b.t{color:var(--violet)}
+.callout p{font-size:15.5px;color:var(--ink2)}
+
+/* analogy strip */
+.analogy{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start;background:linear-gradient(135deg,color-mix(in srgb,var(--amber) 10%,var(--panel)),var(--panel));border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-block:22px}
+.analogy .em{font-size:38px;line-height:1}
+.analogy h4{margin-bottom:4px}
+.analogy p{font-size:15.5px;color:var(--ink2)}
+
+/* code */
+pre{background:var(--bg2);border:1px solid var(--line2);border-radius:12px;padding:16px 18px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.55;margin:0;color:var(--ink)}
+pre .c{color:var(--ink3)} pre .k{color:var(--violet)} pre .s{color:var(--lime)} pre .n{color:var(--amber)} pre .f{color:var(--cyan)}
+.codewrap{position:relative;margin-block:14px}
+.codewrap .lbl{position:absolute;top:8px;right:12px;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+
+/* tabs */
+.tabs{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel)}
+.tabs .tb{display:flex;gap:2px;border-bottom:1px solid var(--line);background:var(--bg2);overflow-x:auto}
+.tabs .tb button{font:600 13px var(--body);background:transparent;color:var(--ink3);border:0;padding:11px 16px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.tabs .tb button.on{color:var(--ink);border-bottom-color:var(--amber)}
+.tabs .tp{display:none;padding:18px}
+.tabs .tp.on{display:block}
+
+/* figures / charts */
+figure{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;overflow:hidden}
+figure svg{width:100%;height:auto;display:block}
+figcaption{font-family:var(--mono);font-size:11.5px;color:var(--ink3);margin-top:8px}
+.chart{position:relative;height:300px}
+.chart canvas{width:100%!important;height:100%!important}
+canvas.demo{width:100%;height:auto;background:var(--bg2);border:1px solid var(--line2);border-radius:14px;display:block;touch-action:none}
+.ctl{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.ctl label{font-family:var(--mono);font-size:12px;color:var(--ink2);display:flex;gap:8px;align-items:center}
+.ctl input[type=range]{accent-color:var(--amber)}
+.btn{font:600 14px var(--body);color:var(--bg);background:var(--amber);border:0;border-radius:9px;padding:10px 16px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line2)}
+.btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.stats{font-family:var(--mono);font-size:13px;color:var(--ink2);display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin-top:14px;font-variant-numeric:tabular-nums}
+.stats b{color:var(--cyan);font-weight:600}
+
+/* steps */
+.steps{display:grid;gap:10px;counter-reset:st}
+.steps>div{display:grid;grid-template-columns:32px 1fr;gap:12px;align-items:start;font-size:15px;color:var(--ink2)}
+.steps>div::before{counter-increment:st;content:counter(st);font-family:var(--mono);font-size:12px;color:var(--amber);border:1px solid var(--line2);border-radius:50%;width:26px;height:26px;display:grid;place-items:center}
+.steps b{color:var(--ink)}
+
+/* table */
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+th,td{padding:10px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);background:var(--bg2)}
+tr:last-child td{border-bottom:0}
+
+/* tools + career */
+.tools{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.tool{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:6px}
+.tool b{font-family:var(--display);font-size:16px}
+.tool span{font-size:14px;color:var(--ink2)}
+.tool a{font-family:var(--mono);font-size:12px;text-decoration:none}
+.career{border:1px solid var(--violet);background:linear-gradient(135deg,color-mix(in srgb,var(--violet) 12%,var(--panel)),var(--panel));border-radius:14px;padding:22px}
+.career .tag{border-color:var(--violet);color:var(--violet)}
+
+/* homework */
+.hw{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.hw .card{border-color:var(--line2)}
+.hw .lvl{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--lime);margin-bottom:6px;display:block}
+
+/* quiz */
+.quiz{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.q{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.q p{font-size:15px;margin-bottom:12px;color:var(--ink)}
+.q .opts{display:flex;gap:8px;flex-wrap:wrap}
+.q button{font:600 13px var(--body);padding:7px 12px;border-radius:8px;border:1px solid var(--line2);background:var(--bg2);color:var(--ink);cursor:pointer}
+.q button.ok{border-color:var(--lime);color:var(--lime)} .q button.bad{border-color:var(--rose);color:var(--rose)}
+.q .why{font-size:13.5px;color:var(--ink2);margin-top:10px;display:none}
+.q.done .why{display:block}
+
+/* details */
+details{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:0 18px;margin-block:10px}
+summary{cursor:pointer;padding:14px 0;font-family:var(--display);font-weight:700;font-size:16px}
+details[open] summary{border-bottom:1px solid var(--line);margin-bottom:12px}
+details>*:not(summary){padding-bottom:14px}
+
+/* footer */
+.fin{text-align:center;padding-block:60px 20px}
+.fin h2{font-size:clamp(28px,4vw,44px)}
+.fin p{margin:14px auto 0}
+
+/* reveal */
+.rv{opacity:1;transform:none;transition:opacity .6s ease,transform .6s ease}
+.js .rv:not(.in){opacity:.001;transform:translateY(18px)}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+@keyframes dash{to{stroke-dashoffset:0}}
+.flowline{stroke-dasharray:6 6;animation:flow 1.2s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-24}}
+@media (prefers-reduced-motion:reduce){.js .rv:not(.in){opacity:1;transform:none}.rv{transition:none}*{animation:none!important}}
+
+@media (max-width:980px){
+  .grid4,.tools,.hw{grid-template-columns:1fr 1fr}
+  .grid3,.quiz{grid-template-columns:1fr 1fr}
+}
+@media (max-width:720px){
+  .hero-grid,.grid2,.grid3,.grid4,.tools,.hw,.quiz,.analogy{grid-template-columns:1fr}
+  .head{grid-template-columns:1fr}.time{text-align:left}
+}
+</style></head><body>
+
+<div id="bar"><div class="wrap">
+  <div class="brand">AI <span>&amp;</span> ML Engineering · Day 11</div>
+  <nav id="nav"><!-- filled by JS from section[data-nav] --></nav>
+  <div class="clock"><span id="clk">00:00</span><button id="clkbtn" type="button">Start 60 min</button></div>
+</div><div id="track"></div></div>
+
+<!-- ============ HERO ============ -->
+<header id="hero"><canvas id="bgc"></canvas><div class="wrap">
+  <div class="eyebrow"><b>Day 11</b> · Phase 2 · Supervised ML · 60 minutes</div>
+  <h1 style="margin-top:18px">The <em>widest street</em><br>between two <span class="c">classes</span></h1>
+  <div class="hero-grid">
+    <p class="lead">Logistic regression draws <i>a</i> line. A Support Vector Machine draws <i>the</i> line: the one with the most empty space on both sides, decided only by the handful of points closest to it. Then the kernel trick lets that straight street bend into curves without ever computing the curve. Today you will train SVMs on shapes a line cannot separate, tune C and gamma by feel on a live canvas, and build a text classifier that fits in a tenth of a second.</p>
+    <div class="agenda"><h3>Today's route</h3><ol>
+      <li><span>00–05</span><a href="#hook">Hook: the divider on the highway</a></li>
+      <li><span>05–23</span><a href="#concept">Concept: margin, support vectors, kernels</a></li>
+      <li><span>23–33</span><a href="#deeper">Deeper: hinge loss, C, gamma, the trick</a></li>
+      <li><span>33–45</span><a href="#code">Code: SVC on shapes, LinearSVC on text</a></li>
+      <li><span>45–50</span><a href="#realworld">Real world &amp; tools</a></li>
+      <li><span>50–53</span><a href="#career">Career corner</a></li>
+      <li><span>53–56</span><a href="#quiz">Quiz</a></li>
+      <li><span>56–58</span><a href="#homework">Homework</a></li>
+      <li><span>58–60</span><a href="#next">Next: metrics</a></li>
+    </ol></div>
+  </div>
+</div></header>
+
+<!-- ============ 1. HOOK ============ -->
+<section class="s" id="hook" data-nav="Hook"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">01 · Hook</div><h2>Where would you paint the divider?</h2><p class="lead">Two lanes of traffic on the Mumbai–Pune Expressway. You must paint one line between them. Any line that keeps the two lanes apart "works". But an engineer paints it as far as possible from <b>both</b> lanes, so a small swerve from either side does not cross it. That extra room is the <b>margin</b>, and the SVM is the algorithm that maximises it.</p></div><div class="time"><b>5</b>min</div></div>
+  <div class="grid2 rv">
+    <div class="card amber"><span class="tag">Projector · 2 min</span><h3>The kernel trick in 60 seconds</h3><p>Play <a href="https://www.youtube.com/watch?v=3liCbRZPrZA" target="_blank" rel="noopener">"SVM with polynomial kernel visualization" (udiprod, 1 min) ↗</a>. Red and blue dots on a table that no straight line can separate; the video lifts them into 3D where a flat sheet cuts them cleanly, and the sheet's shadow on the table is a circle. Then open <a href="https://cs.stanford.edu/people/karpathy/svmjs/demo/" target="_blank" rel="noopener">Karpathy's SVM.js demo ↗</a> and click points onto the canvas. Our own canvas below does the same thing offline.</p></div>
+    <div class="card"><span class="tag">Ask the class</span><h3>Why not just use logistic regression?</h3><p>Logistic regression is happy with any line that gets the probabilities roughly right, and every training point pulls on it a little. The SVM ignores the well-classified crowd entirely: only the points on the edge of the street, the <b>support vectors</b>, have a say. Ask: "if I delete a point far from the boundary, does the SVM change?" No. "If I delete a support vector?" Yes. That is a property no other model we have seen has.</p></div>
+  </div>
+  <div class="callout ro rv"><b class="t">Why this matters in 2026</b><p>SVMs lost the image and speech wars to deep learning after 2012. They did not lose tables with fewer than ~50k rows, high-dimensional sparse text, and anything where you have an embedding and need a fast, robust classifier on top. <span class="mono">LinearSVC</span> on TF-IDF or on sentence embeddings is still the fastest strong baseline in NLP, and "explain the kernel trick" is still one of the top five classical interview questions.</p></div>
+</div></section>
+
+<!-- ============ 2. CONCEPT ============ -->
+<section class="s" id="concept" data-nav="Concept"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">02 · Concept</div><h2>Margin, support vectors, and the trick</h2><p class="lead">Three ideas. Maximise the street width (margin). Let a few points cross it, at a price (soft margin, controlled by C). Measure similarity instead of position so the street can curve (kernels, controlled by gamma).</p></div><div class="time"><b>18</b>min</div></div>
+
+  <div class="analogy rv"><div class="em">🪙</div><div><h4>Coins on a table</h4><p>Scatter ten-rupee coins in a ring around a pile of one-rupee coins on a table. No ruler laid flat can separate the two. Now bang the table: the light one-rupee coins in the middle jump higher than the heavy ten-rupee coins on the outside. For that instant, a flat sheet of paper held at the right height separates them perfectly. Seen from above, the sheet's edge is a <b>circle</b>. The SVM never builds the 3D table-bang; the <b>kernel</b> just tells it how similar two coins would be up there. That is the trick: compute similarities in a higher dimension without ever going there.</p></div></div>
+
+  <h3 class="rv" style="margin-top:30px">Live: margin, support vectors, C and gamma</h3>
+  <p class="rv" style="margin-top:8px">The canvas trains a real SVM in your browser (Platt's SMO algorithm, the same idea inside LIBSVM). The decision boundary is the solid line; the two dashed lines are the margin edges where <span class="mono">f(x) = ±1</span>; ringed points are the <b>support vectors</b>, the only points that determine the boundary. Change the dataset, then drag <b>C</b> and <b>gamma</b> and watch the street widen, narrow, bend, and eventually wrap every single point (overfitting). Click on the canvas to add points of the selected class and see whether the boundary moves.</p>
+  <figure class="rv" style="margin-top:14px">
+    <canvas id="svmc" class="demo" width="900" height="480" aria-label="Interactive SVM: margin, support vectors, kernel"></canvas>
+    <div class="ctl">
+      <label>data <select id="svmdata"><option value="blobs">two blobs (separable)</option><option value="overlap">overlapping blobs</option><option value="moons" selected>moons</option><option value="circles">circles</option></select></label>
+      <label>kernel <select id="svmk"><option value="linear">linear</option><option value="poly">poly (degree 3)</option><option value="rbf" selected>rbf</option></select></label>
+      <label>C <input type="range" id="svmC" min="-2" max="3" step="0.1" value="0"> <span id="svmCv">1</span></label>
+      <label>gamma <input type="range" id="svmG" min="-1.5" max="2" step="0.1" value="0"> <span id="svmGv">1</span></label>
+      <label>click adds <select id="svmcls"><option value="1">amber (+1)</option><option value="-1">cyan (−1)</option></select></label>
+      <button class="btn ghost" id="svmreset" type="button">Reset data</button>
+    </div>
+    <div class="stats">
+      <div>support vectors: <b id="sv_n">–</b> of <b id="sv_tot">–</b> points</div>
+      <div>training accuracy: <b id="sv_acc">–</b></div>
+      <div>margin width (linear only): <b id="sv_m">–</b></div>
+      <div>points inside street / misclassified: <b id="sv_in">–</b></div>
+    </div>
+    <figcaption>Shading = sign and confidence of f(x) = Σ αᵢ yᵢ K(xᵢ, x) + b. Try: circles + linear (fails), circles + rbf (perfect). Moons + rbf: slide gamma to 100 and watch islands form around single points; slide C to 0.01 and watch the street swallow everyone. Linear kernel on separable blobs: the margin width is printed; raise C and it stops changing once no point crosses.</figcaption>
+  </figure>
+
+  <div class="grid2 rv" style="margin-top:26px">
+    <div>
+      <div class="callout"><b class="t">Key idea 1 · Maximum margin</b><p>Of all separating lines, pick the one whose distance to the nearest point of either class is largest. Wider street = a boundary that tolerates noise = better generalisation. Only the nearest points (support vectors) matter; delete the rest and nothing changes.</p></div>
+      <div class="callout cy"><b class="t">Key idea 2 · C is the price of a violation</b><p>Real data overlaps, so we allow points inside the street or on the wrong side, but charge <span class="mono">C</span> per unit of violation. <b>Large C</b>: violations are expensive, the street narrows to avoid them, more risk of overfitting. <b>Small C</b>: violations are cheap, the street widens, more points become support vectors, smoother boundary. C is the SVM's regularisation knob (inverse of the usual λ).</p></div>
+      <div class="callout li"><b class="t">Key idea 3 · gamma is the reach of one point</b><p>With the RBF kernel <span class="mono">K(a,b) = exp(−γ‖a−b‖²)</span>, gamma sets how far a training point's influence extends. <b>Small gamma</b>: every point influences a wide area, boundary is smooth, almost linear. <b>Large gamma</b>: influence dies within a tiny radius, the boundary wraps individual points, overfitting. sklearn's default <span class="mono">gamma='scale'</span> = 1 / (n_features · Var(X)).</p></div>
+    </div>
+    <figure>
+      <div class="chart"><canvas id="cgChart"></canvas></div>
+      <figcaption>Real sklearn run on make_moons (noise 0.25, 400 points, RBF). Left axis: train and test accuracy; right axis: number of support vectors. Small C → huge margin, 280 of 280 points are support vectors, underfit. Large C → fewer support vectors, train accuracy rises, test accuracy plateaus at ~0.94.</figcaption>
+    </figure>
+  </div>
+
+  <h3 class="rv" style="margin-top:34px">The kernel zoo</h3>
+  <div class="tbl rv" style="margin-top:12px"><table>
+    <tr><th>Kernel</th><th>K(a, b)</th><th>Boundary shape</th><th>Knobs</th><th>Use when</th></tr>
+    <tr><td><span class="mono">linear</span></td><td>a·b</td><td>straight line / flat plane</td><td>C</td><td>many features (text, embeddings), lots of rows; use <span class="mono">LinearSVC</span></td></tr>
+    <tr><td><span class="mono">poly</span></td><td>(γ a·b + r)<sup>d</sup></td><td>curves of degree d</td><td>C, degree, gamma, coef0</td><td>you suspect feature interactions of a known order; rarely the best choice</td></tr>
+    <tr><td><span class="mono">rbf</span> (Gaussian)</td><td>exp(−γ‖a−b‖²)</td><td>any smooth shape, islands</td><td>C, gamma</td><td>default for small/medium numeric tables; scale features first</td></tr>
+    <tr><td><span class="mono">sigmoid</span></td><td>tanh(γ a·b + r)</td><td>like a 1-layer neural net</td><td>C, gamma, coef0</td><td>historical; almost never</td></tr>
+    <tr><td>precomputed</td><td>your own matrix</td><td>anything</td><td>C</td><td>string kernels, graph kernels, custom similarities</td></tr>
+  </table></div>
+
+  <div class="callout vi rv" style="margin-top:22px"><b class="t">Interview answer</b><p>"An SVM finds the hyperplane that maximises the margin, the distance to the nearest training points, which are called support vectors. The soft-margin parameter C trades margin width against misclassification. The kernel trick replaces the dot product with a kernel function, which is equivalent to mapping the data to a higher-dimensional space where a linear separator exists, without computing that mapping explicitly. RBF kernels with gamma control how local the boundary is."</p></div>
+</div></section>
+
+<!-- ============ 3. DEEPER ============ -->
+<section class="s" id="deeper" data-nav="Deeper"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">03 · Deeper</div><h2>The maths, kept honest</h2><p class="lead">Four formulas. Each is decoded in one sentence, then we look at the loss function that makes an SVM an SVM.</p></div><div class="time"><b>10</b>min</div></div>
+
+  <h3 class="rv">1. The decision function and the margin</h3>
+  <div class="callout rv" style="margin-block:12px"><p class="mono" style="font-size:17px;color:var(--ink)">f(x) = w·x + b,&nbsp;&nbsp; predict sign(f(x)),&nbsp;&nbsp; margin width = 2 / ‖w‖</p></div>
+  <p class="rv"><span class="mono">w</span> is the normal vector to the boundary, <span class="mono">b</span> the offset. The street edges are <span class="mono">f(x) = +1</span> and <span class="mono">f(x) = −1</span>; the distance between them is <span class="mono">2/‖w‖</span>. So "maximise the margin" is the same as "minimise ‖w‖", which is why the optimisation below has ½‖w‖² in it.</p>
+
+  <h3 class="rv" style="margin-top:26px">2. The soft-margin objective (what sklearn actually solves)</h3>
+  <div class="callout cy rv" style="margin-block:12px"><p class="mono" style="font-size:17px;color:var(--ink)">min<sub>w,b</sub>&nbsp; ½‖w‖² + C Σ<sub>i</sub> max(0, 1 − y<sub>i</sub>(w·x<sub>i</sub> + b))</p></div>
+  <p class="rv">The first term wants a wide street. The second is the <b>hinge loss</b> summed over points: zero when a point is on the correct side <i>and</i> outside the street (<span class="mono">y·f ≥ 1</span>), growing linearly as it enters the street or crosses the line. <span class="mono">C</span> is the exchange rate between the two wishes. Labels <span class="mono">y<sub>i</sub></span> are ±1, not 0/1, so that <span class="mono">y·f</span> is positive exactly when the prediction is right.</p>
+
+  <div class="grid2 rv" style="margin-top:22px">
+    <figure>
+      <svg id="losssvg" viewBox="0 0 460 260" role="img" aria-label="Hinge loss vs logistic loss vs 0-1 loss"></svg>
+      <figcaption>Loss as a function of the margin score y·f(x). 0-1 loss (grey) is what we care about but cannot optimise. Log-loss (cyan, logistic regression) never reaches zero: every point keeps pulling. Hinge loss (amber, SVM) is exactly zero beyond y·f = 1, which is why well-classified points have no influence and only support vectors matter.</figcaption>
+    </figure>
+    <div>
+      <h3>3. The dual, where kernels live</h3>
+      <div class="callout li" style="margin-block:12px"><p class="mono" style="font-size:16px;color:var(--ink)">f(x) = Σ<sub>i</sub> α<sub>i</sub> y<sub>i</sub> K(x<sub>i</sub>, x) + b,&nbsp;&nbsp; 0 ≤ α<sub>i</sub> ≤ C</p></div>
+      <p>Solving the Lagrangian dual gives one weight <span class="mono">α<sub>i</sub></span> per <b>training point</b> instead of one per feature. Most <span class="mono">α<sub>i</sub></span> are exactly zero; the non-zero ones are the support vectors. Crucially, the data appears only inside <span class="mono">K(x<sub>i</sub>, x)</span>, a similarity between two points. Swap the dot product for any valid kernel and you get a non-linear classifier for free. That is the whole kernel trick in one line.</p>
+      <p style="margin-top:10px"><b>Cost:</b> training is O(n²) to O(n³) in the number of rows because the kernel matrix is n×n. Past ~50–100k rows, use <span class="mono">LinearSVC</span> (liblinear, linear in n), <span class="mono">SGDClassifier(loss='hinge')</span>, or approximate the kernel with <span class="mono">RBFSampler</span> / <span class="mono">Nystroem</span>.</p>
+    </div>
+  </div>
+
+  <h3 class="rv" style="margin-top:26px">4. Practical rules that save you an afternoon</h3>
+  <div class="grid3 rv" style="margin-top:10px">
+    <div class="card"><h4>Always scale features</h4><p>The RBF kernel uses Euclidean distance; a column in rupees will dominate a column in years. On Telco churn, unscaled RBF-SVC scores 73.5% accuracy; with <span class="mono">StandardScaler</span> in a Pipeline it scores 79.3%. Trees did not care; SVMs and KNN do.</p></div>
+    <div class="card"><h4>Search C and gamma on a log grid</h4><p><span class="mono">C ∈ {0.01 … 1000}</span>, <span class="mono">gamma ∈ {0.001 … 10}</span>, powers of 10 first, then refine. They interact: a larger gamma often wants a smaller C. Use GridSearchCV with 5-fold stratified CV (formal treatment on Day 13).</p></div>
+    <div class="card"><h4>Probabilities are not native</h4><p>SVC outputs a signed distance, not a probability. <span class="mono">probability=True</span> fits a separate Platt-scaling logistic regression via internal 5-fold CV: slow and slightly inconsistent with <span class="mono">predict</span>. For ROC-AUC use <span class="mono">decision_function</span> instead; it ranks exactly the same.</p></div>
+  </div>
+
+  <div class="callout vi rv" style="margin-top:22px"><b class="t">How to say this in an interview</b><p>"The SVM minimises ½‖w‖² plus C times the hinge loss, which is zero for points outside the margin, so only support vectors shape the boundary. In the dual, the data appears only through inner products, so replacing them with a kernel like RBF gives a non-linear boundary at the cost of O(n²) training. In practice I scale features, grid-search C and gamma on a log scale, and switch to LinearSVC for large or sparse data such as TF-IDF."</p></div>
+</div></section>
+
+<!-- ============ 4. CODE ============ -->
+<section class="s" id="code" data-nav="Code"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">04 · Code</div><h2>SVC on shapes, LinearSVC on text</h2><p class="lead">First the toy shapes so you can see the boundary, then a real text classifier where SVMs still shine. Full runnable version: open <code>Day_11_SVM.ipynb</code> in Google Colab.</p></div><div class="time"><b>12</b>min</div></div>
+
+  <h3 class="rv">Snippet 1 · Three kernels on two shapes</h3>
+  <div class="codewrap rv"><span class="lbl">python</span><pre><span class="k">from</span> sklearn.datasets <span class="k">import</span> make_moons, make_circles
+<span class="k">from</span> sklearn.svm <span class="k">import</span> SVC
+<span class="k">from</span> sklearn.model_selection <span class="k">import</span> train_test_split
+
+shapes = {<span class="s">"moons"</span>:   <span class="f">make_moons</span>(n_samples=<span class="n">400</span>, noise=<span class="n">0.25</span>, random_state=<span class="n">42</span>),
+          <span class="s">"circles"</span>: <span class="f">make_circles</span>(n_samples=<span class="n">400</span>, noise=<span class="n">0.10</span>, factor=<span class="n">0.4</span>, random_state=<span class="n">42</span>)}
+
+<span class="k">for</span> name, (X, y) <span class="k">in</span> shapes.<span class="f">items</span>():
+    X_tr, X_te, y_tr, y_te = <span class="f">train_test_split</span>(X, y, test_size=<span class="n">0.3</span>, random_state=<span class="n">42</span>)
+    <span class="k">for</span> kernel <span class="k">in</span> [<span class="s">"linear"</span>, <span class="s">"poly"</span>, <span class="s">"rbf"</span>]:
+        clf = <span class="f">SVC</span>(kernel=kernel, C=<span class="n">1.0</span>, gamma=<span class="s">"scale"</span>, degree=<span class="n">3</span>).<span class="f">fit</span>(X_tr, y_tr)
+        <span class="k">print</span>(<span class="s">f"{name:8s} {kernel:7s} test acc={clf.score(X_te, y_te):.3f}  support vectors={clf.n_support_.sum()}"</span>)
+<span class="c"># moons    linear  0.817 (102 SV)   poly 0.858 (117)   rbf 0.908 (83)</span>
+<span class="c"># circles  linear  0.542            poly 0.650         rbf 1.000   ← a line cannot cut a ring</span></pre></div>
+
+  <h3 class="rv" style="margin-top:22px">Snippet 2 · Draw the street and the support vectors</h3>
+  <div class="codewrap rv"><span class="lbl">python</span><pre><span class="k">import</span> numpy <span class="k">as</span> np, matplotlib.pyplot <span class="k">as</span> plt
+<span class="k">from</span> sklearn.inspection <span class="k">import</span> DecisionBoundaryDisplay
+
+X, y = shapes[<span class="s">"moons"</span>]
+clf = <span class="f">SVC</span>(kernel=<span class="s">"rbf"</span>, C=<span class="n">1</span>, gamma=<span class="n">1</span>).<span class="f">fit</span>(X, y)
+
+disp = DecisionBoundaryDisplay.<span class="f">from_estimator</span>(clf, X, response_method=<span class="s">"decision_function"</span>,
+                                              plot_method=<span class="s">"contour"</span>, levels=[-<span class="n">1</span>, <span class="n">0</span>, <span class="n">1</span>],
+                                              linestyles=[<span class="s">"--"</span>, <span class="s">"-"</span>, <span class="s">"--"</span>], colors=<span class="s">"k"</span>)   <span class="c"># margin edges + boundary</span>
+disp.ax_.<span class="f">scatter</span>(X[:, <span class="n">0</span>], X[:, <span class="n">1</span>], c=y, cmap=<span class="s">"coolwarm"</span>, s=<span class="n">18</span>)
+disp.ax_.<span class="f">scatter</span>(clf.support_vectors_[:, <span class="n">0</span>], clf.support_vectors_[:, <span class="n">1</span>],       <span class="c"># ring the support vectors</span>
+                 s=<span class="n">90</span>, facecolors=<span class="s">"none"</span>, edgecolors=<span class="s">"k"</span>)
+plt.<span class="f">title</span>(<span class="s">f"RBF SVM: {len(clf.support_vectors_)} support vectors of {len(X)} points"</span>); plt.<span class="f">show</span>()</pre></div>
+
+  <h3 class="rv" style="margin-top:22px">Snippet 3 · Tune C and gamma properly (scale first, grid on a log scale)</h3>
+  <div class="codewrap rv"><span class="lbl">python</span><pre><span class="k">from</span> sklearn.pipeline <span class="k">import</span> make_pipeline
+<span class="k">from</span> sklearn.preprocessing <span class="k">import</span> StandardScaler
+<span class="k">from</span> sklearn.model_selection <span class="k">import</span> GridSearchCV, StratifiedKFold
+
+pipe = <span class="f">make_pipeline</span>(<span class="f">StandardScaler</span>(), <span class="f">SVC</span>(kernel=<span class="s">"rbf"</span>))       <span class="c"># scaler INSIDE the pipeline → no leakage in CV</span>
+grid = {<span class="s">"svc__C"</span>: [<span class="n">0.01</span>, <span class="n">0.1</span>, <span class="n">1</span>, <span class="n">10</span>, <span class="n">100</span>],
+        <span class="s">"svc__gamma"</span>: [<span class="n">0.001</span>, <span class="n">0.01</span>, <span class="n">0.1</span>, <span class="n">1</span>, <span class="n">10</span>]}                  <span class="c"># 25 combos × 5 folds = 125 fits, seconds on moons</span>
+gs = <span class="f">GridSearchCV</span>(pipe, grid, cv=<span class="f">StratifiedKFold</span>(<span class="n">5</span>, shuffle=<span class="k">True</span>, random_state=<span class="n">42</span>),
+                  scoring=<span class="s">"accuracy"</span>, n_jobs=-<span class="n">1</span>).<span class="f">fit</span>(X_tr, y_tr)
+<span class="k">print</span>(gs.best_params_, <span class="f">round</span>(gs.best_score_, <span class="n">3</span>), <span class="s">"→ test"</span>, <span class="f">round</span>(gs.<span class="f">score</span>(X_te, y_te), <span class="n">3</span>))
+
+<span class="c"># heat-map of the 5×5 grid (see notebook): the best region is a diagonal band, large gamma ↔ small C</span></pre></div>
+
+  <h3 class="rv" style="margin-top:22px">Snippet 4 · Text classification: TF-IDF + LinearSVC (still the fastest strong baseline)</h3>
+  <div class="tabs rv">
+    <div class="tb"><button class="on" type="button">LinearSVC</button><button type="button">vs LogisticRegression / NB / SVC</button><button type="button">Read the weights</button></div>
+    <div class="tp on"><div class="codewrap"><span class="lbl">python</span><pre><span class="k">from</span> sklearn.datasets <span class="k">import</span> fetch_20newsgroups
+<span class="k">from</span> sklearn.feature_extraction.text <span class="k">import</span> TfidfVectorizer
+<span class="k">from</span> sklearn.svm <span class="k">import</span> LinearSVC
+
+cats = [<span class="s">"rec.sport.hockey"</span>, <span class="s">"sci.space"</span>, <span class="s">"comp.graphics"</span>, <span class="s">"talk.politics.misc"</span>]
+train = <span class="f">fetch_20newsgroups</span>(subset=<span class="s">"train"</span>, categories=cats, remove=(<span class="s">"headers"</span>, <span class="s">"footers"</span>, <span class="s">"quotes"</span>))
+test  = <span class="f">fetch_20newsgroups</span>(subset=<span class="s">"test"</span>,  categories=cats, remove=(<span class="s">"headers"</span>, <span class="s">"footers"</span>, <span class="s">"quotes"</span>))
+
+vec = <span class="f">TfidfVectorizer</span>(sublinear_tf=<span class="k">True</span>, min_df=<span class="n">2</span>, ngram_range=(<span class="n">1</span>, <span class="n">2</span>))   <span class="c"># 2,242 docs → 59,110 sparse features</span>
+X_tr = vec.<span class="f">fit_transform</span>(train.data); X_te = vec.<span class="f">transform</span>(test.data)
+
+svm = <span class="f">LinearSVC</span>(C=<span class="n">1.0</span>).<span class="f">fit</span>(X_tr, train.target)             <span class="c"># liblinear: linear in n, loves sparse input</span>
+<span class="k">print</span>(<span class="s">"test accuracy:"</span>, <span class="f">round</span>(svm.<span class="f">score</span>(X_te, test.target), <span class="n">3</span>))   <span class="c"># 0.876, trained in 0.09 s</span></pre></div></div>
+    <div class="tp"><div class="codewrap"><span class="lbl">python</span><pre><span class="k">import</span> time
+<span class="k">from</span> sklearn.linear_model <span class="k">import</span> LogisticRegression
+<span class="k">from</span> sklearn.naive_bayes <span class="k">import</span> MultinomialNB
+<span class="k">for</span> name, m <span class="k">in</span> [(<span class="s">"LinearSVC"</span>, <span class="f">LinearSVC</span>(C=<span class="n">1</span>)), (<span class="s">"LogReg"</span>, <span class="f">LogisticRegression</span>(C=<span class="n">10</span>, max_iter=<span class="n">2000</span>)),
+                (<span class="s">"MultinomialNB"</span>, <span class="f">MultinomialNB</span>()), (<span class="s">"SVC rbf"</span>, <span class="f">SVC</span>(kernel=<span class="s">"rbf"</span>))]:
+    t = time.<span class="f">time</span>(); m.<span class="f">fit</span>(X_tr, train.target)
+    <span class="k">print</span>(<span class="s">f"{name:14s} acc={m.score(X_te, test.target):.3f}  fit={time.time()-t:.2f}s"</span>)
+<span class="c"># LinearSVC      acc=0.876  fit=0.09s   ← best AND fastest</span>
+<span class="c"># LogReg         acc=0.868  fit=1.69s</span>
+<span class="c"># MultinomialNB  acc=0.851  fit=0.01s</span>
+<span class="c"># SVC rbf        acc=0.855  fit=10.3s   ← kernel matrix on 59k-dim sparse vectors: slow and no better</span></pre></div></div>
+    <div class="tp"><div class="codewrap"><span class="lbl">python</span><pre><span class="c"># a linear SVM is interpretable: one weight per n-gram per class</span>
+<span class="k">import</span> numpy <span class="k">as</span> np
+terms = np.<span class="f">array</span>(vec.<span class="f">get_feature_names_out</span>())
+<span class="k">for</span> i, c <span class="k">in</span> <span class="f">enumerate</span>(train.target_names):
+    top = terms[np.<span class="f">argsort</span>(svm.coef_[i])[-<span class="n">6</span>:]][::-<span class="n">1</span>]
+    <span class="k">print</span>(<span class="s">f"{c:20s}"</span>, <span class="s">", "</span>.<span class="f">join</span>(top))
+<span class="c"># comp.graphics        graphics, image, file, 3d, computer, files</span>
+<span class="c"># rec.sport.hockey     hockey, game, team, games, season, nhl</span>
+<span class="c"># sci.space            space, orbit, nasa, launch, moon, shuttle</span>
+<span class="c"># talk.politics.misc   clinton, people, tax, government, drugs, law</span></pre></div></div>
+  </div>
+
+  <h3 class="rv" style="margin-top:22px">Snippet 5 · The rest of the family</h3>
+  <div class="codewrap rv"><span class="lbl">python</span><pre><span class="k">from</span> sklearn.svm <span class="k">import</span> SVR, OneClassSVM
+<span class="k">from</span> sklearn.linear_model <span class="k">import</span> SGDClassifier
+<span class="k">from</span> sklearn.kernel_approximation <span class="k">import</span> RBFSampler
+
+svr = <span class="f">SVR</span>(kernel=<span class="s">"rbf"</span>, C=<span class="n">10</span>, epsilon=<span class="n">0.1</span>)            <span class="c"># regression: a tube of width 2ε; only points outside it are SVs</span>
+ocs = <span class="f">OneClassSVM</span>(nu=<span class="n">0.05</span>, gamma=<span class="s">"scale"</span>)            <span class="c"># anomaly detection: learn the shape of "normal", flag the 5% outside</span>
+big = <span class="f">make_pipeline</span>(<span class="f">StandardScaler</span>(), <span class="f">RBFSampler</span>(gamma=<span class="n">0.5</span>, n_components=<span class="n">500</span>, random_state=<span class="n">42</span>),
+                    <span class="f">SGDClassifier</span>(loss=<span class="s">"hinge"</span>))    <span class="c"># approximate RBF-SVM that scales to millions of rows</span></pre></div>
+</div></section>
+
+<!-- ============ 5. REAL WORLD ============ -->
+<section class="s" id="realworld" data-nav="Real world"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">05 · Real world &amp; tools</div><h2>Where SVMs still earn their keep</h2><p class="lead">Text and spam filters, bioinformatics (gene expression: 20k features, 200 samples), handwriting and face detection before 2012, anomaly detection on sensor data, and as the fast classifier head on top of modern embeddings.</p></div><div class="time"><b>5</b>min</div></div>
+  <div class="grid3 rv">
+    <div class="card"><span class="tag">Paper · 1995</span><h3>Cortes &amp; Vapnik, "Support-Vector Networks"</h3><p>The soft-margin SVM paper. The introduction and figures are readable; the derivation is the dual you saw today.</p><a href="https://link.springer.com/article/10.1007/BF00994018" target="_blank" rel="noopener">Springer (Machine Learning, 20) ↗</a></div>
+    <div class="card"><span class="tag">Interactive</span><h3>Karpathy's SVM.js demo</h3><p>Click points, switch kernels, drag C. The same SMO algorithm as our canvas, written by the person who later ran AI at Tesla.</p><a href="https://cs.stanford.edu/people/karpathy/svmjs/demo/" target="_blank" rel="noopener">cs.stanford.edu ↗</a></div>
+    <div class="card"><span class="tag">Guide</span><h3>A Practical Guide to SVM Classification</h3><p>Hsu, Chang &amp; Lin (authors of LIBSVM). Eight pages: scale, use RBF, grid-search C and gamma on a log scale. Still the recipe.</p><a href="https://www.csie.ntu.edu.tw/~cjlin/papers/guide/guide.pdf" target="_blank" rel="noopener">csie.ntu.edu.tw (PDF) ↗</a></div>
+    <div class="card"><span class="tag">Docs</span><h3>scikit-learn SVM user guide</h3><p>SVC vs LinearSVC vs NuSVC, kernel formulas, complexity notes, and the "tips on practical use" section worth reading twice.</p><a href="https://scikit-learn.org/stable/modules/svm.html" target="_blank" rel="noopener">scikit-learn.org ↗</a></div>
+    <div class="card"><span class="tag">Dataset</span><h3>SMS Spam Collection (Kaggle)</h3><p>5,572 SMS messages labelled ham/spam. TF-IDF + LinearSVC gets ~98% in under a second; a perfect first NLP portfolio piece.</p><a href="https://www.kaggle.com/datasets/uciml/sms-spam-collection-dataset" target="_blank" rel="noopener">kaggle.com ↗</a></div>
+    <div class="card"><span class="tag">Video</span><h3>StatQuest: SVMs clearly explained</h3><p>Twenty minutes, drawings only, covers margin, soft margin and the kernel trick in the same order as today.</p><a href="https://www.youtube.com/watch?v=efR1C6CvhmE" target="_blank" rel="noopener">youtube.com ↗</a></div>
+  </div>
+  <h3 class="rv" style="margin-top:32px;margin-bottom:12px">Modern tools for today's work</h3>
+  <div class="tools rv">
+    <div class="tool"><b>Hugging Face sentence-transformers</b><span>Embed text with a small model, then LinearSVC on top: a 2026-grade text classifier in 10 lines (Day 38 goes deep).</span><a href="https://huggingface.co/sentence-transformers" target="_blank" rel="noopener">huggingface.co ↗</a></div>
+    <div class="tool"><b>Optuna</b><span>Log-uniform search over C and gamma beats a fixed grid when each fit is slow.</span><a href="https://optuna.org/" target="_blank" rel="noopener">optuna.org ↗</a></div>
+    <div class="tool"><b>Google Colab</b><span>SVC on 20k rows is fine on CPU; past that use LinearSVC or kernel approximation.</span><a href="https://colab.research.google.com/" target="_blank" rel="noopener">colab.research.google.com ↗</a></div>
+    <div class="tool"><b>Streamlit</b><span>Wrap the spam classifier in a text box + "Predict" button and deploy in 15 minutes.</span><a href="https://streamlit.io/" target="_blank" rel="noopener">streamlit.io ↗</a></div>
+    <div class="tool"><b>Claude / ChatGPT</b><span>Ask "explain why my RBF-SVM has 100% train accuracy and 60% test" and check its answer against the gamma slider above.</span><a href="https://chatgpt.com/" target="_blank" rel="noopener">chatgpt.com ↗</a></div>
+    <div class="tool"><b>Kaggle</b><span>Search notebooks for "LinearSVC tfidf" to see the pattern used in hundreds of competitions.</span><a href="https://www.kaggle.com/code" target="_blank" rel="noopener">kaggle.com/code ↗</a></div>
+  </div>
+</div></section>
+
+<!-- ============ 6. CAREER ============ -->
+<section class="s" id="career" data-nav="Career"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">06 · Career corner</div><h2>The interview classic</h2></div><div class="time"><b>3</b>min</div></div>
+  <div class="career rv">
+    <span class="tag">In job descriptions</span>
+    <p>Roles: <b>Machine Learning Engineer</b>, <b>NLP Engineer</b>, <b>Data Scientist</b>, <b>Research Engineer (bioinformatics / signal processing)</b>. JDs rarely say "SVM" in 2026; they say "strong fundamentals in classical ML", "text classification", "anomaly detection". Interviewers, however, love SVMs because the answer reveals whether you understand margins, regularisation and kernels, three ideas that reappear in deep learning (margin losses, weight decay, attention as kernel similarity).</p>
+    <div class="grid3" style="margin-top:18px">
+      <div class="card"><h4>Q: What is the kernel trick?</h4><p>The SVM dual uses the data only through dot products. Replacing x·x' with a kernel K(x, x') is equivalent to a dot product in a higher-dimensional feature space, without computing the mapping. RBF corresponds to an infinite-dimensional space.</p></div>
+      <div class="card"><h4>Q: What happens as C → ∞? As gamma → ∞?</h4><p>C → ∞: hard margin, no violations allowed, boundary hugs the training data, overfits (may fail if not separable). gamma → ∞: each point's influence shrinks to itself, boundary becomes islands around points, overfits.</p></div>
+      <div class="card"><h4>Q: SVM vs logistic regression?</h4><p>Both linear classifiers; LR minimises log-loss (probabilistic, every point contributes), SVM minimises hinge loss (only margin violators contribute) and maximises margin. SVM kernels give non-linearity; LR gives calibrated probabilities. Similar accuracy on most tabular data.</p></div>
+    </div>
+    <div class="callout vi" style="margin-top:18px;margin-bottom:0"><b class="t">Job-hunt action for today (15 min)</b><p>Build the SMS spam classifier (Medium homework), wrap it in a 20-line Streamlit app, screenshot it, and add a resume bullet: "Built and deployed an SMS spam filter (TF-IDF + LinearSVC, 98% accuracy, &lt;1 s training) with a Streamlit UI." Then practise saying the three interview answers above out loud, once each. Out loud matters.</p></div>
+  </div>
+</div></section>
+
+<!-- ============ 7. QUIZ ============ -->
+<section class="s" id="quiz" data-nav="Quiz"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">07 · Quiz</div><h2>Three questions, thirty seconds each</h2></div><div class="time"><b>3</b>min</div></div>
+  <div class="quiz rv">
+    <div class="q" data-a="1"><p>You delete a training point that is far from the boundary and retrain the SVM. The boundary…</p><div class="opts"><button type="button">Moves slightly, like every model</button><button type="button">Does not change at all</button><button type="button">Moves towards the deleted point</button></div><div class="why">Its hinge loss was zero and its α was zero: it was not a support vector. Only support vectors define the boundary.</div></div>
+    <div class="q" data-a="2"><p>Your RBF-SVM has 100% training accuracy and 61% test accuracy. First thing to try?</p><div class="opts"><button type="button">Increase gamma</button><button type="button">Increase C</button><button type="button">Decrease gamma (and/or C)</button></div><div class="why">Islands around single points = gamma too large (or C too large). Lower gamma widens each point's influence and smooths the boundary.</div></div>
+    <div class="q" data-a="0"><p>You have 500k short reviews as TF-IDF vectors. Which classifier?</p><div class="opts"><button type="button">LinearSVC (or SGDClassifier with hinge loss)</button><button type="button">SVC with RBF kernel</button><button type="button">SVC with poly kernel, degree 5</button></div><div class="why">Kernel SVC builds an n×n kernel matrix: impossible at 500k rows. Linear SVMs train in linear time, love sparse input, and are usually as accurate on text.</div></div>
+  </div>
+</div></section>
+
+<!-- ============ 8. HOMEWORK ============ -->
+<section class="s" id="homework" data-nav="Homework"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">08 · Homework</div><h2>Twenty to forty minutes, pick your level</h2></div><div class="time"><b>2</b>min</div></div>
+  <div class="hw rv">
+    <div class="card"><span class="lvl">Easy · 10 min</span><h4>The C–gamma heat-map</h4><p>In the notebook, run the 5×5 GridSearchCV on moons and plot <span class="mono">cv_results_</span> as a heat-map (C on one axis, gamma on the other). Mark the best cell. One sentence: what shape is the good region?</p></div>
+    <div class="card"><span class="lvl">Medium · 20 min</span><h4>SMS spam filter</h4><p>Download the Kaggle SMS Spam Collection (or use the raw UCI copy linked in the notebook). TF-IDF + LinearSVC, report accuracy and the 10 most "spammy" n-grams. Wrap it in a Streamlit text box if you have time: that is a portfolio piece.</p></div>
+    <div class="card"><span class="lvl">Stretch · job hunt</span><h4>Job-description vs your resume, as a classifier</h4><p>Collect 15 JDs you'd love and 15 you'd skip. TF-IDF + LinearSVC on "want / skip". Print the top weighted terms on each side; those are the words your resume should (and should not) contain. Post the two word lists on LinkedIn.</p></div>
+  </div>
+  <p class="rv" style="margin-top:14px;color:var(--ink3);font-size:14px">Homework starter cells are at the bottom of the Colab notebook.</p>
+</div></section>
+
+<!-- ============ 9. NEXT ============ -->
+<section class="s" id="next" data-nav="Next"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">09 · Next</div><h2>Tomorrow: Measuring a model honestly</h2></div><div class="time"><b>2</b>min</div></div>
+  <div class="fin rv">
+    <h2>Day 12 · Evaluation Metrics</h2>
+    <p>We have said "accuracy" and "AUC" for a week without ever defining them properly. Tomorrow: the confusion matrix, why 99% accuracy can be a useless model, precision vs recall, F1, ROC and PR curves, and how to pick a threshold a business can live with.</p>
+    <div class="card" style="max-width:560px;margin:26px auto 0;text-align:left"><span class="tag">Before next class</span>
+      <ul style="margin:0;padding-left:18px">
+        <li>Run today's notebook; note the best C and gamma for moons and your LinearSVC text accuracy.</li>
+        <li>Do the Easy homework (heat-map). Bring it.</li>
+        <li>Think about this: a fraud model flags 1 in 1,000 transactions; 0.1% of transactions are fraud. Is 99.9% accuracy good? Bring an opinion.</li>
+      </ul></div>
+  </div>
+</div></section>
+
+<script>
+/* ===== Interactive SVM (SMO) ===== */
+(function(){
+const cv=document.getElementById('svmc');if(!cv)return;const ctx=cv.getContext('2d');
+const col=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let seed=11;function rnd(){seed=(seed*1664525+1013904223)%4294967296;return seed/4294967296;}
+function gauss(){const u=rnd()||1e-9,v=rnd();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+let X=[],Y=[];
+function gen(kind){seed=11;X=[];Y=[];const n=45;
+  if(kind==='blobs'||kind==='overlap'){const s=kind==='blobs'?0.09:0.16;for(let i=0;i<n;i++){X.push([0.3+s*gauss(),0.32+s*gauss()]);Y.push(-1);X.push([0.7+s*gauss(),0.68+s*gauss()]);Y.push(1);}}
+  else if(kind==='moons'){for(let i=0;i<n;i++){const t=Math.PI*rnd();X.push([0.28+0.25*Math.cos(t)+0.05*gauss(),0.42+0.25*Math.sin(t)+0.05*gauss()]);Y.push(-1);X.push([0.52+0.25*Math.cos(t)+0.05*gauss(),0.58-0.25*Math.sin(t)+0.05*gauss()]);Y.push(1);}}
+  else{for(let i=0;i<n;i++){const t=2*Math.PI*rnd();X.push([0.5+0.13*Math.cos(t)+0.03*gauss(),0.5+0.13*Math.sin(t)+0.03*gauss()]);Y.push(1);const t2=2*Math.PI*rnd();X.push([0.5+0.38*Math.cos(t2)+0.03*gauss(),0.5+0.38*Math.sin(t2)+0.03*gauss()]);Y.push(-1);}}}
+const el=id=>document.getElementById(id);
+function params(){return{k:el('svmk').value,C:Math.pow(10,+el('svmC').value),g:Math.pow(10,+el('svmG').value)};}
+/* canvas coords are 0..1; kernel works in units ×5 (≈ the spread of sklearn's make_moons) so gamma feels like sklearn's */
+const U=5;
+function kern(a,b,P){const a0=a[0]*U,a1=a[1]*U,b0=b[0]*U,b1=b[1]*U;if(P.k==='linear')return a0*b0+a1*b1;if(P.k==='poly')return Math.pow(P.g*(a0*b0+a1*b1)/U+1,3);const d0=a0-b0,d1=a1-b1;return Math.exp(-P.g*(d0*d0+d1*d1));}
+let model=null;
+function train(){const P=params();const n=X.length;const K=new Float64Array(n*n);for(let i=0;i<n;i++)for(let j=0;j<n;j++)K[i*n+j]=kern(X[i],X[j],P);
+  const a=new Float64Array(n);let b=0;const C=P.C,tol=1e-3;let passes=0,iter=0;
+  const f=i=>{let s=b;for(let j=0;j<n;j++)if(a[j]>0)s+=a[j]*Y[j]*K[i*n+j];return s;};
+  while(passes<8&&iter<400){let changed=0;iter++;
+    for(let i=0;i<n;i++){const Ei=f(i)-Y[i];if((Y[i]*Ei<-tol&&a[i]<C)||(Y[i]*Ei>tol&&a[i]>0)){let j=Math.floor(rnd()*(n-1));if(j>=i)j++;const Ej=f(j)-Y[j];const ai=a[i],aj=a[j];let L,H;
+        if(Y[i]!==Y[j]){L=Math.max(0,aj-ai);H=Math.min(C,C+aj-ai);}else{L=Math.max(0,ai+aj-C);H=Math.min(C,ai+aj);}if(L===H)continue;
+        const eta=2*K[i*n+j]-K[i*n+i]-K[j*n+j];if(eta>=0)continue;
+        a[j]=aj-Y[j]*(Ei-Ej)/eta;if(a[j]>H)a[j]=H;if(a[j]<L)a[j]=L;if(Math.abs(a[j]-aj)<1e-5)continue;
+        a[i]=ai+Y[i]*Y[j]*(aj-a[j]);
+        const b1=b-Ei-Y[i]*(a[i]-ai)*K[i*n+i]-Y[j]*(a[j]-aj)*K[i*n+j],b2=b-Ej-Y[i]*(a[i]-ai)*K[i*n+j]-Y[j]*(a[j]-aj)*K[j*n+j];
+        b=(a[i]>0&&a[i]<C)?b1:(a[j]>0&&a[j]<C)?b2:(b1+b2)/2;changed++;}}
+    passes=changed?0:passes+1;}
+  const sv=[];for(let i=0;i<n;i++)if(a[i]>1e-6)sv.push(i);
+  model={a,b,sv,P,K,dec:x=>{let s=b;for(const i of sv)s+=a[i]*Y[i]*kern(X[i],x,P);return s;}};
+  /* stats */
+  let ok=0,inside=0,wrong=0;for(let i=0;i<n;i++){const d=model.dec(X[i]);if(d*Y[i]>0)ok++;else wrong++;if(Math.abs(d)<1&&d*Y[i]>0)inside++;}
+  el('sv_n').textContent=sv.length;el('sv_tot').textContent=n;el('sv_acc').textContent=(ok/n*100).toFixed(1)+'%';el('sv_in').textContent=inside+' / '+wrong;
+  if(P.k==='linear'){let w0=0,w1=0;for(const i of sv){w0+=a[i]*Y[i]*X[i][0]*U;w1+=a[i]*Y[i]*X[i][1]*U;}const nw=Math.hypot(w0,w1);el('sv_m').textContent=nw>0?(2/nw).toFixed(3)+' units (2/‖w‖)':'–';}else el('sv_m').textContent='– (non-linear)';
+  draw();}
+function draw(){const W=cv.width,H=cv.height;ctx.clearRect(0,0,W,H);const A=col('--amber'),Cc=col('--cyan'),INK=col('--ink'),I3=col('--ink3');
+  const px=20,py=20,S=440;const sx=x=>px+x*S,sy=y=>py+S-y*S;
+  if(model){const G=88,cw=S/G;const vals=new Float32Array(G*G);
+    for(let gy=0;gy<G;gy++)for(let gx=0;gx<G;gx++){const d=model.dec([(gx+.5)/G,(gy+.5)/G]);vals[gy*G+gx]=d;ctx.fillStyle=d>0?A:Cc;ctx.globalAlpha=0.06+0.28*Math.min(1,Math.abs(d)/1.5);ctx.fillRect(sx(gx/G),sy((gy+1)/G),cw+.5,cw+.5);}
+    ctx.globalAlpha=1;
+    /* contours at -1,0,1 via marching squares (segments) */
+    const levels=[{v:0,w:2.2,dash:[]},{v:1,w:1.2,dash:[5,4]},{v:-1,w:1.2,dash:[5,4]}];
+    for(const L of levels){ctx.strokeStyle=INK;ctx.lineWidth=L.w;ctx.setLineDash(L.dash);ctx.beginPath();
+      for(let gy=0;gy<G-1;gy++)for(let gx=0;gx<G-1;gx++){const v=[vals[gy*G+gx],vals[gy*G+gx+1],vals[(gy+1)*G+gx+1],vals[(gy+1)*G+gx]].map(t=>t-L.v);
+        const P4=[[gx+.5,gy+.5],[gx+1.5,gy+.5],[gx+1.5,gy+1.5],[gx+.5,gy+1.5]];const pts=[];
+        for(let e=0;e<4;e++){const a=v[e],b=v[(e+1)%4];if((a<0)!==(b<0)){const t=a/(a-b);const p=P4[e],q=P4[(e+1)%4];pts.push([p[0]+(q[0]-p[0])*t,p[1]+(q[1]-p[1])*t]);}}
+        if(pts.length>=2){ctx.moveTo(sx(pts[0][0]/G),sy(pts[0][1]/G));ctx.lineTo(sx(pts[1][0]/G),sy(pts[1][1]/G));if(pts.length===4){ctx.moveTo(sx(pts[2][0]/G),sy(pts[2][1]/G));ctx.lineTo(sx(pts[3][0]/G),sy(pts[3][1]/G));}}}
+      ctx.stroke();}ctx.setLineDash([]);ctx.lineWidth=1;}
+  ctx.strokeStyle=col('--line2');ctx.strokeRect(px,py,S,S);
+  const svset=new Set(model?model.sv:[]);
+  for(let i=0;i<X.length;i++){const x=sx(X[i][0]),y=sy(X[i][1]);ctx.fillStyle=Y[i]>0?A:Cc;ctx.beginPath();ctx.arc(x,y,4,0,7);ctx.fill();if(svset.has(i)){ctx.strokeStyle=INK;ctx.lineWidth=1.6;ctx.beginPath();ctx.arc(x,y,8,0,7);ctx.stroke();ctx.lineWidth=1;}}
+  /* legend / explanation panel */
+  const lx=490;ctx.fillStyle=I3;ctx.font='12px JetBrains Mono, monospace';
+  const P=model?model.P:params();
+  const lines=['kernel: '+P.k+(P.k==='rbf'?'   K = exp(−γ‖a−b‖²)':P.k==='poly'?'   K = (γ a·b + 1)³':'   K = a·b'),'C = '+P.C.toPrecision(3)+'      γ = '+P.g.toPrecision(3),'','solid line   f(x) = 0   decision boundary','dashed lines f(x) = ±1  margin edges','ringed dots  support vectors (αᵢ > 0)','','C ↑  narrower street, fewer SVs, fits noise','C ↓  wider street, more SVs, smoother','γ ↑  boundary hugs points (islands)','γ ↓  boundary flattens towards linear','','click canvas to add a point of the','selected class; the boundary retrains'];
+  lines.forEach((t,i)=>ctx.fillText(t,lx,50+i*24));}
+function retrain(){try{train();}catch(e){}}
+el('svmC').oninput=e=>{el('svmCv').textContent=Math.pow(10,+e.target.value).toPrecision(2);retrain();};
+el('svmG').oninput=e=>{el('svmGv').textContent=Math.pow(10,+e.target.value).toPrecision(2);retrain();};
+el('svmk').onchange=retrain;el('svmdata').onchange=()=>{gen(el('svmdata').value);retrain();};el('svmreset').onclick=()=>{gen(el('svmdata').value);retrain();};
+cv.addEventListener('click',e=>{const r=cv.getBoundingClientRect();const x=(e.clientX-r.left)*cv.width/r.width,y=(e.clientY-r.top)*cv.height/r.height;const ux=(x-20)/440,uy=(20+440-y)/440;if(ux<0||ux>1||uy<0||uy>1)return;X.push([ux,uy]);Y.push(+el('svmcls').value);retrain();});
+gen('moons');retrain();
+})();
+/* ===== C sweep chart (real sklearn numbers, make_moons noise .25, rbf gamma='scale') ===== */
+(function(){if(!window.Chart)return;const c=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+new Chart(document.getElementById('cgChart'),{type:'line',data:{labels:['0.01','0.1','1','10','100','1000'],datasets:[
+ {label:'train acc',data:[0.839,0.896,0.932,0.932,0.939,0.950],borderColor:c('--cyan'),yAxisID:'y',tension:.3},
+ {label:'test acc',data:[0.825,0.883,0.908,0.942,0.942,0.942],borderColor:c('--amber'),yAxisID:'y',tension:.3},
+ {label:'# support vectors',data:[280,151,83,61,51,50],borderColor:c('--violet'),borderDash:[5,4],yAxisID:'y2',tension:.3}]},
+ options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{x:{title:{display:true,text:'C (log scale)'}},y:{min:0.8,max:1,title:{display:true,text:'accuracy'}},y2:{position:'right',min:0,max:300,grid:{drawOnChartArea:false},title:{display:true,text:'support vectors'}}}}});})();
+/* ===== Loss curves SVG ===== */
+(function(){const s=document.getElementById('losssvg');if(!s)return;const W=460,H=260,x0=40,y0=220,xs=(W-60)/5,ys=150/3;
+const X=m=>x0+(m+2)*xs,Y=l=>y0-l*ys;let o='';
+o+='<line x1="'+x0+'" y1="'+y0+'" x2="'+(W-15)+'" y2="'+y0+'" stroke="var(--line2)"/><line x1="'+X(0)+'" y1="'+(y0-160)+'" x2="'+X(0)+'" y2="'+y0+'" stroke="var(--line2)" stroke-dasharray="3 3"/><line x1="'+X(1)+'" y1="'+(y0-160)+'" x2="'+X(1)+'" y2="'+y0+'" stroke="var(--line2)" stroke-dasharray="3 3"/>';
+for(const m of [-2,-1,0,1,2,3])o+='<text x="'+X(m)+'" y="'+(y0+16)+'" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--ink3)">'+m+'</text>';
+o+='<text x="'+(W-15)+'" y="'+(y0+32)+'" text-anchor="end" font-family="var(--mono)" font-size="10" fill="var(--ink3)">margin score y·f(x)  →  right of 1 = safely correct</text>';
+o+='<text x="'+x0+'" y="'+(y0-168)+'" font-family="var(--mono)" font-size="10" fill="var(--ink3)">loss</text>';
+function path(fn,color,dash){let p='';for(let i=0;i<=200;i++){const m=-2+5*i/200;const l=Math.min(fn(m),3);p+=(i?'L':'M')+X(m).toFixed(1)+' '+Y(l).toFixed(1);}return '<path d="'+p+'" fill="none" stroke="'+color+'" stroke-width="2.2"'+(dash?' stroke-dasharray="'+dash+'"':'')+'/>';}
+o+=path(m=>m<0?1:0,'var(--ink3)','4 3');o+=path(m=>Math.log(1+Math.exp(-m))/Math.log(2),'var(--cyan)','');o+=path(m=>Math.max(0,1-m),'var(--amber)','');
+o+='<text x="'+X(2.05)+'" y="'+(Y(0.25))+'" font-family="var(--mono)" font-size="11" fill="var(--cyan)">log-loss (LR)</text><text x="'+X(1.1)+'" y="'+(Y(0)-8)+'" font-family="var(--mono)" font-size="11" fill="var(--amber)">hinge = 0 beyond 1</text><text x="'+X(-1.9)+'" y="'+(Y(1)-8)+'" font-family="var(--mono)" font-size="11" fill="var(--ink3)">0-1 loss</text>';
+s.innerHTML=o;})();
+</script>
+
+<script>
+document.documentElement.classList.add('js');
+/* nav from sections */
+(function(){const nav=document.getElementById('nav');document.querySelectorAll('section.s[data-nav]').forEach((s,i)=>{const a=document.createElement('a');a.href='#'+s.id;a.innerHTML='<i>'+String(i+1).padStart(2,'0')+'</i>'+s.dataset.nav;nav.appendChild(a);});
+const links=[...nav.querySelectorAll('a')];const secs=[...document.querySelectorAll('section.s[data-nav]')];
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle('on',l.getAttribute('href')==='#'+e.target.id));}})},{rootMargin:'-40% 0px -55% 0px'});secs.forEach(s=>io.observe(s));
+window.addEventListener('scroll',()=>{const h=document.documentElement;document.getElementById('track').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';},{passive:true});})();
+/* reveal */
+(function(){const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:.1});document.querySelectorAll('.rv').forEach(el=>io.observe(el));})();
+/* class timer */
+(function(){let t=0,id=null;const el=document.getElementById('clk'),b=document.getElementById('clkbtn');b.onclick=()=>{if(id){clearInterval(id);id=null;b.textContent='Resume';return;}b.textContent='Pause';id=setInterval(()=>{t++;el.textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');if(t>=3600){clearInterval(id);el.textContent='60:00';b.textContent='Done';}},1000);};})();
+/* hero particles */
+(function(){const c=document.getElementById('bgc');if(!c)return;const x=c.getContext('2d');let w,h,P=[];function rs(){w=c.width=c.offsetWidth;h=c.height=c.offsetHeight;P=Array.from({length:Math.min(70,w/14)},()=>({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-.5)*.4,vy:(Math.random()-.5)*.4}));}rs();window.addEventListener('resize',rs);const col=()=>getComputedStyle(document.documentElement).getPropertyValue('--cyan').trim();function f(){x.clearRect(0,0,w,h);const cc=col();for(const p of P){p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>w)p.vx*=-1;if(p.y<0||p.y>h)p.vy*=-1;}for(let i=0;i<P.length;i++){for(let j=i+1;j<P.length;j++){const d=Math.hypot(P[i].x-P[j].x,P[i].y-P[j].y);if(d<120){x.strokeStyle=cc;x.globalAlpha=(1-d/120)*.35;x.beginPath();x.moveTo(P[i].x,P[i].y);x.lineTo(P[j].x,P[j].y);x.stroke();}}}x.globalAlpha=1;x.fillStyle=cc;for(const p of P){x.beginPath();x.arc(p.x,p.y,1.8,0,7);x.fill();}requestAnimationFrame(f);}if(!matchMedia('(prefers-reduced-motion:reduce)').matches)f();})();
+/* tabs */
+document.querySelectorAll('.tabs').forEach(t=>{const bs=t.querySelectorAll('.tb button'),ps=t.querySelectorAll('.tp');bs.forEach((b,i)=>b.onclick=()=>{bs.forEach(x=>x.classList.remove('on'));ps.forEach(x=>x.classList.remove('on'));b.classList.add('on');ps[i].classList.add('on');});});
+/* quiz: <div class="q" data-a="1"> with .opts buttons; index of correct answer in data-a */
+document.querySelectorAll('.q').forEach(q=>{const a=+q.dataset.a;q.querySelectorAll('.opts button').forEach((b,i)=>b.onclick=()=>{if(q.classList.contains('done'))return;q.classList.add('done');b.classList.add(i===a?'ok':'bad');if(i!==a)q.querySelectorAll('.opts button')[a].classList.add('ok');});});
+/* Chart.js theme defaults */
+if(window.Chart){const cs=getComputedStyle(document.documentElement);Chart.defaults.color=cs.getPropertyValue('--ink2').trim();Chart.defaults.borderColor=cs.getPropertyValue('--line').trim();Chart.defaults.font.family=cs.getPropertyValue('--mono').trim();}
+</script>
+</body></html>

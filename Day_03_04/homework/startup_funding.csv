@@ -1,0 +1,21 @@
+startup,city,amount,date,industry
+Paytm,Noida,"1,50,00,000",2020-01-15,Fintech
+Flipkart,Bangalore,"2,00,00,00,000",2020-03-22,E-commerce
+Razorpay,Bangalore,"75,00,000",2020-02-10,Fintech
+Swiggy,Bengaluru,"1,20,00,000",2020-04-18,Food-tech
+Zomato,bangalore,"1,50,00,000",2020-05-05,Food-tech
+Byju's,Bengaluru ,"2,50,00,00,000",2020-06-30,EdTech
+Ola,Mumbai,"1,00,00,00,000",2020-02-28,Mobility
+CRED,Bengaluru,"80,00,000",2020-07-12,Fintech
+Meesho,Mumbai,"1,10,00,000",2020-08-20,E-commerce
+PhonePe,banglore,"90,00,000",2020-09-15,Fintech
+Unacademy,Bangalore,"1,50,00,000",2020-09-22,EdTech
+Lenskart,delhi,"1,00,00,000",2020-10-10,E-commerce
+Udaan,Bengaluru,"1,30,00,000",2020-11-05,E-commerce
+Cure.fit,Banglore,"75,00,000",2020-11-28,Health
+Delhivery,Delhi,"1,60,00,000",2020-12-18,Logistics
+Groww,Bangalore,"85,00,000",2021-01-20,Fintech
+ShareChat,Bengaluru,"2,00,00,000",2021-02-14,Social
+Cars24,Gurugram,"1,25,00,000",2021-03-10,Auto
+Digit Insurance,Bengaluru,"1,00,00,000",2021-04-22,Insurance
+Infra.Market,Mumbai,"1,50,00,000",2021-05-15,Construction

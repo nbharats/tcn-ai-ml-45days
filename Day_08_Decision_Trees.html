@@ -1,0 +1,602 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Day 08: Trees: decisions a human can read</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0A0E1A; --bg2:#111729; --panel:#161D33; --line:#243052; --line2:#2E3B62;
+  --ink:#EDF0FA; --ink2:#AEB7D3; --ink3:#7B86A8;
+  --amber:#FFB43A; --cyan:#4FD3F2; --rose:#FF6B8A; --lime:#9BE56B; --violet:#9D8CFF;
+  --glow:rgba(79,211,242,.18);
+  --display:'Syne',ui-sans-serif,system-ui,sans-serif;
+  --body:'Manrope',ui-sans-serif,system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#F3F5FB; --bg2:#FFFFFF; --panel:#FFFFFF; --line:#D7DDEE; --line2:#C3CBE3;
+    --ink:#0F1730; --ink2:#3B4666; --ink3:#6B7694;
+    --amber:#C97A00; --cyan:#0A8FB3; --rose:#D93A5D; --lime:#4E9A1E; --violet:#6A55E8;
+    --glow:rgba(10,143,179,.14);
+  }
+}
+:root[data-theme="light"]{
+  --bg:#F3F5FB; --bg2:#FFFFFF; --panel:#FFFFFF; --line:#D7DDEE; --line2:#C3CBE3;
+  --ink:#0F1730; --ink2:#3B4666; --ink3:#6B7694;
+  --amber:#C97A00; --cyan:#0A8FB3; --rose:#D93A5D; --lime:#4E9A1E; --violet:#6A55E8;
+  --glow:rgba(10,143,179,.14);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;padding-inline:clamp(16px,4vw,48px);padding-block:0 80px}
+a{color:var(--cyan)}
+h1,h2,h3,h4{font-family:var(--display);text-wrap:balance;line-height:1.08;margin:0}
+h2{font-size:clamp(30px,4.2vw,50px);font-weight:800;letter-spacing:-.01em}
+h3{font-size:clamp(20px,2.2vw,26px);font-weight:700}
+h4{font-size:17px;font-weight:700}
+p{max-width:68ch;margin:0}
+p+p{margin-top:12px}
+ul,ol{max-width:70ch}
+li{margin-bottom:6px}
+.wrap{max-width:1180px;margin:0 auto}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)}
+.eyebrow b{color:var(--amber);font-weight:600}
+code,.mono{font-family:var(--mono)}
+p code,li code,td code{font-size:.9em;background:var(--bg2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--cyan)}
+
+/* progress bar + nav */
+#bar{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);margin-inline:calc(-1*clamp(16px,4vw,48px));padding-inline:clamp(16px,4vw,48px)}
+#bar .wrap{display:flex;align-items:center;gap:14px;height:56px;overflow-x:auto;scrollbar-width:none}
+#bar .wrap::-webkit-scrollbar{display:none}
+#bar .brand{font-family:var(--display);font-weight:800;font-size:15px;white-space:nowrap}
+#bar .brand span{color:var(--amber)}
+#bar nav{display:flex;gap:4px;flex:1}
+#bar nav a{font-family:var(--mono);font-size:11.5px;text-decoration:none;color:var(--ink3);padding:6px 10px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+#bar nav a.on{color:var(--ink);border-color:var(--line2);background:var(--panel)}
+#bar nav a i{font-style:normal;color:var(--amber);margin-right:5px}
+#bar .clock{font-family:var(--mono);font-size:12px;color:var(--ink2);white-space:nowrap;display:flex;gap:8px;align-items:center}
+#bar .clock button{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line2);border-radius:6px;padding:4px 9px;cursor:pointer}
+#track{position:absolute;left:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--cyan),var(--amber));width:0}
+
+/* sections */
+section.s{padding-block:88px 40px;border-top:1px solid var(--line);position:relative}
+.head{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end;margin-bottom:38px}
+.time{font-family:var(--mono);font-size:12px;color:var(--ink3);text-align:right;line-height:1.5}
+.time b{display:block;font-size:22px;color:var(--amber);font-weight:600}
+.lead{font-size:clamp(18px,1.6vw,21px);color:var(--ink2);max-width:62ch;margin-top:16px}
+
+/* hero */
+#hero{padding-block:70px 60px;position:relative;overflow:hidden;margin-inline:calc(-1*clamp(16px,4vw,48px));padding-inline:clamp(16px,4vw,48px)}
+#hero canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.55;pointer-events:none}
+#hero .wrap{position:relative}
+#hero h1{font-size:clamp(40px,7vw,96px);font-weight:800;letter-spacing:-.03em;line-height:.98}
+#hero h1 em{font-style:normal;color:var(--amber)}
+#hero h1 .c{color:var(--cyan)}
+.hero-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:40px;align-items:end;margin-top:30px}
+.agenda{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
+.agenda h3{font-size:14px;font-family:var(--mono);font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-bottom:12px}
+.agenda ol{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.agenda li{display:grid;grid-template-columns:52px 1fr;gap:12px;font-size:15px;align-items:baseline;margin:0}
+.agenda li span{font-family:var(--mono);font-size:12px;color:var(--amber)}
+.agenda li a{color:var(--ink);text-decoration:none}
+.agenda li a:hover{color:var(--cyan)}
+
+/* generic blocks */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;transition:transform .25s,border-color .25s}
+.card:hover{border-color:var(--cyan)}
+.card h3{margin-bottom:8px}
+.card h4{margin-bottom:6px}
+.card p{font-size:15.5px;color:var(--ink2)}
+.card.amber{border-color:var(--amber)} .card.violet{border-color:var(--violet)} .card.lime{border-color:var(--lime)} .card.rose{border-color:var(--rose)}
+.tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid var(--line2);color:var(--ink3);margin-bottom:12px}
+.pill{display:inline-flex;gap:6px;align-items:center;font-family:var(--mono);font-size:12px;padding:5px 11px;border-radius:999px;background:var(--bg2);border:1px solid var(--line);color:var(--ink2);text-decoration:none;margin:4px 6px 4px 0}
+.pill:hover{border-color:var(--cyan);color:var(--ink)}
+.callout{border-left:4px solid var(--amber);background:var(--panel);border-radius:0 14px 14px 0;padding:16px 20px;margin-block:18px}
+.callout.cy{border-left-color:var(--cyan)} .callout.ro{border-left-color:var(--rose)} .callout.li{border-left-color:var(--lime)} .callout.vi{border-left-color:var(--violet)}
+.callout b.t{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);display:block;margin-bottom:6px}
+.callout.cy b.t{color:var(--cyan)} .callout.ro b.t{color:var(--rose)} .callout.li b.t{color:var(--lime)} .callout.vi b.t{color:var(--violet)}
+.callout p{font-size:15.5px;color:var(--ink2)}
+
+/* analogy strip */
+.analogy{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start;background:linear-gradient(135deg,color-mix(in srgb,var(--amber) 10%,var(--panel)),var(--panel));border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-block:22px}
+.analogy .em{font-size:38px;line-height:1}
+.analogy h4{margin-bottom:4px}
+.analogy p{font-size:15.5px;color:var(--ink2)}
+
+/* code */
+pre{background:var(--bg2);border:1px solid var(--line2);border-radius:12px;padding:16px 18px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.55;margin:0;color:var(--ink)}
+pre .c{color:var(--ink3)} pre .k{color:var(--violet)} pre .s{color:var(--lime)} pre .n{color:var(--amber)} pre .f{color:var(--cyan)}
+.codewrap{position:relative;margin-block:14px}
+.codewrap .lbl{position:absolute;top:8px;right:12px;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+
+/* tabs */
+.tabs{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel)}
+.tabs .tb{display:flex;gap:2px;border-bottom:1px solid var(--line);background:var(--bg2);overflow-x:auto}
+.tabs .tb button{font:600 13px var(--body);background:transparent;color:var(--ink3);border:0;padding:11px 16px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.tabs .tb button.on{color:var(--ink);border-bottom-color:var(--amber)}
+.tabs .tp{display:none;padding:18px}
+.tabs .tp.on{display:block}
+
+/* figures / charts */
+figure{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;overflow:hidden}
+figure svg{width:100%;height:auto;display:block}
+figcaption{font-family:var(--mono);font-size:11.5px;color:var(--ink3);margin-top:8px}
+.chart{position:relative;height:300px}
+.chart canvas{width:100%!important;height:100%!important}
+canvas.demo{width:100%;height:auto;background:var(--bg2);border:1px solid var(--line2);border-radius:14px;display:block;touch-action:none}
+.ctl{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.ctl label{font-family:var(--mono);font-size:12px;color:var(--ink2);display:flex;gap:8px;align-items:center}
+.ctl input[type=range]{accent-color:var(--amber)}
+.btn{font:600 14px var(--body);color:var(--bg);background:var(--amber);border:0;border-radius:9px;padding:10px 16px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line2)}
+.btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.stats{font-family:var(--mono);font-size:13px;color:var(--ink2);display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin-top:14px;font-variant-numeric:tabular-nums}
+.stats b{color:var(--cyan);font-weight:600}
+
+/* steps */
+.steps{display:grid;gap:10px;counter-reset:st}
+.steps>div{display:grid;grid-template-columns:32px 1fr;gap:12px;align-items:start;font-size:15px;color:var(--ink2)}
+.steps>div::before{counter-increment:st;content:counter(st);font-family:var(--mono);font-size:12px;color:var(--amber);border:1px solid var(--line2);border-radius:50%;width:26px;height:26px;display:grid;place-items:center}
+.steps b{color:var(--ink)}
+
+/* table */
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+th,td{padding:10px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);background:var(--bg2)}
+tr:last-child td{border-bottom:0}
+
+/* tools + career */
+.tools{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.tool{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:6px}
+.tool b{font-family:var(--display);font-size:16px}
+.tool span{font-size:14px;color:var(--ink2)}
+.tool a{font-family:var(--mono);font-size:12px;text-decoration:none}
+.career{border:1px solid var(--violet);background:linear-gradient(135deg,color-mix(in srgb,var(--violet) 12%,var(--panel)),var(--panel));border-radius:14px;padding:22px}
+.career .tag{border-color:var(--violet);color:var(--violet)}
+
+/* homework */
+.hw{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.hw .card{border-color:var(--line2)}
+.hw .lvl{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--lime);margin-bottom:6px;display:block}
+
+/* quiz */
+.quiz{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.q{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.q p{font-size:15px;margin-bottom:12px;color:var(--ink)}
+.q .opts{display:flex;gap:8px;flex-wrap:wrap}
+.q button{font:600 13px var(--body);padding:7px 12px;border-radius:8px;border:1px solid var(--line2);background:var(--bg2);color:var(--ink);cursor:pointer}
+.q button.ok{border-color:var(--lime);color:var(--lime)} .q button.bad{border-color:var(--rose);color:var(--rose)}
+.q .why{font-size:13.5px;color:var(--ink2);margin-top:10px;display:none}
+.q.done .why{display:block}
+
+/* details */
+details{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:0 18px;margin-block:10px}
+summary{cursor:pointer;padding:14px 0;font-family:var(--display);font-weight:700;font-size:16px}
+details[open] summary{border-bottom:1px solid var(--line);margin-bottom:12px}
+details>*:not(summary){padding-bottom:14px}
+
+/* footer */
+.fin{text-align:center;padding-block:60px 20px}
+.fin h2{font-size:clamp(28px,4vw,44px)}
+.fin p{margin:14px auto 0}
+
+/* reveal */
+.rv{opacity:1;transform:none;transition:opacity .6s ease,transform .6s ease}
+.js .rv:not(.in){opacity:.001;transform:translateY(18px)}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+@keyframes dash{to{stroke-dashoffset:0}}
+.flowline{stroke-dasharray:6 6;animation:flow 1.2s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-24}}
+@media (prefers-reduced-motion:reduce){.js .rv:not(.in){opacity:1;transform:none}.rv{transition:none}*{animation:none!important}}
+
+@media (max-width:980px){
+  .grid4,.tools,.hw{grid-template-columns:1fr 1fr}
+  .grid3,.quiz{grid-template-columns:1fr 1fr}
+}
+@media (max-width:720px){
+  .hero-grid,.grid2,.grid3,.grid4,.tools,.hw,.quiz,.analogy{grid-template-columns:1fr}
+  .head{grid-template-columns:1fr}.time{text-align:left}
+}
+</style></head><body>
+
+<div id="bar"><div class="wrap">
+  <div class="brand">AI <span>&amp;</span> ML Engineering · Day 08</div>
+  <nav id="nav"><!-- filled by JS from section[data-nav] --></nav>
+  <div class="clock"><span id="clk">00:00</span><button id="clkbtn" type="button">Start 60 min</button></div>
+</div><div id="track"></div></div>
+
+<!-- ============ HERO ============ -->
+<header id="hero"><canvas id="bgc"></canvas><div class="wrap">
+  <div class="eyebrow"><b>Day 08</b> · Phase 2 · Supervised ML · 60 minutes</div>
+  <h1 style="margin-top:18px">Trees: decisions a <em>human</em> can <span class="c">read</span>.</h1>
+  <div class="hero-grid">
+    <p class="lead">Every model so far produced a number you had to interpret. A decision tree produces a list of questions: "Is credit score above 680? Is income above ₹40k? Then approve." You can print it, read it to a customer, and defend it to a regulator. Today you will grow one by hand, watch it split on impurity, watch it overfit into a memorising monster, and then prune it back to something honest. Tomorrow's Random Forest and Day 10's XGBoost are built from hundreds of these.</p>
+    <div class="agenda"><h3>Today's route</h3><ol>
+      <li><span>00–05</span><a href="#hook">Hook: "Why was my loan rejected?"</a></li>
+      <li><span>05–23</span><a href="#concept">Concept: questions, impurity, greed</a></li>
+      <li><span>23–33</span><a href="#deeper">Deeper: entropy, Gini, gain, pruning</a></li>
+      <li><span>33–45</span><a href="#code">Code: grow, read, overfit, prune</a></li>
+      <li><span>45–50</span><a href="#realworld">Real world &amp; tools</a></li>
+      <li><span>50–53</span><a href="#career">Career corner</a></li>
+      <li><span>53–56</span><a href="#quiz">Quiz</a></li>
+      <li><span>56–58</span><a href="#homework">Homework</a></li>
+      <li><span>58–60</span><a href="#next">Next</a></li>
+    </ol></div>
+  </div>
+</div></header>
+
+<!-- ============ HOOK ============ -->
+<section class="s" id="hook" data-nav="Hook"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">01 · Hook</div><h2>"Why was my loan rejected?"</h2><p class="lead">A customer walks into a bank branch in Indore with that question. The branch manager cannot answer "because θ₇ was −0.34". She needs a sentence.</p></div><div class="time"><b>5</b>min</div></div>
+  <div class="grid2">
+    <div>
+      <p>Lending is the most regulated use of machine learning in India. Credit decisions must be explainable to the customer, auditable by the bank's risk committee, and defensible to the regulator. Yesterday's Naive Bayes multiplied 5,000 word probabilities; last week's Ridge regression mixed 79 features into one weighted sum. Neither gives the branch manager a sentence. A decision tree does: <em>"Your credit score was below 650 and you have been in your current job for less than 12 months."</em> Two questions, one reason, done. That is why trees (and the forests and boosted trees built on them) are the workhorse of tabular data in banking, insurance, telecom and e-commerce, and why "explainable ML" is now a phrase in job descriptions.</p>
+      <p style="margin-top:14px">A tree is also how you already think. Deciding whether to order in tonight: "Is it raining? → Is there dal at home? → Is it past 9 pm?" Each question splits the situations into purer groups until every group has one obvious answer. Today's algorithm is just a machine that finds the <em>best question to ask first</em>, then the best question after that, by measuring how much each question cleans up the mess.</p>
+      <div class="callout cy" style="margin-top:18px"><b class="t">Open on the projector</b><p><a href="http://www.r2d3.us/visual-intro-to-machine-learning-part-1/" target="_blank" rel="noopener">R2D3: A visual introduction to machine learning ↗</a>. It grows a decision tree on San Francisco vs New York homes as you scroll, then shows it overfitting. It is the most beautiful eight minutes on the topic; scroll it together, then come back and build the same thing with sliders.</p></div>
+    </div>
+    <figure class="rv"><svg viewBox="0 0 520 320" role="img" aria-label="A three-question loan decision tree">
+      <defs><marker id="ah8" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--ink3)"/></marker></defs>
+      <g stroke="var(--cyan)" stroke-width="1.5" fill="none" marker-end="url(#ah8)">
+        <path class="flowline" d="M260 62 L 140 118"/><path class="flowline" d="M260 62 L 380 118"/>
+        <path class="flowline" d="M140 158 L 70 214"/><path class="flowline" d="M140 158 L 210 214"/>
+        <path class="flowline" d="M380 158 L 310 214"/><path class="flowline" d="M380 158 L 450 214"/>
+      </g>
+      <g font-family="JetBrains Mono,monospace" font-size="11" text-anchor="middle">
+        <rect x="170" y="22" width="180" height="40" rx="10" fill="var(--panel)" stroke="var(--amber)" stroke-width="1.5"/><text x="260" y="41" fill="var(--ink)">credit score ≥ 650 ?</text><text x="260" y="55" fill="var(--ink3)">1,000 applicants · gini .48</text>
+        <text x="185" y="96" fill="var(--rose)">no (380)</text><text x="335" y="96" fill="var(--lime)">yes (620)</text>
+        <rect x="60" y="118" width="160" height="40" rx="10" fill="var(--panel)" stroke="var(--line2)"/><text x="140" y="137" fill="var(--ink)">job tenure ≥ 12 mo ?</text><text x="140" y="151" fill="var(--ink3)">gini .38</text>
+        <rect x="300" y="118" width="160" height="40" rx="10" fill="var(--panel)" stroke="var(--line2)"/><text x="380" y="137" fill="var(--ink)">income ≥ ₹40k ?</text><text x="380" y="151" fill="var(--ink3)">gini .21</text>
+        <rect x="20" y="214" width="100" height="44" rx="10" fill="var(--bg2)" stroke="var(--rose)"/><text x="70" y="233" fill="var(--rose)">REJECT</text><text x="70" y="249" fill="var(--ink3)">210 · 92% default</text>
+        <rect x="160" y="214" width="100" height="44" rx="10" fill="var(--bg2)" stroke="var(--amber)"/><text x="210" y="233" fill="var(--amber)">REVIEW</text><text x="210" y="249" fill="var(--ink3)">170 · 48% default</text>
+        <rect x="260" y="214" width="100" height="44" rx="10" fill="var(--bg2)" stroke="var(--amber)"/><text x="310" y="233" fill="var(--amber)">REVIEW</text><text x="310" y="249" fill="var(--ink3)">150 · 31% default</text>
+        <rect x="400" y="214" width="100" height="44" rx="10" fill="var(--bg2)" stroke="var(--lime)"/><text x="450" y="233" fill="var(--lime)">APPROVE</text><text x="450" y="249" fill="var(--ink3)">470 · 6% default</text>
+        <text x="260" y="300" fill="var(--ink3)">each leaf is a sentence the branch manager can say out loud</text>
+      </g>
+    </svg><figcaption>A depth-2 loan tree. Every internal node is a yes/no question on one feature; every leaf is a decision with the training data's outcome rate. The number "gini" measures how mixed each node is: 0.48 is nearly a coin flip, 0.06 is almost pure. Growing a tree means asking the question that lowers gini the most.</figcaption></figure>
+  </div>
+</div></section>
+
+<!-- ============ CONCEPT ============ -->
+<section class="s" id="concept" data-nav="Concept"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">02 · Concept</div><h2>Ask the question that cleans up the most mess</h2><p class="lead">Three ideas: impurity is mess, a split is a question, and greedily asking the best question at each step grows a tree.</p></div><div class="time"><b>18</b>min</div></div>
+
+  <h3>Idea 1 · Impurity: how mixed is this group?</h3>
+  <p style="margin-top:10px">Take 100 loan applicants: 50 repaid, 50 defaulted. That group is maximally <em>impure</em>; you learn nothing by knowing someone is in it. Take another group: 98 repaid, 2 defaulted. Almost pure; "approve" is a safe answer. We need a number for this. Two are standard: <b>Gini impurity</b> <span class="mono">G = 1 − Σ p<sub>k</sub>²</span> (the probability that two random members of the group have different labels) and <b>entropy</b> <span class="mono">H = −Σ p<sub>k</sub> log₂ p<sub>k</sub></span> (the average number of yes/no questions needed to identify a member's label). Both are 0 when the group is pure and maximal at a 50/50 split. In practice they pick nearly the same splits; sklearn defaults to Gini because it skips the logarithm.</p>
+
+  <div class="analogy rv"><div class="em">🧺</div><div><h4>Sorting the laundry</h4><p>A bucket with whites and colours mixed 50/50 is pure chaos: pick any two items and they probably do not match. A bucket that is 95% whites is almost sorted. Gini is literally "the chance that two socks pulled at random do not match". A good sorting question ("is it white?") produces two buckets that are each much more uniform than the original. A useless question ("was it bought on a Tuesday?") produces two buckets exactly as mixed as before. The tree's job is to find the sock-sorting questions and ignore the Tuesday questions.</p></div></div>
+
+  <div class="grid2" style="margin-top:12px">
+    <figure class="rv"><div class="chart"><canvas id="impchart"></canvas></div><figcaption>Gini and entropy for a two-class node as the fraction of class 1 goes from 0 to 1. Both peak at 50/50 and hit zero at purity. Entropy is scaled here (÷2) so you can see they have the same shape.</figcaption></figure>
+    <div>
+      <div class="callout"><b class="t">Key idea · Information gain</b><p>A split's quality is <span class="mono">gain = impurity(parent) − weighted average impurity(children)</span>, where each child is weighted by its share of the samples. A question that sends 990 people left and 10 right can only gain a little even if the 10 are perfectly pure; a question that splits 500/500 into two pure groups gains everything. The tree tries <em>every feature</em> and <em>every threshold</em> between sorted values and keeps the one with the largest gain. That is the whole algorithm (CART).</p></div>
+      <div class="callout ro"><b class="t">Common confusion</b><p>Trees do not need feature scaling, one-hot encoding of ordinal features, or any distance metric. A threshold "income ≥ 40,000" is the same question whether income is in rupees or lakhs. That is a real advantage over KNN and logistic regression, and it is why trees handle messy tabular data so well.</p></div>
+    </div>
+  </div>
+
+  <h3 style="margin-top:34px">Idea 2 · Find the best split, then do it again: the live lab</h3>
+  <p style="margin-top:10px">Below is a loan dataset with two features. Drag the split threshold by hand and watch Gini and gain update; press <b>Find best split</b> to watch the algorithm sweep every candidate threshold on both features and stop at the winner. Then turn up <b>depth</b> to let it recurse into each child, and watch the regions fragment.</p>
+  <figure class="rv" style="margin-top:14px">
+    <canvas id="treec" class="demo" width="900" height="460" aria-label="Decision tree split lab"></canvas>
+    <div class="ctl">
+      <label>split on <select id="tfeat" style="font:inherit;background:var(--bg2);color:var(--ink);border:1px solid var(--line2);border-radius:6px;padding:3px 6px"><option value="x">income (vertical line)</option><option value="y">credit score (horizontal line)</option></select></label>
+      <label>threshold <input id="tthr" type="range" min="0" max="1" step="0.005" value="0.5"> <b id="tthrv" class="mono">–</b></label>
+      <button class="btn" id="tbest" type="button">Find best split (animate)</button>
+    </div>
+    <div class="ctl">
+      <label>grow full tree to depth <input id="tdepth" type="range" min="0" max="10" value="0"> <b id="tdepthv" class="mono">0</b></label>
+      <label>min samples per leaf <input id="tleaf" type="range" min="1" max="20" value="1"> <b id="tleafv" class="mono">1</b></label>
+    </div>
+    <div class="stats"><div>parent Gini <b id="tgp">–</b></div><div>left / right Gini <b id="tglr">–</b></div><div>weighted child Gini <b id="tgw">–</b></div><div>information gain <b id="tgain">–</b></div><div>tree: leaves <b id="tleaves">–</b></div><div>train / test accuracy <b id="tacc">–</b></div></div>
+    <figcaption>180 training points (filled) and 90 test points (hollow, same distribution): green repaid, red defaulted. With depth = 0 you are choosing one split by hand; the stats show the Gini of the parent, of each side, and the gain. With depth ≥ 1 the tree grows greedily from the best split, painting each leaf with its majority class. Push depth to 10 with min-leaf 1: training accuracy hits 100% while test accuracy falls; every tiny island is a memorised outlier. Raise min samples per leaf, or lower depth, and the islands vanish. That is pruning.</figcaption>
+  </figure>
+
+  <div class="grid2" style="margin-top:22px">
+    <figure class="rv"><div class="chart"><canvas id="depthchart"></canvas></div><figcaption>Train vs test accuracy of the live tree as depth grows (min-leaf 1). The gap is overfitting; the peak of the amber line is the depth you should pick. Same U-shape as Day 05's polynomial degree.</figcaption></figure>
+    <div>
+      <h3>Idea 3 · Trees overfit by default, so we prune</h3>
+      <p style="margin-top:10px">Left alone, CART keeps splitting until every leaf is pure, which on real data means one training row per leaf. It has memorised, not learned; sklearn's default <code>max_depth=None</code> does exactly this. Two families of cure:</p>
+      <ul style="margin-top:8px">
+        <li><b>Pre-pruning</b> (stop early): <code>max_depth</code>, <code>min_samples_leaf</code>, <code>min_samples_split</code>, <code>min_impurity_decrease</code>. Simple, fast, and what the sliders above do.</li>
+        <li><b>Post-pruning</b> (grow fully, then cut back): <b>cost-complexity pruning</b> with <code>ccp_alpha</code>. It charges the tree α per leaf and removes any branch whose accuracy gain is not worth its leaves. One knob, chosen by cross-validation, and usually better than guessing a depth.</li>
+      </ul>
+      <div class="analogy" style="margin-top:14px"><div class="em">🌳</div><div><h4>The mango tree and the mali</h4><p>An unpruned mango tree grows a branch toward every patch of sunlight, including the ones over the neighbour's wall that will never bear fruit. The mali cuts branches whose fruit is not worth the water they drink. ccp_alpha is the price of water: raise it and only the productive branches survive.</p></div></div>
+    </div>
+  </div>
+
+  <div class="callout vi"><b class="t">Interview answer · "How does a decision tree decide where to split?"</b><p>"At each node it considers every feature and every threshold between adjacent sorted values, computes the impurity of the two resulting children, Gini or entropy, and picks the split with the largest information gain, i.e. the largest drop in weighted impurity. It repeats greedily on each child until a stopping rule (depth, min samples, purity) is hit. Because greedy growth overfits, we prune with cost-complexity pruning chosen by cross-validation."</p></div>
+</div></section>
+
+<!-- ============ DEEPER ============ -->
+<section class="s" id="deeper" data-nav="Deeper"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">03 · Deeper</div><h2>Entropy, Gini, gain, pruning and importance in formulas</h2><p class="lead">Everything the whiteboard round will ask, with numbers you can compute by hand.</p></div><div class="time"><b>10</b>min</div></div>
+
+  <h3>1 · Impurity measures</h3>
+  <p style="margin-top:8px"><span class="mono">Gini(S) = 1 − Σ<sub>k</sub> p<sub>k</sub>²</span> &nbsp; <span class="mono">Entropy(S) = −Σ<sub>k</sub> p<sub>k</sub> log₂ p<sub>k</sub></span></p>
+  <p><b>S</b> is the set of samples at a node, <b>p<sub>k</sub></b> the fraction belonging to class k. Worked example: 30 repaid, 10 defaulted → p = (0.75, 0.25). Gini = 1 − (0.5625 + 0.0625) = <b>0.375</b>. Entropy = −(0.75·log₂0.75 + 0.25·log₂0.25) = 0.311 + 0.5 = <b>0.811</b> bits. For regression trees the impurity is simply the variance (MSE) of the targets in the node, and leaves predict the mean.</p>
+
+  <h3 style="margin-top:26px">2 · Information gain</h3>
+  <p style="margin-top:8px"><span class="mono">Gain(S, split) = I(S) − Σ<sub>child c</sub> (|S<sub>c</sub>| / |S|) · I(S<sub>c</sub>)</span></p>
+  <p><b>I</b> is Gini or entropy, <b>|S<sub>c</sub>|/|S|</b> the fraction of samples going to child c. Continue the example: split the 40 into left (25 repaid, 1 defaulted; Gini 0.074) and right (5 repaid, 9 defaulted; Gini 0.459). Weighted child Gini = (26/40)·0.074 + (14/40)·0.459 = 0.048 + 0.161 = 0.209. Gain = 0.375 − 0.209 = <b>0.166</b>. The tree computes this for every candidate and keeps the max. With n samples and d features that is O(n·d) candidates per node (after one sort per feature), which is why trees train fast.</p>
+
+  <h3 style="margin-top:26px">3 · Cost-complexity pruning</h3>
+  <p style="margin-top:8px"><span class="mono">R<sub>α</sub>(T) = R(T) + α · |leaves(T)|</span></p>
+  <p><b>R(T)</b> is the tree's total training impurity (or misclassification), <b>|leaves(T)|</b> its number of leaves, <b>α</b> ≥ 0 the price per leaf. For α = 0 the full tree wins; as α grows, subtrees whose impurity reduction per leaf is below α are collapsed, one at a time, giving a nested sequence of smaller trees. sklearn's <code>cost_complexity_pruning_path()</code> returns the exact α values where each collapse happens; you cross-validate over them and pass the winner as <code>ccp_alpha</code>.</p>
+
+  <h3 style="margin-top:26px">4 · Feature importance (and its trap)</h3>
+  <p style="margin-top:8px"><span class="mono">importance(f) = Σ<sub>nodes splitting on f</sub> (|S<sub>node</sub>| / n) · Gain<sub>node</sub></span>, normalised to sum to 1.</p>
+  <p>A feature's importance is the total weighted impurity it removed across the tree. It is free, useful, and biased: features with many unique values (a continuous "age" vs a binary "gender") get more chances to split and inflate their score, and correlated features share credit arbitrarily. For serious work, cross-check with <code>permutation_importance</code> (shuffle a column, measure the accuracy drop) or SHAP (Day 10).</p>
+
+  <div class="tbl rv" style="margin-top:22px"><table>
+    <thead><tr><th>Knob (sklearn)</th><th>Default</th><th>What it does</th><th>Raise it to…</th></tr></thead>
+    <tbody>
+      <tr><td><code>criterion</code></td><td><code>"gini"</code></td><td>impurity measure; <code>"entropy"</code> / <code>"log_loss"</code> alternatives</td><td>rarely matters; entropy is slower</td></tr>
+      <tr><td><code>max_depth</code></td><td><code>None</code> (unlimited)</td><td>longest root-to-leaf path</td><td>lower it to reduce overfitting; 3–8 is typical</td></tr>
+      <tr><td><code>min_samples_leaf</code></td><td><code>1</code></td><td>smallest allowed leaf</td><td>raise to 5–50 to kill outlier islands</td></tr>
+      <tr><td><code>min_samples_split</code></td><td><code>2</code></td><td>smallest node that may still split</td><td>raise for smoother trees</td></tr>
+      <tr><td><code>max_features</code></td><td><code>None</code> (all)</td><td>features considered per split</td><td>lower it for randomness (Random Forest, Day 09)</td></tr>
+      <tr><td><code>ccp_alpha</code></td><td><code>0.0</code></td><td>post-pruning price per leaf</td><td>choose from <code>cost_complexity_pruning_path</code> by CV</td></tr>
+      <tr><td><code>class_weight</code></td><td><code>None</code></td><td>re-weight rare classes</td><td><code>"balanced"</code> for fraud / churn</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout vi" style="margin-top:22px"><b class="t">How to say this in an interview</b><p>"A decision tree recursively partitions the feature space with axis-aligned thresholds chosen greedily to maximise information gain, measured by the drop in Gini impurity or entropy. Unconstrained trees overfit, so I limit depth or leaf size, or grow fully and post-prune with cost-complexity pruning, selecting ccp_alpha by cross-validation. Trees need no scaling, handle mixed features, and are interpretable, but a single tree is high-variance, which is exactly what ensembles fix."</p></div>
+</div></section>
+
+<!-- ============ CODE ============ -->
+<section class="s" id="code" data-nav="Code"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">04 · Code</div><h2>Grow it, read it, overfit it, prune it</h2><p class="lead">Full runnable version on the Titanic data, with plots: open <code>Day_08_Decision_Trees.ipynb</code> in Google Colab.</p></div><div class="time"><b>12</b>min</div></div>
+
+  <h3>1 · Train and read a tree (Titanic survival)</h3>
+  <div class="codewrap"><span class="lbl">python</span><pre><span class="k">import</span> pandas <span class="k">as</span> pd
+<span class="k">from</span> sklearn.tree <span class="k">import</span> DecisionTreeClassifier, export_text, plot_tree
+<span class="k">from</span> sklearn.model_selection <span class="k">import</span> train_test_split
+
+df = pd.read_csv(<span class="s">"https://raw.githubusercontent.com/mwaskom/seaborn-data/master/titanic.csv"</span>)
+df = df[[<span class="s">"survived"</span>, <span class="s">"pclass"</span>, <span class="s">"sex"</span>, <span class="s">"age"</span>, <span class="s">"sibsp"</span>, <span class="s">"parch"</span>, <span class="s">"fare"</span>]].dropna()
+df[<span class="s">"sex"</span>] = (df.sex == <span class="s">"male"</span>).astype(<span class="k">int</span>)          <span class="c"># trees are fine with 0/1; no scaling needed</span>
+X, y = df.drop(columns=<span class="s">"survived"</span>), df.survived
+X_tr, X_te, y_tr, y_te = train_test_split(X, y, test_size=<span class="n">0.25</span>, random_state=<span class="n">42</span>, stratify=y)
+
+tree = <span class="f">DecisionTreeClassifier</span>(max_depth=<span class="n">3</span>, random_state=<span class="n">42</span>).fit(X_tr, y_tr)
+<span class="k">print</span>(<span class="f">export_text</span>(tree, feature_names=list(X.columns)))   <span class="c"># the tree as readable if/else rules</span>
+<span class="k">print</span>(<span class="s">"train:"</span>, tree.score(X_tr, y_tr), <span class="s">" test:"</span>, tree.score(X_te, y_te))</pre></div>
+
+  <h3 style="margin-top:22px">2 · Draw it</h3>
+  <div class="codewrap"><span class="lbl">python</span><pre><span class="k">import</span> matplotlib.pyplot <span class="k">as</span> plt
+plt.figure(figsize=(<span class="n">18</span>, <span class="n">7</span>))
+<span class="f">plot_tree</span>(tree, feature_names=list(X.columns), class_names=[<span class="s">"died"</span>, <span class="s">"survived"</span>],
+          filled=<span class="k">True</span>, rounded=<span class="k">True</span>, impurity=<span class="k">True</span>, proportion=<span class="k">True</span>, fontsize=<span class="n">9</span>)
+plt.show()
+<span class="c"># each box: the question, gini, share of samples, class proportions, majority class</span>
+<span class="c"># the first question is sex &lt;= 0.5, i.e. "female?" — "women and children first" learned from data</span></pre></div>
+
+  <h3 style="margin-top:22px">3 · Overfit on purpose, then look at the damage</h3>
+  <div class="codewrap"><span class="lbl">python</span><pre>full = DecisionTreeClassifier(random_state=<span class="n">42</span>).fit(X_tr, y_tr)        <span class="c"># max_depth=None: grows until leaves are pure</span>
+<span class="k">print</span>(<span class="s">"depth:"</span>, full.get_depth(), <span class="s">" leaves:"</span>, full.get_n_leaves())
+<span class="k">print</span>(<span class="s">"train:"</span>, full.score(X_tr, y_tr), <span class="s">" test:"</span>, full.score(X_te, y_te))   <span class="c"># ~0.99 vs ~0.70: memorised</span>
+
+<span class="k">for</span> d <span class="k">in</span> [<span class="n">1</span>, <span class="n">2</span>, <span class="n">3</span>, <span class="n">4</span>, <span class="n">6</span>, <span class="n">8</span>, <span class="n">12</span>, <span class="k">None</span>]:                      <span class="c"># pre-pruning sweep</span>
+    t = DecisionTreeClassifier(max_depth=d, random_state=<span class="n">42</span>).fit(X_tr, y_tr)
+    <span class="k">print</span>(<span class="s">f"depth={str(d):4s} leaves={t.get_n_leaves():3d} train={t.score(X_tr, y_tr):.3f} test={t.score(X_te, y_te):.3f}"</span>)</pre></div>
+
+  <h3 style="margin-top:22px">4 · Post-pruning with cost-complexity (ccp_alpha)</h3>
+  <div class="tabs rv" style="margin-top:12px">
+    <div class="tb"><button class="on" type="button">choose alpha by CV</button><button type="button">what the path looks like</button></div>
+    <div class="tp on"><pre><span class="k">import</span> numpy <span class="k">as</span> np
+<span class="k">from</span> sklearn.model_selection <span class="k">import</span> cross_val_score
+
+path = full.<span class="f">cost_complexity_pruning_path</span>(X_tr, y_tr)      <span class="c"># every alpha at which a branch would be cut</span>
+alphas = path.ccp_alphas[:-<span class="n">1</span>]                              <span class="c"># drop the last one (it prunes to a single leaf)</span>
+
+cv = [cross_val_score(DecisionTreeClassifier(ccp_alpha=a, random_state=<span class="n">42</span>), X_tr, y_tr, cv=<span class="n">5</span>).mean() <span class="k">for</span> a <span class="k">in</span> alphas]
+best_alpha = alphas[int(np.argmax(cv))]
+pruned = DecisionTreeClassifier(ccp_alpha=best_alpha, random_state=<span class="n">42</span>).fit(X_tr, y_tr)
+<span class="k">print</span>(<span class="s">f"best alpha={best_alpha:.4f} leaves={pruned.get_n_leaves()} test={pruned.score(X_te, y_te):.3f}"</span>)</pre></div>
+    <div class="tp"><pre><span class="c"># impurities rise as alpha rises; leaves fall. Plot both to see the trade-off.</span>
+leaves = [DecisionTreeClassifier(ccp_alpha=a, random_state=<span class="n">42</span>).fit(X_tr, y_tr).get_n_leaves() <span class="k">for</span> a <span class="k">in</span> alphas]
+fig, ax = plt.subplots(<span class="n">1</span>, <span class="n">2</span>, figsize=(<span class="n">12</span>, <span class="n">4</span>))
+ax[<span class="n">0</span>].plot(alphas, leaves, marker=<span class="s">"o"</span>); ax[<span class="n">0</span>].set_xlabel(<span class="s">"ccp_alpha"</span>); ax[<span class="n">0</span>].set_ylabel(<span class="s">"leaves"</span>)
+ax[<span class="n">1</span>].plot(alphas, cv, marker=<span class="s">"o"</span>);     ax[<span class="n">1</span>].set_xlabel(<span class="s">"ccp_alpha"</span>); ax[<span class="n">1</span>].set_ylabel(<span class="s">"5-fold CV accuracy"</span>)
+plt.show()</pre></div>
+  </div>
+
+  <h3 style="margin-top:22px">5 · Feature importance, two ways</h3>
+  <div class="codewrap"><span class="lbl">python</span><pre><span class="k">from</span> sklearn.inspection <span class="k">import</span> permutation_importance
+
+imp = pd.Series(pruned.feature_importances_, index=X.columns).sort_values(ascending=<span class="k">False</span>)
+<span class="k">print</span>(<span class="s">"impurity-based:\n"</span>, imp.round(<span class="n">3</span>))                 <span class="c"># fast, biased toward high-cardinality features</span>
+
+perm = <span class="f">permutation_importance</span>(pruned, X_te, y_te, n_repeats=<span class="n">20</span>, random_state=<span class="n">42</span>)
+<span class="k">print</span>(<span class="s">"permutation (test set):\n"</span>, pd.Series(perm.importances_mean, index=X.columns).sort_values(ascending=<span class="k">False</span>).round(<span class="n">3</span>))
+<span class="c"># if a feature is important here, shuffling it hurt accuracy on data the tree never saw</span></pre></div>
+
+  <div class="callout cy"><b class="t">Gotchas you will hit</b><p><b>Different tree every run?</b> Ties between equally good splits are broken randomly; set <code>random_state</code>. <b>Tree ignores your one-hot columns?</b> Trees handle them, but with many categories a single binary split per level is weak; consider ordinal codes or target encoding (Day 17). <b><code>plot_tree</code> unreadable?</b> Plot a <code>max_depth=3</code> tree for the slide and use <code>export_text</code> for the real one. Want prettier plots: <a href="https://github.com/parrt/dtreeviz" target="_blank" rel="noopener">dtreeviz ↗</a> (<code>pip install dtreeviz</code>).</p></div>
+</div></section>
+
+<!-- ============ REAL WORLD ============ -->
+<section class="s" id="realworld" data-nav="Real world"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">05 · Real world &amp; tools</div><h2>Where trees run today</h2><p class="lead">On their own where explanations matter; in forests and boosters everywhere else on tabular data.</p></div><div class="time"><b>5</b>min</div></div>
+  <div class="grid3">
+    <div class="card rv"><span class="tag">Interactive</span><h4>R2D3: Visual intro to ML</h4><p>Part 1 grows a tree as you scroll; Part 2 is entirely about bias, variance and overfitting in trees. Assign both.</p><a class="pill" href="http://www.r2d3.us/visual-intro-to-machine-learning-part-1/" target="_blank" rel="noopener">r2d3.us ↗</a></div>
+    <div class="card rv"><span class="tag">Interactive</span><h4>MLU-Explain: Decision Trees</h4><p>Amazon ML University's visual walkthrough of splits, impurity and depth, with a live playground.</p><a class="pill" href="https://mlu-explain.github.io/decision-tree/" target="_blank" rel="noopener">mlu-explain.github.io ↗</a></div>
+    <div class="card rv"><span class="tag">Visualisation</span><h4>dtreeviz</h4><p>Beautiful tree diagrams with histograms at every node and the path of a single prediction highlighted. The picture you put in a client deck.</p><a class="pill" href="https://github.com/parrt/dtreeviz" target="_blank" rel="noopener">github.com/parrt/dtreeviz ↗</a></div>
+    <div class="card rv"><span class="tag">Reference</span><h4>scikit-learn: Decision Trees guide</h4><p>CART details, the pruning section with the exact cost-complexity algorithm, tips on imbalanced data and tree depth.</p><a class="pill" href="https://scikit-learn.org/stable/modules/tree.html" target="_blank" rel="noopener">scikit-learn.org ↗</a></div>
+    <div class="card rv"><span class="tag">Competition</span><h4>Kaggle: Titanic</h4><p>The dataset in today's notebook, as the world's most-entered ML competition. A pruned tree scores ~0.78 on the leaderboard; a great first submission.</p><a class="pill" href="https://www.kaggle.com/c/titanic" target="_blank" rel="noopener">kaggle.com ↗</a></div>
+    <div class="card rv"><span class="tag">Book · free</span><h4>Interpretable Machine Learning</h4><p>Christoph Molnar's open book. The decision-tree chapter, then permutation importance and SHAP, are exactly the "explainable ML" a bank will ask about.</p><a class="pill" href="https://christophm.github.io/interpretable-ml-book/" target="_blank" rel="noopener">christophm.github.io ↗</a></div>
+  </div>
+  <h3 style="margin-top:34px">Modern AI tools for today's work</h3>
+  <div class="tools" style="margin-top:12px">
+    <div class="tool"><b>Google Colab</b><span>Run the notebook; every tree here trains in milliseconds.</span><a href="https://colab.research.google.com/" target="_blank" rel="noopener">colab.research.google.com</a></div>
+    <div class="tool"><b>Kaggle</b><span>Titanic submission tonight; the leaderboard rank goes on your resume.</span><a href="https://www.kaggle.com/c/titanic" target="_blank" rel="noopener">kaggle.com</a></div>
+    <div class="tool"><b>Optuna</b><span>Search max_depth, min_samples_leaf and ccp_alpha jointly instead of one at a time.</span><a href="https://optuna.org/" target="_blank" rel="noopener">optuna.org</a></div>
+    <div class="tool"><b>SHAP</b><span>Per-prediction explanations for any tree model; the industry standard for "why was this rejected?".</span><a href="https://github.com/shap/shap" target="_blank" rel="noopener">github.com/shap/shap</a></div>
+    <div class="tool"><b>Streamlit</b><span>Build a "loan decision explainer": enter values, show the path through the tree.</span><a href="https://streamlit.io/" target="_blank" rel="noopener">streamlit.io</a></div>
+    <div class="tool"><b>Claude / ChatGPT</b><span>Paste an <code>export_text</code> tree and ask it to translate every leaf into a customer-facing sentence. Check each one.</span><a href="https://claude.ai/" target="_blank" rel="noopener">claude.ai</a></div>
+  </div>
+</div></section>
+
+<!-- ============ CAREER ============ -->
+<section class="s" id="career" data-nav="Career"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">06 · Career corner</div><h2>How today shows up in a job</h2></div><div class="time"><b>3</b>min</div></div>
+  <div class="career rv">
+    <span class="tag">In job descriptions</span>
+    <p><b>Credit Risk Modeller / Analyst</b> (banks, NBFCs, fintech lenders), <b>Data Scientist</b> (tabular problems: churn, pricing, fraud) and <b>ML Engineer</b> roles list "tree-based models", "XGBoost/LightGBM", "model interpretability / explainable AI", "SHAP". Single trees are the interview topic; ensembles of trees are the production model. You cannot explain a Random Forest tomorrow if you cannot explain one tree today.</p>
+    <h4 style="margin-top:18px">Real interview questions</h4>
+    <ul>
+      <li><b>"Gini vs entropy: when does it matter?"</b> → Almost never for accuracy; both peak at 50/50 and are zero at purity. Gini is faster (no log), so it is the default; entropy slightly favours balanced splits.</li>
+      <li><b>"How do you stop a decision tree from overfitting?"</b> → Pre-pruning (max_depth, min_samples_leaf), post-pruning (ccp_alpha via cost-complexity path + CV), or use an ensemble that averages many trees.</li>
+      <li><b>"Why doesn't a tree need feature scaling?"</b> → Splits are thresholds on one feature at a time; any monotonic transform of a feature gives the same set of possible splits.</li>
+    </ul>
+    <h4 style="margin-top:18px">Job-hunt action for today</h4>
+    <p>Make a Titanic submission on Kaggle with your pruned tree (10 minutes; template in the notebook), then write a 3-line LinkedIn post: the tree's first split, your leaderboard score, and one sentence on why you pruned. Add "Decision Trees, Model Interpretability" to your LinkedIn skills. Recruiters searching "interpretability" are searching for exactly this hour.</p>
+  </div>
+</div></section>
+
+<!-- ============ QUIZ ============ -->
+<section class="s" id="quiz" data-nav="Quiz"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">07 · Quiz</div><h2>Three quick checks</h2></div><div class="time"><b>3</b>min</div></div>
+  <div class="quiz">
+    <div class="q rv" data-a="1"><p>A node has 40 repaid and 40 defaulted. Its Gini impurity is…</p><div class="opts"><button type="button">0</button><button type="button">0.5</button><button type="button">1</button></div><div class="why">Gini = 1 − (0.5² + 0.5²) = 1 − 0.5 = 0.5, the maximum for two classes. (Entropy would be 1 bit.)</div></div>
+    <div class="q rv" data-a="2"><p>Your tree scores 99% on training data and 71% on test. The single most direct fix is…</p><div class="opts"><button type="button">Scale the features</button><button type="button">Switch criterion from Gini to entropy</button><button type="button">Prune: limit depth / min_samples_leaf or tune ccp_alpha</button></div><div class="why">That gap is overfitting (high variance). Scaling does nothing for trees; the criterion barely matters. Pruning, or an ensemble, is the fix.</div></div>
+    <div class="q rv" data-a="0"><p>Raising <code>ccp_alpha</code> from 0 to 0.02 will…</p><div class="opts"><button type="button">Remove leaves, making the tree smaller</button><button type="button">Add leaves, making the tree deeper</button><button type="button">Change the impurity measure</button></div><div class="why">ccp_alpha is the price per leaf in cost-complexity pruning; a higher price collapses branches whose gain is not worth their leaves.</div></div>
+  </div>
+</div></section>
+
+<!-- ============ HOMEWORK ============ -->
+<section class="s" id="homework" data-nav="Homework"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">08 · Homework</div><h2>Tonight, 30–40 minutes</h2></div><div class="time"><b>2</b>min</div></div>
+  <div class="hw">
+    <div class="card rv"><span class="lvl">Easy · 10 min</span><h4>Gini by hand</h4><p>A node holds 60 "order again" and 20 "never again" customers. Compute Gini and entropy. A split sends 50/5 left and 10/15 right; compute the gain. Then verify with a 3-line NumPy snippet.</p></div>
+    <div class="card rv"><span class="lvl">Medium · 20 min</span><h4>Your daily decision tree</h4><p>Log 30 recent decisions of one kind (e.g. "did I cook or order?", features: day, hour, rain, energy 1–5, money left). Fit a <code>max_depth=2</code> tree and <code>export_text</code> it. Does it describe you honestly? Post the rules (anonymised) if they are funny.</p></div>
+    <div class="card rv"><span class="lvl">Stretch · job hunt</span><h4>Titanic on the leaderboard</h4><p>Use the notebook's submission template: pruned tree with ccp_alpha chosen by CV, predict on Kaggle's test.csv, upload. Screenshot your rank for LinkedIn. Bonus: beat 0.78 with better features (title from name, family size).</p></div>
+  </div>
+</div></section>
+
+<!-- ============ NEXT ============ -->
+<section class="s" id="next" data-nav="Next"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">09 · Next</div><h2>Tomorrow</h2></div><div class="time"><b>2</b>min</div></div>
+  <div class="fin rv">
+    <h2>Day 09 · Wisdom of crowds: bagging &amp; Random Forest</h2>
+    <p>One tree is high-variance: change a few rows and the whole tree changes. Tomorrow we train hundreds of slightly different trees on bootstrapped data and let them vote. Variance collapses, accuracy jumps, and you get the "default first model" every data scientist reaches for.</p>
+    <div style="margin-top:26px;text-align:left;max-width:560px;margin-inline:auto">
+      <div class="steps">
+        <div><div><b>Run the notebook</b> and note the best ccp_alpha and how many leaves survived.</div></div>
+        <div><div><b>Do the Easy homework</b> (Gini by hand); you will be asked to say the numbers aloud.</div></div>
+        <div><div><b>Scroll R2D3 Part 2</b> (bias and variance) if you have 8 minutes; it is tomorrow's opening argument.</div></div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+
+<script>
+document.documentElement.classList.add('js');
+/* nav from sections */
+(function(){const nav=document.getElementById('nav');document.querySelectorAll('section.s[data-nav]').forEach((s,i)=>{const a=document.createElement('a');a.href='#'+s.id;a.innerHTML='<i>'+String(i+1).padStart(2,'0')+'</i>'+s.dataset.nav;nav.appendChild(a);});
+const links=[...nav.querySelectorAll('a')];const secs=[...document.querySelectorAll('section.s[data-nav]')];
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle('on',l.getAttribute('href')==='#'+e.target.id));}})},{rootMargin:'-40% 0px -55% 0px'});secs.forEach(s=>io.observe(s));
+window.addEventListener('scroll',()=>{const h=document.documentElement;document.getElementById('track').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';},{passive:true});})();
+/* reveal */
+(function(){const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:.1});document.querySelectorAll('.rv').forEach(el=>io.observe(el));})();
+/* class timer */
+(function(){let t=0,id=null;const el=document.getElementById('clk'),b=document.getElementById('clkbtn');b.onclick=()=>{if(id){clearInterval(id);id=null;b.textContent='Resume';return;}b.textContent='Pause';id=setInterval(()=>{t++;el.textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');if(t>=3600){clearInterval(id);el.textContent='60:00';b.textContent='Done';}},1000);};})();
+/* hero particles */
+(function(){const c=document.getElementById('bgc');if(!c)return;const x=c.getContext('2d');let w,h,P=[];function rs(){w=c.width=c.offsetWidth;h=c.height=c.offsetHeight;P=Array.from({length:Math.min(70,w/14)},()=>({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-.5)*.4,vy:(Math.random()-.5)*.4}));}rs();window.addEventListener('resize',rs);const col=()=>getComputedStyle(document.documentElement).getPropertyValue('--cyan').trim();function f(){x.clearRect(0,0,w,h);const cc=col();for(const p of P){p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>w)p.vx*=-1;if(p.y<0||p.y>h)p.vy*=-1;}for(let i=0;i<P.length;i++){for(let j=i+1;j<P.length;j++){const d=Math.hypot(P[i].x-P[j].x,P[i].y-P[j].y);if(d<120){x.strokeStyle=cc;x.globalAlpha=(1-d/120)*.35;x.beginPath();x.moveTo(P[i].x,P[i].y);x.lineTo(P[j].x,P[j].y);x.stroke();}}}x.globalAlpha=1;x.fillStyle=cc;for(const p of P){x.beginPath();x.arc(p.x,p.y,1.8,0,7);x.fill();}requestAnimationFrame(f);}if(!matchMedia('(prefers-reduced-motion:reduce)').matches)f();})();
+/* tabs */
+document.querySelectorAll('.tabs').forEach(t=>{const bs=t.querySelectorAll('.tb button'),ps=t.querySelectorAll('.tp');bs.forEach((b,i)=>b.onclick=()=>{bs.forEach(x=>x.classList.remove('on'));ps.forEach(x=>x.classList.remove('on'));b.classList.add('on');ps[i].classList.add('on');});});
+/* quiz: <div class="q" data-a="1"> with .opts buttons; index of correct answer in data-a */
+document.querySelectorAll('.q').forEach(q=>{const a=+q.dataset.a;q.querySelectorAll('.opts button').forEach((b,i)=>b.onclick=()=>{if(q.classList.contains('done'))return;q.classList.add('done');b.classList.add(i===a?'ok':'bad');if(i!==a)q.querySelectorAll('.opts button')[a].classList.add('ok');});});
+/* Chart.js theme defaults */
+if(window.Chart){const cs=getComputedStyle(document.documentElement);Chart.defaults.color=cs.getPropertyValue('--ink2').trim();Chart.defaults.borderColor=cs.getPropertyValue('--line').trim();Chart.defaults.font.family=cs.getPropertyValue('--mono').trim();}
+</script>
+<script>
+/* ===== Day 08 page visuals ===== */
+(function(){
+  const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  function rng(seed){let s=seed>>>0;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
+  function gauss(r){let u=0,v=0;while(u===0)u=r();while(v===0)v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+  const gini=(a,b)=>{const n=a+b;if(!n)return 0;const p=a/n;return 1-p*p-(1-p)*(1-p);};
+
+  /* ---------- impurity chart ---------- */
+  if(window.Chart&&document.getElementById('impchart')){const ps=[],g=[],h=[];for(let i=0;i<=50;i++){const p=i/50;ps.push(p.toFixed(2));g.push(+(2*p*(1-p)).toFixed(4));const e=(p<=0||p>=1)?0:-(p*Math.log2(p)+(1-p)*Math.log2(1-p));h.push(+(e/2).toFixed(4));}
+    new Chart(document.getElementById('impchart'),{type:'line',data:{labels:ps,datasets:[{label:'Gini = 1 − Σp²',data:g,borderColor:css('--amber'),backgroundColor:css('--amber'),pointRadius:0,tension:.25},{label:'Entropy ÷ 2',data:h,borderColor:css('--cyan'),backgroundColor:css('--cyan'),pointRadius:0,tension:.25,borderDash:[5,4]}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{title:{display:true,text:'fraction of class 1 in the node'},ticks:{maxTicksLimit:11}},y:{min:0,max:0.55,title:{display:true,text:'impurity'}}},plugins:{legend:{position:'top'}}}});}
+
+  /* ---------- tree lab ---------- */
+  (function(){
+    const c=document.getElementById('treec');if(!c)return;const ctx=c.getContext('2d');
+    const r=rng(31);
+    /* features normalised to [0,1]: x = income, y = credit score. Non-linear truth + noise */
+    function gen(n){const out=[];for(let i=0;i<n;i++){const x=r(),y=r();let p=0.08;if(y>0.55&&x>0.3)p=0.9;else if(y>0.75)p=0.75;else if(x>0.7&&y>0.35)p=0.6;out.push({x,y,l:r()<p?1:0});}return out;}
+    const train=gen(180),test=gen(90);
+    const W=c.width,H=c.height,pad={l:60,r:20,t:20,b:44};
+    const sx=v=>pad.l+v*(W-pad.l-pad.r), sy=v=>pad.t+(1-v)*(H-pad.t-pad.b);
+    const featEl=document.getElementById('tfeat'),thrEl=document.getElementById('tthr'),depEl=document.getElementById('tdepth'),leafEl=document.getElementById('tleaf');
+    const cnt=pts=>{let a=0;for(const p of pts)if(p.l)a++;return[a,pts.length-a];};
+    function bestSplit(pts,minLeaf){let best=null;for(const f of ['x','y']){const s=[...pts].sort((a,b)=>a[f]-b[f]);const [A,B]=cnt(pts);let la=0,lb=0;for(let i=0;i<s.length-1;i++){if(s[i].l)la++;else lb++;if(s[i][f]===s[i+1][f])continue;const nl=i+1,nr=s.length-nl;if(nl<minLeaf||nr<minLeaf)continue;const gw=(nl*gini(la,lb)+nr*gini(A-la,B-lb))/s.length;if(!best||gw<best.gw)best={f,thr:(s[i][f]+s[i+1][f])/2,gw};}}return best;}
+    function grow(pts,depth,minLeaf,box){const [a,b]=cnt(pts);const node={box,n:pts.length,a,b,g:gini(a,b),pred:a>=b?1:0};if(depth===0||node.g===0||pts.length<2*minLeaf)return node;const s=bestSplit(pts,minLeaf);if(!s||s.gw>=node.g-1e-12)return node;node.split=s;const L=pts.filter(p=>p[s.f]<=s.thr),R=pts.filter(p=>p[s.f]>s.thr);
+      const bl={...box},br={...box};if(s.f==='x'){bl.x1=s.thr;br.x0=s.thr;}else{bl.y1=s.thr;br.y0=s.thr;}node.left=grow(L,depth-1,minLeaf,bl);node.right=grow(R,depth-1,minLeaf,br);return node;}
+    function predict(node,p){while(node.split){node=p[node.split.f]<=node.split.thr?node.left:node.right;}return node.pred;}
+    function leaves(node,out=[]){if(node.split){leaves(node.left,out);leaves(node.right,out);}else out.push(node);return out;}
+    function acc(node,pts){let ok=0;for(const p of pts)if(predict(node,p)===p.l)ok++;return ok/pts.length;}
+    let anim=null,sweep=null;
+    function draw(){
+      const f=featEl.value||'x',thr=+thrEl.value,depth=+depEl.value,minLeaf=+leafEl.value;
+      document.getElementById('tdepthv').textContent=depth;document.getElementById('tleafv').textContent=minLeaf;
+      document.getElementById('tthrv').textContent=f==='x'?'income '+(20+thr*130).toFixed(0)+'k':'score '+(450+thr*400).toFixed(0);
+      ctx.clearRect(0,0,W,H);
+      const [A,B]=cnt(train);document.getElementById('tgp').textContent=gini(A,B).toFixed(3);
+      if(depth===0){
+        /* manual single split */
+        const L=train.filter(p=>p[f]<=thr),R=train.filter(p=>p[f]>thr);const [la,lb]=cnt(L),[ra,rb]=cnt(R);
+        const gl=gini(la,lb),gr=gini(ra,rb),gw=(L.length*gl+R.length*gr)/train.length;
+        /* paint the two halves by majority */
+        const paint=(box,pred,strength)=>{ctx.fillStyle=pred?'rgba(155,229,107,'+(0.06+0.22*strength)+')':'rgba(255,107,138,'+(0.06+0.22*strength)+')';ctx.fillRect(sx(box.x0),sy(box.y1),sx(box.x1)-sx(box.x0),sy(box.y0)-sy(box.y1));};
+        const bl=f==='x'?{x0:0,x1:thr,y0:0,y1:1}:{x0:0,x1:1,y0:0,y1:thr},br=f==='x'?{x0:thr,x1:1,y0:0,y1:1}:{x0:0,x1:1,y0:thr,y1:1};
+        if(L.length)paint(bl,la>=lb?1:0,1-2*gl);if(R.length)paint(br,ra>=rb?1:0,1-2*gr);
+        ctx.strokeStyle=css('--amber');ctx.lineWidth=2.5;ctx.beginPath();if(f==='x'){ctx.moveTo(sx(thr),pad.t);ctx.lineTo(sx(thr),H-pad.b);}else{ctx.moveTo(pad.l,sy(thr));ctx.lineTo(W-pad.r,sy(thr));}ctx.stroke();ctx.lineWidth=1;
+        document.getElementById('tglr').textContent=gl.toFixed(3)+' / '+gr.toFixed(3);document.getElementById('tgw').textContent=gw.toFixed(3);
+        const gain=gini(A,B)-gw;const ge=document.getElementById('tgain');ge.textContent=gain.toFixed(3);ge.style.color=gain>0.1?css('--lime'):(gain>0.02?css('--amber'):css('--rose'));
+        document.getElementById('tleaves').textContent='2 (one split)';
+        const root={split:{f,thr},left:{pred:la>=lb?1:0},right:{pred:ra>=rb?1:0}};document.getElementById('tacc').textContent=(acc(root,train)*100).toFixed(0)+'% / '+(acc(root,test)*100).toFixed(0)+'%';
+        ctx.fillStyle=css('--ink2');ctx.font='12px JetBrains Mono,monospace';ctx.fillText('left: '+la+' repaid, '+lb+' default   right: '+ra+' repaid, '+rb+' default',pad.l+8,pad.t+16);
+      }else{
+        const root=grow(train,depth,minLeaf,{x0:0,x1:1,y0:0,y1:1});const lv=leaves(root);
+        for(const n of lv){const strength=1-2*n.g;ctx.fillStyle=n.pred?'rgba(155,229,107,'+(0.06+0.24*strength)+')':'rgba(255,107,138,'+(0.06+0.24*strength)+')';ctx.fillRect(sx(n.box.x0),sy(n.box.y1),sx(n.box.x1)-sx(n.box.x0),sy(n.box.y0)-sy(n.box.y1));ctx.strokeStyle=css('--line2');ctx.strokeRect(sx(n.box.x0),sy(n.box.y1),sx(n.box.x1)-sx(n.box.x0),sy(n.box.y0)-sy(n.box.y1));}
+        /* root split highlighted */
+        if(root.split){ctx.strokeStyle=css('--amber');ctx.lineWidth=2.5;ctx.beginPath();if(root.split.f==='x'){ctx.moveTo(sx(root.split.thr),pad.t);ctx.lineTo(sx(root.split.thr),H-pad.b);}else{ctx.moveTo(pad.l,sy(root.split.thr));ctx.lineTo(W-pad.r,sy(root.split.thr));}ctx.stroke();ctx.lineWidth=1;}
+        const s=root.split;document.getElementById('tglr').textContent=s?(root.left.g.toFixed(3)+' / '+root.right.g.toFixed(3)):'–';document.getElementById('tgw').textContent=s?((root.left.n*root.left.g+root.right.n*root.right.g)/root.n).toFixed(3):'–';
+        const ge=document.getElementById('tgain');ge.textContent=s?(root.g-(root.left.n*root.left.g+root.right.n*root.right.g)/root.n).toFixed(3)+' (root)':'–';ge.style.color=css('--cyan');
+        document.getElementById('tleaves').textContent=lv.length+' (depth '+depth+')';
+        const ta=acc(root,train),te=acc(root,test);const ae=document.getElementById('tacc');ae.textContent=(ta*100).toFixed(0)+'% / '+(te*100).toFixed(0)+'%';ae.style.color=(ta-te>0.12)?css('--rose'):css('--cyan');
+        ctx.fillStyle=css('--ink2');ctx.font='12px JetBrains Mono,monospace';ctx.fillText('root question: '+(s?(s.f==='x'?'income ≤ '+(20+s.thr*130).toFixed(0)+'k ?':'credit score ≤ '+(450+s.thr*400).toFixed(0)+' ?'):'(pure)')+'   amber = root split',pad.l+8,pad.t+16);
+      }
+      /* axes + points */
+      ctx.strokeStyle=css('--line2');ctx.strokeRect(pad.l,pad.t,W-pad.l-pad.r,H-pad.t-pad.b);
+      ctx.fillStyle=css('--ink3');ctx.font='11px JetBrains Mono,monospace';for(const v of [0,0.25,0.5,0.75,1])ctx.fillText((20+v*130).toFixed(0)+'k',sx(v)-10,H-pad.b+16);for(const v of [0,0.25,0.5,0.75,1])ctx.fillText((450+v*400).toFixed(0),pad.l-34,sy(v)+4);
+      ctx.fillText('monthly income →',W/2-50,H-8);ctx.save();ctx.translate(14,H/2+44);ctx.rotate(-Math.PI/2);ctx.fillText('credit score →',0,0);ctx.restore();
+      for(const p of train){ctx.fillStyle=p.l?css('--lime'):css('--rose');ctx.beginPath();ctx.arc(sx(p.x),sy(p.y),4.5,0,7);ctx.fill();}
+      for(const p of test){ctx.strokeStyle=p.l?css('--lime'):css('--rose');ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(sx(p.x),sy(p.y),4.5,0,7);ctx.stroke();}ctx.lineWidth=1;
+    }
+    [featEl,thrEl,depEl,leafEl].forEach(e=>{e.addEventListener('input',()=>{if(anim){cancelAnimationFrame(anim);anim=null;}draw();});e.addEventListener('change',draw);});
+    document.getElementById('tbest').onclick=()=>{
+      if(anim){cancelAnimationFrame(anim);anim=null;}
+      depEl.value=0;const cands=[];for(const f of ['x','y'])for(let t=0.02;t<=0.98;t+=0.02)cands.push([f,t]);
+      let i=0,best=null,last=0;
+      const step=ts=>{if(ts-last>28){const [f,t]=cands[i];featEl.value=f;thrEl.value=t.toFixed(3);draw();const gain=+document.getElementById('tgain').textContent;if(!best||gain>best.gain)best={f,t,gain};
+          ctx.fillStyle=css('--amber');ctx.font='12px JetBrains Mono,monospace';ctx.fillText('scanning candidate '+(i+1)+'/'+cands.length+'   best so far: gain '+best.gain.toFixed(3),pad.l+8,pad.t+34);i++;last=ts;}
+        if(i<cands.length)anim=requestAnimationFrame(step);else{featEl.value=best.f;thrEl.value=best.t.toFixed(3);draw();ctx.fillStyle=css('--amber');ctx.font='600 13px JetBrains Mono,monospace';ctx.fillText('best split found: gain '+best.gain.toFixed(3)+' → this becomes the root question',pad.l+8,pad.t+34);anim=null;}};
+      anim=requestAnimationFrame(step);
+    };
+    draw();
+    /* ---------- depth chart from the same tree ---------- */
+    if(window.Chart&&document.getElementById('depthchart')){const ds=[],tr=[],te=[];for(let d=1;d<=12;d++){const root=grow(train,d,1,{x0:0,x1:1,y0:0,y1:1});ds.push(d);tr.push(+(acc(root,train)*100).toFixed(1));te.push(+(acc(root,test)*100).toFixed(1));}
+      new Chart(document.getElementById('depthchart'),{type:'line',data:{labels:ds,datasets:[{label:'train accuracy %',data:tr,borderColor:css('--cyan'),backgroundColor:css('--cyan'),tension:.3,pointRadius:3},{label:'test accuracy %',data:te,borderColor:css('--amber'),backgroundColor:css('--amber'),tension:.3,pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{title:{display:true,text:'max depth (min_samples_leaf = 1)'}},y:{min:50,max:100,title:{display:true,text:'accuracy %'}}},plugins:{legend:{position:'top'}}}});}
+  })();
+})();
+
+</script>
+</body></html>

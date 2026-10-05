@@ -1,0 +1,648 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Day 05: Regression beyond a line</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0A0E1A; --bg2:#111729; --panel:#161D33; --line:#243052; --line2:#2E3B62;
+  --ink:#EDF0FA; --ink2:#AEB7D3; --ink3:#7B86A8;
+  --amber:#FFB43A; --cyan:#4FD3F2; --rose:#FF6B8A; --lime:#9BE56B; --violet:#9D8CFF;
+  --glow:rgba(79,211,242,.18);
+  --display:'Syne',ui-sans-serif,system-ui,sans-serif;
+  --body:'Manrope',ui-sans-serif,system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#F3F5FB; --bg2:#FFFFFF; --panel:#FFFFFF; --line:#D7DDEE; --line2:#C3CBE3;
+    --ink:#0F1730; --ink2:#3B4666; --ink3:#6B7694;
+    --amber:#C97A00; --cyan:#0A8FB3; --rose:#D93A5D; --lime:#4E9A1E; --violet:#6A55E8;
+    --glow:rgba(10,143,179,.14);
+  }
+}
+:root[data-theme="light"]{
+  --bg:#F3F5FB; --bg2:#FFFFFF; --panel:#FFFFFF; --line:#D7DDEE; --line2:#C3CBE3;
+  --ink:#0F1730; --ink2:#3B4666; --ink3:#6B7694;
+  --amber:#C97A00; --cyan:#0A8FB3; --rose:#D93A5D; --lime:#4E9A1E; --violet:#6A55E8;
+  --glow:rgba(10,143,179,.14);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;padding-inline:clamp(16px,4vw,48px);padding-block:0 80px}
+a{color:var(--cyan)}
+h1,h2,h3,h4{font-family:var(--display);text-wrap:balance;line-height:1.08;margin:0}
+h2{font-size:clamp(30px,4.2vw,50px);font-weight:800;letter-spacing:-.01em}
+h3{font-size:clamp(20px,2.2vw,26px);font-weight:700}
+h4{font-size:17px;font-weight:700}
+p{max-width:68ch;margin:0}
+p+p{margin-top:12px}
+ul,ol{max-width:70ch}
+li{margin-bottom:6px}
+.wrap{max-width:1180px;margin:0 auto}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)}
+.eyebrow b{color:var(--amber);font-weight:600}
+code,.mono{font-family:var(--mono)}
+p code,li code,td code{font-size:.9em;background:var(--bg2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--cyan)}
+
+/* progress bar + nav */
+#bar{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);margin-inline:calc(-1*clamp(16px,4vw,48px));padding-inline:clamp(16px,4vw,48px)}
+#bar .wrap{display:flex;align-items:center;gap:14px;height:56px;overflow-x:auto;scrollbar-width:none}
+#bar .wrap::-webkit-scrollbar{display:none}
+#bar .brand{font-family:var(--display);font-weight:800;font-size:15px;white-space:nowrap}
+#bar .brand span{color:var(--amber)}
+#bar nav{display:flex;gap:4px;flex:1}
+#bar nav a{font-family:var(--mono);font-size:11.5px;text-decoration:none;color:var(--ink3);padding:6px 10px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+#bar nav a.on{color:var(--ink);border-color:var(--line2);background:var(--panel)}
+#bar nav a i{font-style:normal;color:var(--amber);margin-right:5px}
+#bar .clock{font-family:var(--mono);font-size:12px;color:var(--ink2);white-space:nowrap;display:flex;gap:8px;align-items:center}
+#bar .clock button{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line2);border-radius:6px;padding:4px 9px;cursor:pointer}
+#track{position:absolute;left:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--cyan),var(--amber));width:0}
+
+/* sections */
+section.s{padding-block:88px 40px;border-top:1px solid var(--line);position:relative}
+.head{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end;margin-bottom:38px}
+.time{font-family:var(--mono);font-size:12px;color:var(--ink3);text-align:right;line-height:1.5}
+.time b{display:block;font-size:22px;color:var(--amber);font-weight:600}
+.lead{font-size:clamp(18px,1.6vw,21px);color:var(--ink2);max-width:62ch;margin-top:16px}
+
+/* hero */
+#hero{padding-block:70px 60px;position:relative;overflow:hidden;margin-inline:calc(-1*clamp(16px,4vw,48px));padding-inline:clamp(16px,4vw,48px)}
+#hero canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.55;pointer-events:none}
+#hero .wrap{position:relative}
+#hero h1{font-size:clamp(40px,7vw,96px);font-weight:800;letter-spacing:-.03em;line-height:.98}
+#hero h1 em{font-style:normal;color:var(--amber)}
+#hero h1 .c{color:var(--cyan)}
+.hero-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:40px;align-items:end;margin-top:30px}
+.agenda{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
+.agenda h3{font-size:14px;font-family:var(--mono);font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-bottom:12px}
+.agenda ol{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.agenda li{display:grid;grid-template-columns:52px 1fr;gap:12px;font-size:15px;align-items:baseline;margin:0}
+.agenda li span{font-family:var(--mono);font-size:12px;color:var(--amber)}
+.agenda li a{color:var(--ink);text-decoration:none}
+.agenda li a:hover{color:var(--cyan)}
+
+/* generic blocks */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;transition:transform .25s,border-color .25s}
+.card:hover{border-color:var(--cyan)}
+.card h3{margin-bottom:8px}
+.card h4{margin-bottom:6px}
+.card p{font-size:15.5px;color:var(--ink2)}
+.card.amber{border-color:var(--amber)} .card.violet{border-color:var(--violet)} .card.lime{border-color:var(--lime)} .card.rose{border-color:var(--rose)}
+.tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid var(--line2);color:var(--ink3);margin-bottom:12px}
+.pill{display:inline-flex;gap:6px;align-items:center;font-family:var(--mono);font-size:12px;padding:5px 11px;border-radius:999px;background:var(--bg2);border:1px solid var(--line);color:var(--ink2);text-decoration:none;margin:4px 6px 4px 0}
+.pill:hover{border-color:var(--cyan);color:var(--ink)}
+.callout{border-left:4px solid var(--amber);background:var(--panel);border-radius:0 14px 14px 0;padding:16px 20px;margin-block:18px}
+.callout.cy{border-left-color:var(--cyan)} .callout.ro{border-left-color:var(--rose)} .callout.li{border-left-color:var(--lime)} .callout.vi{border-left-color:var(--violet)}
+.callout b.t{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);display:block;margin-bottom:6px}
+.callout.cy b.t{color:var(--cyan)} .callout.ro b.t{color:var(--rose)} .callout.li b.t{color:var(--lime)} .callout.vi b.t{color:var(--violet)}
+.callout p{font-size:15.5px;color:var(--ink2)}
+
+/* analogy strip */
+.analogy{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start;background:linear-gradient(135deg,color-mix(in srgb,var(--amber) 10%,var(--panel)),var(--panel));border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-block:22px}
+.analogy .em{font-size:38px;line-height:1}
+.analogy h4{margin-bottom:4px}
+.analogy p{font-size:15.5px;color:var(--ink2)}
+
+/* code */
+pre{background:var(--bg2);border:1px solid var(--line2);border-radius:12px;padding:16px 18px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.55;margin:0;color:var(--ink)}
+pre .c{color:var(--ink3)} pre .k{color:var(--violet)} pre .s{color:var(--lime)} pre .n{color:var(--amber)} pre .f{color:var(--cyan)}
+.codewrap{position:relative;margin-block:14px}
+.codewrap .lbl{position:absolute;top:8px;right:12px;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+
+/* tabs */
+.tabs{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel)}
+.tabs .tb{display:flex;gap:2px;border-bottom:1px solid var(--line);background:var(--bg2);overflow-x:auto}
+.tabs .tb button{font:600 13px var(--body);background:transparent;color:var(--ink3);border:0;padding:11px 16px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.tabs .tb button.on{color:var(--ink);border-bottom-color:var(--amber)}
+.tabs .tp{display:none;padding:18px}
+.tabs .tp.on{display:block}
+
+/* figures / charts */
+figure{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;overflow:hidden}
+figure svg{width:100%;height:auto;display:block}
+figcaption{font-family:var(--mono);font-size:11.5px;color:var(--ink3);margin-top:8px}
+.chart{position:relative;height:300px}
+.chart canvas{width:100%!important;height:100%!important}
+canvas.demo{width:100%;height:auto;background:var(--bg2);border:1px solid var(--line2);border-radius:14px;display:block;touch-action:none}
+.ctl{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.ctl label{font-family:var(--mono);font-size:12px;color:var(--ink2);display:flex;gap:8px;align-items:center}
+.ctl input[type=range]{accent-color:var(--amber)}
+.btn{font:600 14px var(--body);color:var(--bg);background:var(--amber);border:0;border-radius:9px;padding:10px 16px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line2)}
+.btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.stats{font-family:var(--mono);font-size:13px;color:var(--ink2);display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin-top:14px;font-variant-numeric:tabular-nums}
+.stats b{color:var(--cyan);font-weight:600}
+
+/* steps */
+.steps{display:grid;gap:10px;counter-reset:st}
+.steps>div{display:grid;grid-template-columns:32px 1fr;gap:12px;align-items:start;font-size:15px;color:var(--ink2)}
+.steps>div::before{counter-increment:st;content:counter(st);font-family:var(--mono);font-size:12px;color:var(--amber);border:1px solid var(--line2);border-radius:50%;width:26px;height:26px;display:grid;place-items:center}
+.steps b{color:var(--ink)}
+
+/* table */
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+th,td{padding:10px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);background:var(--bg2)}
+tr:last-child td{border-bottom:0}
+
+/* tools + career */
+.tools{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.tool{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:6px}
+.tool b{font-family:var(--display);font-size:16px}
+.tool span{font-size:14px;color:var(--ink2)}
+.tool a{font-family:var(--mono);font-size:12px;text-decoration:none}
+.career{border:1px solid var(--violet);background:linear-gradient(135deg,color-mix(in srgb,var(--violet) 12%,var(--panel)),var(--panel));border-radius:14px;padding:22px}
+.career .tag{border-color:var(--violet);color:var(--violet)}
+
+/* homework */
+.hw{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.hw .card{border-color:var(--line2)}
+.hw .lvl{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--lime);margin-bottom:6px;display:block}
+
+/* quiz */
+.quiz{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.q{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.q p{font-size:15px;margin-bottom:12px;color:var(--ink)}
+.q .opts{display:flex;gap:8px;flex-wrap:wrap}
+.q button{font:600 13px var(--body);padding:7px 12px;border-radius:8px;border:1px solid var(--line2);background:var(--bg2);color:var(--ink);cursor:pointer}
+.q button.ok{border-color:var(--lime);color:var(--lime)} .q button.bad{border-color:var(--rose);color:var(--rose)}
+.q .why{font-size:13.5px;color:var(--ink2);margin-top:10px;display:none}
+.q.done .why{display:block}
+
+/* details */
+details{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:0 18px;margin-block:10px}
+summary{cursor:pointer;padding:14px 0;font-family:var(--display);font-weight:700;font-size:16px}
+details[open] summary{border-bottom:1px solid var(--line);margin-bottom:12px}
+details>*:not(summary){padding-bottom:14px}
+
+/* footer */
+.fin{text-align:center;padding-block:60px 20px}
+.fin h2{font-size:clamp(28px,4vw,44px)}
+.fin p{margin:14px auto 0}
+
+/* reveal */
+.rv{opacity:1;transform:none;transition:opacity .6s ease,transform .6s ease}
+.js .rv:not(.in){opacity:.001;transform:translateY(18px)}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+@keyframes dash{to{stroke-dashoffset:0}}
+.flowline{stroke-dasharray:6 6;animation:flow 1.2s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-24}}
+@media (prefers-reduced-motion:reduce){.js .rv:not(.in){opacity:1;transform:none}.rv{transition:none}*{animation:none!important}}
+
+@media (max-width:980px){
+  .grid4,.tools,.hw{grid-template-columns:1fr 1fr}
+  .grid3,.quiz{grid-template-columns:1fr 1fr}
+}
+@media (max-width:720px){
+  .hero-grid,.grid2,.grid3,.grid4,.tools,.hw,.quiz,.analogy{grid-template-columns:1fr}
+  .head{grid-template-columns:1fr}.time{text-align:left}
+}
+</style></head><body>
+
+<div id="bar"><div class="wrap">
+  <div class="brand">AI <span>&amp;</span> ML Engineering · Day 05</div>
+  <nav id="nav"><!-- filled by JS from section[data-nav] --></nav>
+  <div class="clock"><span id="clk">00:00</span><button id="clkbtn" type="button">Start 60 min</button></div>
+</div><div id="track"></div></div>
+
+<!-- ============ HERO ============ -->
+<header id="hero"><canvas id="bgc"></canvas><div class="wrap">
+  <div class="eyebrow"><b>Day 05</b> · Phase 2 · Supervised ML · 60 minutes</div>
+  <h1 style="margin-top:18px">Regression <em>beyond</em> a line.<br>When to bend it, when to <span class="c">tame</span> it.</h1>
+  <div class="hero-grid">
+    <p class="lead">Yesterday you taught a machine to draw one straight line through one feature. Today you'll handle many features at once, let the line curve, and then learn the most important skill in applied ML: recognising when your model is memorising instead of learning, and fixing it with Ridge and Lasso. By the end you can read a house-price model like a doctor reads an X-ray.</p>
+    <div class="agenda"><h3>Today's route</h3><ol>
+      <li><span>00–05</span><a href="#hook">Hook: the ₹1,000-crore mistake</a></li>
+      <li><span>05–23</span><a href="#concept">Concept: many features, curves, and the overfitting trap</a></li>
+      <li><span>23–33</span><a href="#deeper">Deeper: the math of VIF, bias-variance, Ridge, Lasso</a></li>
+      <li><span>33–45</span><a href="#code">Code: sklearn regression toolkit</a></li>
+      <li><span>45–50</span><a href="#realworld">Real world &amp; tools</a></li>
+      <li><span>50–53</span><a href="#career">Career corner</a></li>
+      <li><span>53–56</span><a href="#quiz">Quiz</a></li>
+      <li><span>56–58</span><a href="#homework">Homework</a></li>
+      <li><span>58–60</span><a href="#next">Next</a></li>
+    </ol></div>
+  </div>
+</div></header>
+
+<!-- ============ HOOK ============ -->
+<section class="s" id="hook" data-nav="Hook"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">01 · Hook</div><h2>The company that trusted its price model too much</h2><p class="lead">Zillow is America's biggest property website. In 2021 it used its own house-price regression model, the "Zestimate", to <em>buy</em> houses. Within months it shut the whole business down.</p></div><div class="time"><b>5</b>min</div></div>
+  <div class="grid2">
+    <div>
+      <p>The model had been fine for years as a number on a web page. Then Zillow started paying real money based on it. In a hot, fast-changing market the model kept predicting yesterday's prices, systematically overpaid for thousands of homes, and the company wrote off hundreds of millions of dollars and laid off a quarter of its staff. The maths was not exotic. It was regression. The failure was about <b>which features</b> the model leaned on, <b>how flexible</b> it was, and <b>how it behaved on data it had never seen</b>. That is today's entire lesson.</p>
+      <p style="margin-top:14px">Bring it home. Open any Indian property portal and ask: what is a 2BHK in Whitefield, Bengaluru worth? Area, floor, age of building, distance to the metro, number of bathrooms, whether the society has a gym. Ten features, not one. Some of them say the same thing twice (area in sq ft and area in sq m). Some matter a lot, most matter a little, a few matter not at all. A model that treats all of them as equally trustworthy will confidently produce nonsense.</p>
+      <div class="callout cy" style="margin-top:18px"><b class="t">Open on the projector</b><p><a href="https://www.zillow.com/z/zestimate/" target="_blank" rel="noopener">Zillow's Zestimate page ↗</a> (the model that started it all) and the <a href="https://www.kaggle.com/datasets/amitabhajoy/bengaluru-house-price-data" target="_blank" rel="noopener">Bengaluru House Price dataset on Kaggle ↗</a> that you will use in tonight's homework. Scroll the columns and ask the class: which of these features would you trust?</p></div>
+    </div>
+    <figure class="rv"><svg viewBox="0 0 520 300" role="img" aria-label="Many features flowing into a price prediction">
+      <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--ink3)"/></marker></defs>
+      <g font-family="JetBrains Mono,monospace" font-size="11" fill="var(--ink2)">
+        <rect x="10" y="20" width="150" height="30" rx="8" fill="var(--bg2)" stroke="var(--line2)"/><text x="85" y="39" text-anchor="middle">area_sqft</text>
+        <rect x="10" y="60" width="150" height="30" rx="8" fill="var(--bg2)" stroke="var(--rose)"/><text x="85" y="79" text-anchor="middle">area_sqm (same info!)</text>
+        <rect x="10" y="100" width="150" height="30" rx="8" fill="var(--bg2)" stroke="var(--line2)"/><text x="85" y="119" text-anchor="middle">bhk</text>
+        <rect x="10" y="140" width="150" height="30" rx="8" fill="var(--bg2)" stroke="var(--line2)"/><text x="85" y="159" text-anchor="middle">metro_km</text>
+        <rect x="10" y="180" width="150" height="30" rx="8" fill="var(--bg2)" stroke="var(--line2)"/><text x="85" y="199" text-anchor="middle">building_age</text>
+        <rect x="10" y="220" width="150" height="30" rx="8" fill="var(--bg2)" stroke="var(--ink3)" stroke-dasharray="3 3"/><text x="85" y="239" text-anchor="middle">owner_lucky_number</text>
+      </g>
+      <g stroke="var(--cyan)" stroke-width="1.5" fill="none" marker-end="url(#ah)">
+        <path class="flowline" d="M160 35 C 230 35, 230 135, 300 135"/>
+        <path class="flowline" d="M160 75 C 230 75, 230 135, 300 135"/>
+        <path class="flowline" d="M160 115 C 230 115, 230 135, 300 135"/>
+        <path class="flowline" d="M160 155 C 230 155, 230 135, 300 135"/>
+        <path class="flowline" d="M160 195 C 230 195, 230 135, 300 135"/>
+        <path class="flowline" d="M160 235 C 230 235, 230 135, 300 135" stroke="var(--ink3)"/>
+      </g>
+      <rect x="300" y="100" width="120" height="70" rx="12" fill="var(--panel)" stroke="var(--amber)" stroke-width="1.5"/>
+      <text x="360" y="128" text-anchor="middle" font-family="Syne,sans-serif" font-weight="700" font-size="14" fill="var(--ink)">θ · x</text>
+      <text x="360" y="150" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="var(--ink3)">weighted sum</text>
+      <path class="flowline" d="M420 135 L 455 135" stroke="var(--amber)" stroke-width="2" fill="none" marker-end="url(#ah)"/>
+      <text x="462" y="130" font-family="Syne,sans-serif" font-weight="700" font-size="14" fill="var(--amber)">₹ price</text>
+      <text x="462" y="150" font-family="JetBrains Mono,monospace" font-size="10" fill="var(--ink3)">± how sure?</text>
+    </svg><figcaption>Multiple regression: every feature gets a weight θ. Two features carrying the same story (red) confuse the weights; a useless feature (dashed) should get weight ≈ 0. Today we make both happen on purpose.</figcaption></figure>
+  </div>
+</div></section>
+
+<!-- ============ CONCEPT ============ -->
+<section class="s" id="concept" data-nav="Concept"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">02 · Concept</div><h2>Many features, curved lines, and the overfitting trap</h2><p class="lead">Three upgrades to yesterday's line, and the one danger that comes with each of them.</p></div><div class="time"><b>18</b>min</div></div>
+
+  <h3>Upgrade 1 · From one feature to many</h3>
+  <p style="margin-top:10px">Simple linear regression was <span class="mono">price = θ₀ + θ₁ · area</span>. Multiple linear regression just adds a term per feature: <span class="mono">price = θ₀ + θ₁·area + θ₂·bhk + θ₃·metro_km + …</span>. Nothing else changes: same MSE cost, same gradient descent, same <code>LinearRegression()</code>. The only new thing is that the model now lives in many dimensions, so you can no longer eyeball the fit. You must <em>measure</em> it.</p>
+
+  <div class="analogy rv"><div class="em">🍛</div><div><h4>The thali analogy for weights</h4><p>A thali's price is the sum of what's on the plate: dal adds ₹30, paneer adds ₹80, papad adds ₹5. Multiple regression learns the "menu price" (θ) of each feature from thousands of receipts where you only saw the total. If the receipts always list "2 rotis" and "roti count × 2" as separate items, the model cannot tell which one deserves the money. That is <b>multicollinearity</b>: two features telling the same story make the individual weights unstable, even when the total prediction stays fine.</p></div></div>
+
+  <div class="callout ro"><b class="t">Common confusion</b><p>Multicollinearity does <b>not</b> make predictions worse. It makes the <b>coefficients</b> unreliable: they swing wildly with tiny data changes, signs flip, and "area adds ₹5,000 per sq ft" becomes untrustworthy. If your job is to <em>explain</em> the model (banking, pricing, policy), you must fix it. If you only need predictions, you can often live with it. We measure it with <b>VIF</b> in the next section.</p></div>
+
+  <h3 style="margin-top:34px">Upgrade 2 · Let the line bend: polynomial regression</h3>
+  <p style="margin-top:10px">Real relationships curve. Price per sq ft rises fast for tiny flats, flattens for mid-size, and rises again for penthouses. The trick is beautifully lazy: add new columns <span class="mono">x², x³, …</span> to your data and run <em>ordinary linear regression</em> on them. The model is still linear in its weights θ; it is only the features that are curved. The <b>degree</b> is the knob: degree 1 is a line, degree 2 a parabola, degree 15 a rollercoaster.</p>
+
+  <h3 style="margin-top:30px">The trap · underfitting and overfitting</h3>
+  <p style="margin-top:10px">Drag the slider. Watch what happens to the two errors. This single picture is the most examined idea in machine learning interviews.</p>
+  <figure class="rv" style="margin-top:14px">
+    <canvas id="polyc" class="demo" width="900" height="420" aria-label="Polynomial regression fit with adjustable degree"></canvas>
+    <div class="ctl">
+      <label>degree <input id="deg" type="range" min="1" max="15" value="1"> <b id="degv" class="mono">1</b></label>
+      <label>ridge λ <input id="lam" type="range" min="0" max="100" value="0"> <b id="lamv" class="mono">0</b></label>
+      <button class="btn ghost" id="resample" type="button">Resample noise (shows variance)</button>
+      <button class="btn ghost" id="autoplay" type="button">Auto-sweep 1→15</button>
+    </div>
+    <div class="stats"><div>train MSE <b id="trmse">–</b></div><div>test MSE <b id="temse">–</b></div><div>verdict <b id="verdict">–</b></div><div>largest |θ| <b id="maxw">–</b></div></div>
+    <figcaption>Cyan dots: 20 training points. Hollow amber: 20 unseen test points, same hidden curve (dashed). Solid curve: your model. Degree 1 misses the shape (underfit, both errors high). Around 3–5 both errors are low. By 12+ the training error keeps dropping while test error explodes: the model memorised the noise. Click "Resample noise" at degree 14 and watch the curve jump around; that jumpiness is <em>variance</em>. Now raise λ and watch Ridge calm it down.</figcaption>
+  </figure>
+
+  <div class="grid2" style="margin-top:28px">
+    <div>
+      <h3>Bias vs variance: the honest picture</h3>
+      <p style="margin-top:10px">Every model's test error has three parts. <b>Bias</b>: error from being too simple (a line trying to fit a curve; it is wrong in the same way every time). <b>Variance</b>: error from being too sensitive (a degree-14 curve that changes completely if one training point moves). <b>Noise</b>: the irreducible randomness in the world; nobody beats it. Adding flexibility lowers bias but raises variance, so total error is U-shaped, and the bottom of the U is where you want to live. The chart on the right is computed live from the same data as the demo above.</p>
+      <div class="callout"><b class="t">Key idea</b><p>You cannot see overfitting on training data. By definition the training error looks great. You only see it by holding back data the model never touched, which is why <code>train_test_split</code> is the first line of every honest notebook, and why Day 13 gives it a whole hour (cross-validation).</p></div>
+    </div>
+    <figure class="rv"><div class="chart"><canvas id="bvchart"></canvas></div><figcaption>Train vs test MSE as degree grows (λ = 0). The gap between the curves is overfitting. The sweet spot is the minimum of the amber line, not the cyan one.</figcaption></figure>
+  </div>
+
+  <h3 style="margin-top:34px">Upgrade 3 · Regularization: put a tax on big weights</h3>
+  <p style="margin-top:10px">Overfitting has a fingerprint: huge coefficients. The degree-14 curve gets its wiggles from weights like +8,000 and −7,900 cancelling each other. So we change the cost function: keep the MSE, and <em>add a penalty for large θ</em>. The model can still use big weights, but now it must earn them by lowering the error enough to pay the tax. Two flavours:</p>
+  <ul style="margin-top:8px">
+    <li><b>Ridge (L2)</b> taxes <span class="mono">Σθ²</span>. Big weights get squeezed toward zero, but never exactly to zero. Great when many features each matter a little, and when features are correlated (it shares the weight between them).</li>
+    <li><b>Lasso (L1)</b> taxes <span class="mono">Σ|θ|</span>. Weak weights get pushed to <em>exactly</em> zero, so Lasso also performs feature selection: it tells you which columns to delete.</li>
+  </ul>
+  <figure class="rv" style="margin-top:14px">
+    <canvas id="regc" class="demo" width="900" height="360" aria-label="Ridge vs Lasso coefficient shrinkage"></canvas>
+    <div class="ctl"><label>alpha (penalty strength, log scale) <input id="alpha" type="range" min="-3" max="1.5" step="0.05" value="-3"> <b id="alphav" class="mono">0.001</b></label></div>
+    <div class="stats"><div>Lasso weights at exactly 0 <b id="nzero">0 / 6</b></div><div>Ridge Σθ² <b id="l2n">–</b></div></div>
+    <figcaption>Six features, true weights [3, −2, 1.5, 0, 0, 0.2]; features 4 and 5 are pure noise. Grey = plain OLS, cyan = Ridge, amber = Lasso, all recomputed live in the browser as you move alpha. Ridge shrinks everything smoothly; Lasso snaps the useless features to exactly zero first, then starts eating the real ones. Too much alpha and both models forget everything (underfit again).</figcaption>
+  </figure>
+
+  <div class="analogy rv"><div class="em">🎒</div><div><h4>Ridge vs Lasso, packing for a train journey</h4><p>You have 6 items and a small bag. Ridge is your mother: "take everything, but fold each one smaller." Lasso is a Rajdhani ticket checker with a weight limit: "the shampoo and the extra shoes stay home." Both reduce the load; only Lasso leaves things behind. Elastic Net (Day 13 tuning material) is both of them arguing, with <code>l1_ratio</code> deciding who wins.</p></div></div>
+
+  <div class="callout vi"><b class="t">Interview answer · "What is the bias-variance trade-off?"</b><p>"Bias is error from a model that is too simple to capture the pattern; variance is error from a model so flexible it fits the noise of one particular training set. As model complexity increases, bias falls and variance rises, so test error is U-shaped. I choose complexity, or a regularization strength, by looking at validation error, never training error."</p></div>
+</div></section>
+
+<!-- ============ DEEPER ============ -->
+<section class="s" id="deeper" data-nav="Deeper"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">03 · Deeper</div><h2>The mechanics: four formulas you can defend</h2><p class="lead">Each formula in plain HTML, then every symbol decoded in one sentence. Nothing here needs more than school algebra.</p></div><div class="time"><b>10</b>min</div></div>
+
+  <h3>1 · Multiple regression in matrix form</h3>
+  <p style="margin-top:8px"><span class="mono">ŷ = Xθ</span>, with cost <span class="mono">J(θ) = (1/2m) · ‖Xθ − y‖²</span>, and the closed-form solution <span class="mono">θ = (XᵀX)⁻¹ Xᵀ y</span> (the normal equation).</p>
+  <p><b>X</b> is the data table (m rows = houses, n+1 columns = features plus a column of 1s for the intercept). <b>θ</b> is the column of weights we want. <b>y</b> is the true prices. <b>‖·‖²</b> means "square every error and add them up". The normal equation is what <code>LinearRegression()</code> computes (via a numerically safer version called least squares / SVD). It needs <span class="mono">XᵀX</span> to be invertible, and that is exactly what multicollinearity breaks.</p>
+
+  <h3 style="margin-top:26px">2 · Variance Inflation Factor</h3>
+  <p style="margin-top:8px"><span class="mono">VIF<sub>j</sub> = 1 / (1 − R²<sub>j</sub>)</span></p>
+  <p>To score feature <b>j</b>, temporarily make it the <em>target</em>: regress it on all the other features and record that regression's <b>R²<sub>j</sub></b>. If the other features can predict feature j almost perfectly (R² → 1), the denominator goes to zero and VIF explodes. Rule of thumb used in industry: <b>VIF &gt; 5</b> is a warning, <b>VIF &gt; 10</b> means drop or combine the feature. "Area in sq ft" vs "area in sq m" gives VIF = ∞ (perfectly predictable). A real pair like "bhk" and "bathrooms" often lands around 4–8.</p>
+
+  <h3 style="margin-top:26px">3 · The bias-variance decomposition</h3>
+  <p style="margin-top:8px"><span class="mono">E[(y − ŷ)²] = Bias(ŷ)² + Var(ŷ) + σ²</span></p>
+  <p>The expected squared error on a new point (<b>E</b> = average over many possible training sets) splits into: how far the <em>average</em> model is from the truth (<b>Bias²</b>), how much individual models scatter around that average (<b>Var</b>), and the noise in the world itself (<b>σ²</b>). You never observe these three numbers separately on real data; the decomposition is a way of thinking, and the "resample noise" button above is the closest you will get to seeing Var(ŷ) with your eyes.</p>
+
+  <h3 style="margin-top:26px">4 · Ridge and Lasso costs</h3>
+  <p style="margin-top:8px"><span class="mono">J<sub>ridge</sub>(θ) = Σ(ŷ − y)² + α · Σ<sub>j≥1</sub> θ<sub>j</sub>²</span> &nbsp; and &nbsp; <span class="mono">J<sub>lasso</sub>(θ) = (1/2m) · Σ(ŷ − y)² + α · Σ<sub>j≥1</sub> |θ<sub>j</sub>|</span></p>
+  <p>The first term is the familiar squared error. The second is the tax: <b>α</b> (sklearn's <code>alpha</code>) is the tax rate, and the sum runs over j ≥ 1 because we never penalise the intercept θ₀. Ridge has a closed form, <span class="mono">θ = (XᵀX + αI)⁻¹ Xᵀ y</span>: adding <span class="mono">αI</span> to the diagonal is literally what makes the matrix invertible again, which is why Ridge is the classic cure for multicollinearity. Lasso has no closed form (|θ| has a corner at zero) and is solved by coordinate descent; that corner is also <em>why</em> it produces exact zeros. Note the two formulas scale the error term differently; that is sklearn's convention, so the same alpha means different strengths in <code>Ridge</code> and <code>Lasso</code>.</p>
+
+  <div class="callout ro" style="margin-top:20px"><b class="t">Non-negotiable</b><p><b>Scale your features before Ridge or Lasso.</b> The penalty treats a coefficient of 5 on "metro_km" (range 0–20) and a coefficient of 5 on "area_sqft" (range 300–5000) as equally guilty, even though they mean completely different things. Wrap the model in a <code>Pipeline(StandardScaler(), Ridge())</code> so the scaler fits only on training data.</p></div>
+
+  <div class="tbl rv" style="margin-top:22px"><table>
+    <thead><tr><th>Model</th><th>Penalty</th><th>Weights can hit 0?</th><th>Best when</th><th>sklearn</th></tr></thead>
+    <tbody>
+      <tr><td>OLS (plain)</td><td>none</td><td>no</td><td>few clean features, m ≫ n</td><td><code>LinearRegression()</code></td></tr>
+      <tr><td>Ridge</td><td>α Σθ² (L2)</td><td>no (shrinks)</td><td>many correlated, all-slightly-useful features</td><td><code>Ridge(alpha=1.0)</code></td></tr>
+      <tr><td>Lasso</td><td>α Σ|θ| (L1)</td><td><b>yes</b> (selects)</td><td>you suspect most features are junk</td><td><code>Lasso(alpha=1.0)</code></td></tr>
+      <tr><td>Elastic Net</td><td>mix of both</td><td>yes</td><td>correlated groups + selection</td><td><code>ElasticNet(alpha=1.0, l1_ratio=0.5)</code></td></tr>
+      <tr><td>Polynomial</td><td>none (feature trick)</td><td>–</td><td>curved relationships, low degree</td><td><code>PolynomialFeatures(degree=2)</code> + any of the above</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout vi" style="margin-top:22px"><b class="t">How to say this in an interview</b><p>"Ridge and Lasso both add a penalty on coefficient size to the least-squares loss, controlled by alpha. Ridge uses the squared L2 norm, which shrinks coefficients smoothly and handles multicollinearity well; Lasso uses the L1 norm, whose corner at zero drives weak coefficients to exactly zero, so it doubles as feature selection. I always standardise features first and pick alpha by cross-validation."</p></div>
+</div></section>
+
+<!-- ============ CODE ============ -->
+<section class="s" id="code" data-nav="Code"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">04 · Code</div><h2>The sklearn regression toolkit</h2><p class="lead">Five snippets that cover 90% of what you will type in a regression job. Full runnable version: open <code>Day_05_Regression_Deep_Dive.ipynb</code> in Google Colab.</p></div><div class="time"><b>12</b>min</div></div>
+
+  <h3>1 · Multiple linear regression on California housing</h3>
+  <div class="codewrap"><span class="lbl">python</span><pre><span class="c"># 20,640 districts, 8 numeric features, target = median house value (in $100k)</span>
+<span class="k">from</span> sklearn.datasets <span class="k">import</span> fetch_california_housing
+<span class="k">from</span> sklearn.model_selection <span class="k">import</span> train_test_split
+<span class="k">from</span> sklearn.linear_model <span class="k">import</span> LinearRegression
+<span class="k">from</span> sklearn.metrics <span class="k">import</span> mean_squared_error, r2_score
+
+X, y = <span class="f">fetch_california_housing</span>(return_X_y=<span class="k">True</span>, as_frame=<span class="k">True</span>)
+X_tr, X_te, y_tr, y_te = <span class="f">train_test_split</span>(X, y, test_size=<span class="n">0.2</span>, random_state=<span class="n">42</span>)
+
+lr = <span class="f">LinearRegression</span>().fit(X_tr, y_tr)          <span class="c"># same class as Day 04, now 8 features</span>
+pred = lr.predict(X_te)
+<span class="k">print</span>(<span class="s">"RMSE:"</span>, mean_squared_error(y_te, pred) ** <span class="n">0.5</span>)   <span class="c"># ~0.75 (i.e. $75k)</span>
+<span class="k">print</span>(<span class="s">"R²  :"</span>, r2_score(y_te, pred))                       <span class="c"># ~0.58</span>
+<span class="k">print</span>(dict(zip(X.columns, lr.coef_.round(<span class="n">3</span>))))            <span class="c"># one weight per feature</span></pre></div>
+
+  <h3 style="margin-top:22px">2 · Multicollinearity check with VIF</h3>
+  <div class="tabs rv" style="margin-top:12px">
+    <div class="tb"><button class="on" type="button">statsmodels (one-liner)</button><button type="button">by hand (understand it)</button></div>
+    <div class="tp on"><pre><span class="k">from</span> statsmodels.stats.outliers_influence <span class="k">import</span> variance_inflation_factor
+<span class="k">import</span> pandas <span class="k">as</span> pd
+
+vif = pd.DataFrame({
+    <span class="s">"feature"</span>: X_tr.columns,
+    <span class="s">"VIF"</span>: [<span class="f">variance_inflation_factor</span>(X_tr.values, i) <span class="k">for</span> i <span class="k">in</span> range(X_tr.shape[<span class="n">1</span>])]
+}).sort_values(<span class="s">"VIF"</span>, ascending=<span class="k">False</span>)
+<span class="k">print</span>(vif)   <span class="c"># Latitude/Longitude and AveRooms/AveBedrms will light up</span></pre></div>
+    <div class="tp"><pre><span class="c"># VIF_j = 1 / (1 - R²_j), where R²_j comes from predicting feature j from the others</span>
+<span class="k">def</span> <span class="f">vif_by_hand</span>(df):
+    out = {}
+    <span class="k">for</span> col <span class="k">in</span> df.columns:
+        others = df.drop(columns=col)
+        r2 = <span class="f">LinearRegression</span>().fit(others, df[col]).score(others, df[col])
+        out[col] = <span class="n">1</span> / (<span class="n">1</span> - r2 + <span class="n">1e-12</span>)     <span class="c"># tiny epsilon avoids divide-by-zero</span>
+    <span class="k">return</span> pd.Series(out).sort_values(ascending=<span class="k">False</span>)
+
+<span class="k">print</span>(<span class="f">vif_by_hand</span>(X_tr))</pre></div>
+  </div>
+
+  <h3 style="margin-top:22px">3 · Polynomial degree sweep (the demo above, in Python)</h3>
+  <div class="codewrap"><span class="lbl">python</span><pre><span class="k">from</span> sklearn.preprocessing <span class="k">import</span> PolynomialFeatures, StandardScaler
+<span class="k">from</span> sklearn.pipeline <span class="k">import</span> make_pipeline
+<span class="k">import</span> numpy <span class="k">as</span> np
+
+rng = np.random.default_rng(<span class="n">42</span>)
+x = np.sort(rng.uniform(-<span class="n">1</span>, <span class="n">1</span>, <span class="n">40</span>))[:, <span class="k">None</span>]              <span class="c"># shape (40, 1)</span>
+y = <span class="n">0.8</span> * np.sin(<span class="n">3</span> * x[:, <span class="n">0</span>]) + <span class="n">0.4</span> * x[:, <span class="n">0</span>] + rng.normal(<span class="n">0</span>, <span class="n">0.25</span>, <span class="n">40</span>)
+x_tr, x_te, y_tr, y_te = train_test_split(x, y, test_size=<span class="n">0.5</span>, random_state=<span class="n">0</span>)
+
+<span class="k">for</span> d <span class="k">in</span> [<span class="n">1</span>, <span class="n">3</span>, <span class="n">5</span>, <span class="n">9</span>, <span class="n">15</span>]:
+    model = <span class="f">make_pipeline</span>(<span class="f">PolynomialFeatures</span>(degree=d), <span class="f">StandardScaler</span>(), <span class="f">LinearRegression</span>())
+    model.fit(x_tr, y_tr)
+    tr = mean_squared_error(y_tr, model.predict(x_tr))
+    te = mean_squared_error(y_te, model.predict(x_te))
+    <span class="k">print</span>(<span class="s">f"degree {d:2d}  train {tr:.3f}  test {te:.3f}"</span>)  <span class="c"># watch test error U-turn</span></pre></div>
+
+  <h3 style="margin-top:22px">4 · Ridge vs Lasso, with the scaler inside the pipeline</h3>
+  <div class="codewrap"><span class="lbl">python</span><pre><span class="k">from</span> sklearn.linear_model <span class="k">import</span> Ridge, Lasso, RidgeCV, LassoCV
+
+<span class="k">for</span> name, model <span class="k">in</span> [(<span class="s">"OLS"</span>,   LinearRegression()),
+                    (<span class="s">"Ridge"</span>, Ridge(alpha=<span class="n">1.0</span>)),
+                    (<span class="s">"Lasso"</span>, Lasso(alpha=<span class="n">0.01</span>, max_iter=<span class="n">10000</span>))]:
+    pipe = make_pipeline(StandardScaler(), model).fit(X_tr, y_tr)   <span class="c"># scaler fits on train only</span>
+    coefs = pipe[-<span class="n">1</span>].coef_                                         <span class="c"># last step of the pipeline</span>
+    <span class="k">print</span>(<span class="s">f"{name:5s} R²={pipe.score(X_te, y_te):.3f}  zeros={(coefs == 0).sum()}  max|θ|={abs(coefs).max():.2f}"</span>)
+
+<span class="c"># let sklearn choose alpha by cross-validation (Day 13 explains CV properly)</span>
+ridge_cv = make_pipeline(StandardScaler(), <span class="f">RidgeCV</span>(alphas=np.logspace(-<span class="n">3</span>, <span class="n">3</span>, <span class="n">25</span>))).fit(X_tr, y_tr)
+lasso_cv = make_pipeline(StandardScaler(), <span class="f">LassoCV</span>(cv=<span class="n">5</span>, random_state=<span class="n">0</span>)).fit(X_tr, y_tr)
+<span class="k">print</span>(<span class="s">"best ridge alpha:"</span>, ridge_cv[-<span class="n">1</span>].alpha_, <span class="s">" best lasso alpha:"</span>, lasso_cv[-<span class="n">1</span>].alpha_)</pre></div>
+
+  <h3 style="margin-top:22px">5 · Coefficient path: watch Lasso switch features off</h3>
+  <div class="codewrap"><span class="lbl">python</span><pre><span class="k">import</span> matplotlib.pyplot <span class="k">as</span> plt
+alphas = np.logspace(-<span class="n">3</span>, <span class="n">0.5</span>, <span class="n">40</span>)
+Xs = StandardScaler().fit_transform(X_tr)
+paths = np.array([Lasso(alpha=a, max_iter=<span class="n">10000</span>).fit(Xs, y_tr).coef_ <span class="k">for</span> a <span class="k">in</span> alphas])
+
+<span class="k">for</span> j, col <span class="k">in</span> enumerate(X.columns):
+    plt.plot(alphas, paths[:, j], label=col)
+plt.xscale(<span class="s">"log"</span>); plt.axhline(<span class="n">0</span>, color=<span class="s">"k"</span>, lw=<span class="n">.5</span>)
+plt.xlabel(<span class="s">"alpha"</span>); plt.ylabel(<span class="s">"coefficient"</span>); plt.legend(); plt.show()
+<span class="c"># reading it: the feature whose line reaches zero LAST is the one the model trusts most</span></pre></div>
+
+  <div class="callout cy"><b class="t">Gotcha you will hit</b><p><code>Lasso</code> printing <em>ConvergenceWarning</em>? Raise <code>max_iter</code> and make sure you scaled. Ridge giving a worse R² than OLS on this dataset? That is normal at <code>alpha=1.0</code> with 16k rows and 8 features: regularization helps most when data is small or features are many/correlated. Report what you see, not what you expected.</p></div>
+</div></section>
+
+<!-- ============ REAL WORLD ============ -->
+<section class="s" id="realworld" data-nav="Real world"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">05 · Real world &amp; tools</div><h2>Where this runs in production</h2><p class="lead">Regression with regularization is the quiet workhorse behind pricing, forecasting and risk. Open these on the projector.</p></div><div class="time"><b>5</b>min</div></div>
+  <div class="grid3">
+    <div class="card rv"><span class="tag">Interactive explainer</span><h4>MLU-Explain: Bias–Variance</h4><p>Amazon's ML University built a scroll-through visual of exactly today's U-curve. Best 5 minutes you will spend on the topic.</p><a class="pill" href="https://mlu-explain.github.io/bias-variance/" target="_blank" rel="noopener">mlu-explain.github.io ↗</a></div>
+    <div class="card rv"><span class="tag">Competition</span><h4>Kaggle: House Prices (Advanced Regression)</h4><p>79 features of homes in Ames, Iowa. The canonical portfolio regression project; a Lasso/Ridge pipeline alone gets a respectable rank.</p><a class="pill" href="https://www.kaggle.com/c/house-prices-advanced-regression-techniques" target="_blank" rel="noopener">kaggle.com ↗</a></div>
+    <div class="card rv"><span class="tag">Dataset · India</span><h4>Bengaluru House Prices</h4><p>13k listings with area, BHK, bath, location. Messy in realistic ways ("2100 – 2850" sq ft ranges), perfect for tonight's homework.</p><a class="pill" href="https://www.kaggle.com/datasets/amitabhajoy/bengaluru-house-price-data" target="_blank" rel="noopener">kaggle.com ↗</a></div>
+    <div class="card rv"><span class="tag">Reference</span><h4>scikit-learn: Linear Models guide</h4><p>The official page for OLS, Ridge, Lasso, Elastic Net with the exact cost functions sklearn minimises. Bookmark it; interviewers quote it.</p><a class="pill" href="https://scikit-learn.org/stable/modules/linear_model.html" target="_blank" rel="noopener">scikit-learn.org ↗</a></div>
+    <div class="card rv"><span class="tag">Textbook · free</span><h4>An Introduction to Statistical Learning</h4><p>Chapters 3 and 6 are today's lesson in book form, with Python labs. Free PDF from the authors.</p><a class="pill" href="https://www.statlearning.com/" target="_blank" rel="noopener">statlearning.com ↗</a></div>
+    <div class="card rv"><span class="tag">Play</span><h4>Seeing Theory: Regression</h4><p>Brown University's interactive stats site. Drag points, watch the least-squares line and residuals update.</p><a class="pill" href="https://seeing-theory.brown.edu/regression-analysis/index.html" target="_blank" rel="noopener">seeing-theory.brown.edu ↗</a></div>
+  </div>
+  <h3 style="margin-top:34px">Modern AI tools for today's work</h3>
+  <div class="tools" style="margin-top:12px">
+    <div class="tool"><b>Google Colab</b><span>Run today's notebook free; the California dataset downloads in seconds.</span><a href="https://colab.research.google.com/" target="_blank" rel="noopener">colab.research.google.com</a></div>
+    <div class="tool"><b>Kaggle</b><span>Datasets + free notebooks + the House Prices leaderboard for your portfolio.</span><a href="https://www.kaggle.com/" target="_blank" rel="noopener">kaggle.com</a></div>
+    <div class="tool"><b>Optuna</b><span>Automatically search alpha / degree / l1_ratio instead of hand-looping (Day 13 covers it).</span><a href="https://optuna.org/" target="_blank" rel="noopener">optuna.org</a></div>
+    <div class="tool"><b>Weights &amp; Biases</b><span>Log every experiment's RMSE so you can prove which alpha won.</span><a href="https://wandb.ai/" target="_blank" rel="noopener">wandb.ai</a></div>
+    <div class="tool"><b>Claude / ChatGPT</b><span>Paste your VIF table and ask "which features should I combine and why?". Verify the answer with the formula.</span><a href="https://claude.ai/" target="_blank" rel="noopener">claude.ai</a></div>
+    <div class="tool"><b>Streamlit</b><span>Turn tonight's Bengaluru model into a "guess my flat's price" web app in 30 lines.</span><a href="https://streamlit.io/" target="_blank" rel="noopener">streamlit.io</a></div>
+  </div>
+</div></section>
+
+<!-- ============ CAREER ============ -->
+<section class="s" id="career" data-nav="Career"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">06 · Career corner</div><h2>How today shows up in a job</h2></div><div class="time"><b>3</b>min</div></div>
+  <div class="career rv">
+    <span class="tag">In job descriptions</span>
+    <p><b>Data Scientist</b>, <b>ML Engineer</b> and <b>Data Analyst / Business Analyst</b> postings routinely list "regression modelling", "regularization", "feature selection" and "statsmodels/scikit-learn". Pricing teams (Flipkart, OYO, MakeMyTrip), fintech risk teams (credit limit models are often regularized regressions) and consulting analytics roles all interview on exactly this hour.</p>
+    <h4 style="margin-top:18px">Real interview questions</h4>
+    <ul>
+      <li><b>"Ridge or Lasso: when would you choose which?"</b> → Ridge when many correlated features all carry a bit of signal; Lasso when I suspect most features are noise and I want a sparse, explainable model. If unsure, Elastic Net with CV.</li>
+      <li><b>"How do you detect and fix multicollinearity?"</b> → Correlation heatmap for a first look, VIF for the real check (&gt; 5–10 is trouble). Fix by dropping/combining features, PCA, or Ridge.</li>
+      <li><b>"Your training R² is 0.98 and test R² is 0.55. What happened?"</b> → Overfitting: high variance. Reduce complexity, regularize, get more data, or check for leakage.</li>
+    </ul>
+    <h4 style="margin-top:18px">Job-hunt action for today</h4>
+    <p>Make one submission to the Kaggle House Prices competition tonight (a scaled <code>LassoCV</code> pipeline is enough). Then add this bullet to your resume: <em>"Built a regularized regression pipeline (Ridge/Lasso, VIF-based feature selection) on 79-feature housing data; ranked in Kaggle's public leaderboard."</em> A real rank beats a certificate.</p>
+  </div>
+</div></section>
+
+<!-- ============ QUIZ ============ -->
+<section class="s" id="quiz" data-nav="Quiz"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">07 · Quiz</div><h2>Three quick checks</h2></div><div class="time"><b>3</b>min</div></div>
+  <div class="quiz">
+    <div class="q rv" data-a="2"><p>Training MSE keeps falling as you raise polynomial degree, but test MSE starts rising after degree 4. The model at degree 12 is…</p><div class="opts"><button type="button">Underfitting (high bias)</button><button type="button">Perfect, use degree 12</button><button type="button">Overfitting (high variance)</button></div><div class="why">Falling train error with rising test error is the signature of overfitting: the model is learning the noise of the training set. Pick the degree that minimises <em>test/validation</em> error.</div></div>
+    <div class="q rv" data-a="1"><p>You want the model to automatically drop useless features. Which penalty?</p><div class="opts"><button type="button">L2 (Ridge)</button><button type="button">L1 (Lasso)</button><button type="button">Neither, use a higher degree</button></div><div class="why">The L1 penalty's sharp corner at zero pushes weak coefficients to exactly 0. Ridge only shrinks them; they never quite vanish.</div></div>
+    <div class="q rv" data-a="0"><p>Feature "area_sqm" has VIF = 340. What does that tell you?</p><div class="opts"><button type="button">Other features almost perfectly predict it; its coefficient is unreliable</button><button type="button">It is the most important feature</button><button type="button">The model's predictions are wrong</button></div><div class="why">VIF = 1/(1−R²): 340 means R² ≈ 0.997 when predicting area_sqm from the other columns (probably area_sqft). Predictions may still be fine; the individual weight is meaningless. Drop one of the twins.</div></div>
+  </div>
+</div></section>
+
+<!-- ============ HOMEWORK ============ -->
+<section class="s" id="homework" data-nav="Homework"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">08 · Homework</div><h2>Tonight, 30–40 minutes</h2></div><div class="time"><b>2</b>min</div></div>
+  <div class="hw">
+    <div class="card rv"><span class="lvl">Easy · 10 min</span><h4>Your own curve</h4><p>Write down 12 (hour of day, minutes to reach college/office) pairs from your memory or Google Maps. Fit degrees 1, 2 and 6 with <code>PolynomialFeatures</code>. Which degree would you trust for tomorrow's commute? One sentence why.</p></div>
+    <div class="card rv"><span class="lvl">Medium · 20 min</span><h4>Bengaluru house prices</h4><p>Load the Kaggle Bengaluru dataset, keep <code>total_sqft</code>, <code>bath</code>, <code>bhk</code> (parse "2 BHK" → 2), drop rows with ranges. Compute VIF, then compare OLS vs Ridge vs Lasso in a scaled pipeline. Report test RMSE in lakhs.</p></div>
+    <div class="card rv"><span class="lvl">Stretch · job hunt</span><h4>Kaggle submission + LinkedIn</h4><p>Submit a <code>LassoCV</code> pipeline to the House Prices competition (log-transform the target). Post 3 lines on LinkedIn: what you built, your RMSE, one thing that surprised you. Tag it #100DaysOfML.</p></div>
+  </div>
+</div></section>
+
+<!-- ============ NEXT ============ -->
+<section class="s" id="next" data-nav="Next"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">09 · Next</div><h2>Tomorrow</h2></div><div class="time"><b>2</b>min</div></div>
+  <div class="fin rv">
+    <h2>Day 06 · Classification: from yes/no to probabilities</h2>
+    <p>Today's line predicted a number. Tomorrow we bend the same line through a sigmoid so it predicts "loan approved: 87% yes". Same gradient descent, new cost function, and your first decision boundary.</p>
+    <div style="margin-top:26px;text-align:left;max-width:560px;margin-inline:auto">
+      <div class="steps">
+        <div><div><b>Run the notebook top to bottom</b> in Colab; note the VIF table for California housing.</div></div>
+        <div><div><b>Do at least the Easy homework</b> and bring your chosen degree with a reason.</div></div>
+        <div><div><b>Skim</b> the MLU-Explain bias-variance page (5 min) so tomorrow's "threshold" idea lands faster.</div></div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+
+<script>
+document.documentElement.classList.add('js');
+/* nav from sections */
+(function(){const nav=document.getElementById('nav');document.querySelectorAll('section.s[data-nav]').forEach((s,i)=>{const a=document.createElement('a');a.href='#'+s.id;a.innerHTML='<i>'+String(i+1).padStart(2,'0')+'</i>'+s.dataset.nav;nav.appendChild(a);});
+const links=[...nav.querySelectorAll('a')];const secs=[...document.querySelectorAll('section.s[data-nav]')];
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle('on',l.getAttribute('href')==='#'+e.target.id));}})},{rootMargin:'-40% 0px -55% 0px'});secs.forEach(s=>io.observe(s));
+window.addEventListener('scroll',()=>{const h=document.documentElement;document.getElementById('track').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';},{passive:true});})();
+/* reveal */
+(function(){const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:.1});document.querySelectorAll('.rv').forEach(el=>io.observe(el));})();
+/* class timer */
+(function(){let t=0,id=null;const el=document.getElementById('clk'),b=document.getElementById('clkbtn');b.onclick=()=>{if(id){clearInterval(id);id=null;b.textContent='Resume';return;}b.textContent='Pause';id=setInterval(()=>{t++;el.textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');if(t>=3600){clearInterval(id);el.textContent='60:00';b.textContent='Done';}},1000);};})();
+/* hero particles */
+(function(){const c=document.getElementById('bgc');if(!c)return;const x=c.getContext('2d');let w,h,P=[];function rs(){w=c.width=c.offsetWidth;h=c.height=c.offsetHeight;P=Array.from({length:Math.min(70,w/14)},()=>({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-.5)*.4,vy:(Math.random()-.5)*.4}));}rs();window.addEventListener('resize',rs);const col=()=>getComputedStyle(document.documentElement).getPropertyValue('--cyan').trim();function f(){x.clearRect(0,0,w,h);const cc=col();for(const p of P){p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>w)p.vx*=-1;if(p.y<0||p.y>h)p.vy*=-1;}for(let i=0;i<P.length;i++){for(let j=i+1;j<P.length;j++){const d=Math.hypot(P[i].x-P[j].x,P[i].y-P[j].y);if(d<120){x.strokeStyle=cc;x.globalAlpha=(1-d/120)*.35;x.beginPath();x.moveTo(P[i].x,P[i].y);x.lineTo(P[j].x,P[j].y);x.stroke();}}}x.globalAlpha=1;x.fillStyle=cc;for(const p of P){x.beginPath();x.arc(p.x,p.y,1.8,0,7);x.fill();}requestAnimationFrame(f);}if(!matchMedia('(prefers-reduced-motion:reduce)').matches)f();})();
+/* tabs */
+document.querySelectorAll('.tabs').forEach(t=>{const bs=t.querySelectorAll('.tb button'),ps=t.querySelectorAll('.tp');bs.forEach((b,i)=>b.onclick=()=>{bs.forEach(x=>x.classList.remove('on'));ps.forEach(x=>x.classList.remove('on'));b.classList.add('on');ps[i].classList.add('on');});});
+/* quiz: <div class="q" data-a="1"> with .opts buttons; index of correct answer in data-a */
+document.querySelectorAll('.q').forEach(q=>{const a=+q.dataset.a;q.querySelectorAll('.opts button').forEach((b,i)=>b.onclick=()=>{if(q.classList.contains('done'))return;q.classList.add('done');b.classList.add(i===a?'ok':'bad');if(i!==a)q.querySelectorAll('.opts button')[a].classList.add('ok');});});
+/* Chart.js theme defaults */
+if(window.Chart){const cs=getComputedStyle(document.documentElement);Chart.defaults.color=cs.getPropertyValue('--ink2').trim();Chart.defaults.borderColor=cs.getPropertyValue('--line').trim();Chart.defaults.font.family=cs.getPropertyValue('--mono').trim();}
+</script>
+<script>
+/* ===== Day 05 page visuals ===== */
+(function(){
+  const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  /* tiny deterministic RNG + gaussian */
+  function rng(seed){let s=seed>>>0;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
+  function gauss(r){let u=0,v=0;while(u===0)u=r();while(v===0)v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+  /* solve A x = b (Gaussian elimination with partial pivoting) */
+  function solve(A,b){const n=b.length;const M=A.map((r,i)=>[...r,b[i]]);for(let c=0;c<n;c++){let p=c;for(let r=c+1;r<n;r++)if(Math.abs(M[r][c])>Math.abs(M[p][c]))p=r;[M[c],M[p]]=[M[p],M[c]];const d=M[c][c]||1e-12;for(let r=c+1;r<n;r++){const f=M[r][c]/d;for(let k=c;k<=n;k++)M[r][k]-=f*M[c][k];}}const x=new Array(n).fill(0);for(let r=n-1;r>=0;r--){let s=M[r][n];for(let k=r+1;k<n;k++)s-=M[r][k]*x[k];x[r]=s/(M[r][r]||1e-12);}return x;}
+  /* ridge-regularised polynomial least squares on x in [-1,1] */
+  function polyfit(xs,ys,deg,lam){const n=deg+1;const A=Array.from({length:n},()=>new Array(n).fill(0));const b=new Array(n).fill(0);for(let i=0;i<xs.length;i++){const pw=[1];for(let k=1;k<n;k++)pw.push(pw[k-1]*xs[i]);for(let r=0;r<n;r++){b[r]+=pw[r]*ys[i];for(let c=0;c<n;c++)A[r][c]+=pw[r]*pw[c];}}for(let k=1;k<n;k++)A[k][k]+=lam+1e-10;return solve(A,b);}
+  const evalp=(th,x)=>{let s=0,p=1;for(const t of th){s+=t*p;p*=x;}return s;};
+  const mse=(th,xs,ys)=>xs.reduce((a,x,i)=>a+(evalp(th,x)-ys[i])**2,0)/xs.length;
+  const truef=x=>0.8*Math.sin(3*x)+0.4*x;
+
+  /* ---------- polynomial demo ---------- */
+  const c=document.getElementById('polyc');if(!c)return;const ctx=c.getContext('2d');
+  const N=20;let seed=7;
+  const xtr=[],xte=[];{const r=rng(3);for(let i=0;i<N;i++){xtr.push(-1+2*r());xte.push(-1+2*r());}xtr.sort();xte.sort();}
+  let ytr=[],yte=[];
+  function sample(){const r=rng(seed);ytr=xtr.map(x=>truef(x)+0.25*gauss(r));yte=xte.map(x=>truef(x)+0.25*gauss(r));}
+  sample();
+  const degEl=document.getElementById('deg'),lamEl=document.getElementById('lam');
+  const W=c.width,H=c.height,pad={l:50,r:20,t:20,b:36};
+  const sx=x=>pad.l+(x+1)/2*(W-pad.l-pad.r), sy=y=>pad.t+(1.6-y)/3.2*(H-pad.t-pad.b);
+  function draw(){
+    const deg=+degEl.value, lam=Math.pow(10,(+lamEl.value)/25-3)*(+lamEl.value>0?1:0); /* 0 .. 10 */
+    document.getElementById('degv').textContent=deg;document.getElementById('lamv').textContent=lam===0?'0':lam.toPrecision(2);
+    const th=polyfit(xtr,ytr,deg,lam);
+    ctx.clearRect(0,0,W,H);
+    /* axes */
+    ctx.strokeStyle=css('--line2');ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pad.l,sy(0));ctx.lineTo(W-pad.r,sy(0));ctx.moveTo(sx(0),pad.t);ctx.lineTo(sx(0),H-pad.b);ctx.stroke();
+    ctx.fillStyle=css('--ink3');ctx.font='12px JetBrains Mono,monospace';ctx.fillText('x (feature, scaled to −1…1)',W/2-90,H-10);ctx.save();ctx.translate(14,H/2+20);ctx.rotate(-Math.PI/2);ctx.fillText('y (target)',0,0);ctx.restore();
+    /* true curve */
+    ctx.setLineDash([5,5]);ctx.strokeStyle=css('--ink3');ctx.beginPath();for(let i=0;i<=200;i++){const x=-1+2*i/200;const p=[sx(x),sy(truef(x))];i?ctx.lineTo(...p):ctx.moveTo(...p);}ctx.stroke();ctx.setLineDash([]);
+    /* fit */
+    ctx.strokeStyle=css('--rose');ctx.lineWidth=2.5;ctx.beginPath();let started=false;for(let i=0;i<=300;i++){const x=-1.02+2.04*i/300;let y=evalp(th,x);y=Math.max(-3,Math.min(3,y));const p=[sx(x),sy(y)];started?ctx.lineTo(...p):ctx.moveTo(...p);started=true;}ctx.stroke();
+    /* points */
+    ctx.lineWidth=1.5;for(let i=0;i<N;i++){ctx.fillStyle=css('--cyan');ctx.beginPath();ctx.arc(sx(xtr[i]),sy(ytr[i]),5,0,7);ctx.fill();}
+    for(let i=0;i<N;i++){ctx.strokeStyle=css('--amber');ctx.beginPath();ctx.arc(sx(xte[i]),sy(yte[i]),5,0,7);ctx.stroke();}
+    /* legend */
+    ctx.fillStyle=css('--ink2');ctx.font='12px JetBrains Mono,monospace';ctx.fillText('● train   ○ test   – – true   — model (degree '+deg+(lam?', λ='+lam.toPrecision(2):'')+')',pad.l+6,pad.t+14);
+    const tr=mse(th,xtr,ytr),te=mse(th,xte,yte);
+    document.getElementById('trmse').textContent=tr.toFixed(3);document.getElementById('temse').textContent=te.toFixed(3);
+    document.getElementById('maxw').textContent=Math.max(...th.map(Math.abs)).toFixed(1);
+    const v=document.getElementById('verdict');
+    if(tr>0.10){v.textContent='underfit · high bias';v.style.color=css('--amber');}
+    else if(te>0.15){v.textContent='overfit · high variance';v.style.color=css('--rose');}
+    else{v.textContent='good fit';v.style.color=css('--lime');}
+  }
+  degEl.addEventListener('input',draw);lamEl.addEventListener('input',draw);
+  document.getElementById('resample').onclick=()=>{seed+=1;sample();draw();};
+  let anim=null;document.getElementById('autoplay').onclick=function(){if(anim){cancelAnimationFrame(anim);anim=null;this.textContent='Auto-sweep 1→15';return;}this.textContent='Stop';let d=1,last=0;const step=t=>{if(t-last>450){degEl.value=d;draw();d=d>=15?1:d+1;last=t;}anim=requestAnimationFrame(step);};anim=requestAnimationFrame(step);};
+  draw();
+  /* ---------- bias-variance chart (same data, λ=0) ---------- */
+  if(window.Chart){const degs=[],trs=[],tes=[];for(let d=1;d<=12;d++){const th=polyfit(xtr,ytr,d,0);degs.push(d);trs.push(+mse(th,xtr,ytr).toFixed(4));tes.push(+Math.min(mse(th,xte,yte),3).toFixed(4));}
+    new Chart(document.getElementById('bvchart'),{type:'line',data:{labels:degs,datasets:[{label:'train MSE',data:trs,borderColor:css('--cyan'),backgroundColor:css('--cyan'),tension:.3,pointRadius:3},{label:'test MSE',data:tes,borderColor:css('--amber'),backgroundColor:css('--amber'),tension:.3,pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{title:{display:true,text:'polynomial degree'}},y:{title:{display:true,text:'MSE (test clipped at 3)'},min:0}},plugins:{legend:{position:'top'}}}});}
+})();
+
+/* ---------- Ridge vs Lasso shrinkage demo ---------- */
+(function(){
+  const c=document.getElementById('regc');if(!c)return;const ctx=c.getContext('2d');
+  const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  function rng(seed){let s=seed>>>0;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
+  function gauss(r){let u=0,v=0;while(u===0)u=r();while(v===0)v=r();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+  const r=rng(11),m=60,n=6,truew=[3,-2,1.5,0,0,0.2];
+  /* features: x1 and x2 mildly correlated to make Ridge's sharing visible */
+  const X=[],y=[];for(let i=0;i<m;i++){const z=Array.from({length:n},()=>gauss(r));z[1]=0.6*z[0]+0.8*z[1];X.push(z);y.push(z.reduce((a,v,j)=>a+v*truew[j],0)+0.8*gauss(r));}
+  /* standardise columns, centre y */
+  for(let j=0;j<n;j++){let mu=0,sd=0;for(let i=0;i<m;i++)mu+=X[i][j];mu/=m;for(let i=0;i<m;i++)sd+=(X[i][j]-mu)**2;sd=Math.sqrt(sd/m);for(let i=0;i<m;i++)X[i][j]=(X[i][j]-mu)/sd;}
+  const ymu=y.reduce((a,b)=>a+b,0)/m;for(let i=0;i<m;i++)y[i]-=ymu;
+  const XtX=Array.from({length:n},(_,a)=>Array.from({length:n},(_,b)=>X.reduce((s,row)=>s+row[a]*row[b],0)));
+  const Xty=Array.from({length:n},(_,a)=>X.reduce((s,row,i)=>s+row[a]*y[i],0));
+  function solve(A,b){const k=b.length;const M=A.map((row,i)=>[...row,b[i]]);for(let c=0;c<k;c++){let p=c;for(let q=c+1;q<k;q++)if(Math.abs(M[q][c])>Math.abs(M[p][c]))p=q;[M[c],M[p]]=[M[p],M[c]];for(let q=c+1;q<k;q++){const f=M[q][c]/M[c][c];for(let t=c;t<=k;t++)M[q][t]-=f*M[c][t];}}const x=new Array(k).fill(0);for(let q=k-1;q>=0;q--){let s=M[q][k];for(let t=q+1;t<k;t++)s-=M[q][t]*x[t];x[q]=s/M[q][q];}return x;}
+  const ridge=a=>solve(XtX.map((row,i)=>row.map((v,j)=>v+(i===j?a:0))),Xty);
+  /* sklearn Lasso objective: (1/2m)||y-Xw||^2 + a||w||_1 ; coordinate descent */
+  function lasso(a){const w=new Array(n).fill(0);const res=y.slice();const S=(z,g)=>z>g?z-g:(z<-g?z+g:0);for(let it=0;it<300;it++){let delta=0;for(let j=0;j<n;j++){let rho=0;for(let i=0;i<m;i++)rho+=X[i][j]*(res[i]+X[i][j]*w[j]);const wj=S(rho/m,a)/(XtX[j][j]/m);const d=wj-w[j];if(d!==0){for(let i=0;i<m;i++)res[i]-=X[i][j]*d;w[j]=wj;delta=Math.max(delta,Math.abs(d));}}if(delta<1e-7)break;}return w;}
+  const ols=ridge(0);
+  const el=document.getElementById('alpha');
+  const W=c.width,H=c.height,pad={l:50,r:20,t:30,b:40};const y0=pad.t+(H-pad.t-pad.b)*0.5;const sc=(H-pad.t-pad.b)/8; /* ±4 range */
+  function draw(){
+    const a=Math.pow(10,+el.value);document.getElementById('alphav').textContent=a<0.01?a.toFixed(3):a.toFixed(2);
+    const wr=ridge(a*m/10), wl=lasso(a); /* ridge alpha scaled so both feel comparable on the slider */
+    ctx.clearRect(0,0,W,H);
+    ctx.strokeStyle=css('--line2');ctx.beginPath();ctx.moveTo(pad.l,y0);ctx.lineTo(W-pad.r,y0);ctx.stroke();
+    ctx.fillStyle=css('--ink3');ctx.font='12px JetBrains Mono,monospace';
+    for(const v of [-3,-2,-1,1,2,3]){ctx.fillText(v,pad.l-24,y0-v*sc+4);ctx.strokeStyle=css('--line');ctx.beginPath();ctx.moveTo(pad.l,y0-v*sc);ctx.lineTo(W-pad.r,y0-v*sc);ctx.stroke();}
+    const gw=(W-pad.l-pad.r)/n,bw=gw/4.2;let zeros=0,l2=0;
+    for(let j=0;j<n;j++){const gx=pad.l+j*gw+gw*0.15;
+      const bars=[[ols[j],css('--ink3')],[wr[j],css('--cyan')],[wl[j],css('--amber')]];
+      bars.forEach(([v,col],k)=>{ctx.fillStyle=col;const hgt=v*sc;ctx.fillRect(gx+k*bw*1.1,y0-Math.max(hgt,0),bw,Math.abs(hgt));});
+      /* true weight tick */
+      ctx.strokeStyle=css('--lime');ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(gx-4,y0-truew[j]*sc);ctx.lineTo(gx+3.4*bw,y0-truew[j]*sc);ctx.stroke();ctx.lineWidth=1;
+      ctx.fillStyle=css('--ink2');ctx.fillText('θ'+(j+1)+' (true '+truew[j]+')',gx,H-14);
+      if(Math.abs(wl[j])<1e-9)zeros++;l2+=wr[j]*wr[j];}
+    ctx.fillStyle=css('--ink2');ctx.fillText('grey OLS   cyan Ridge   amber Lasso   green tick = true weight',pad.l+4,18);
+    document.getElementById('nzero').textContent=zeros+' / 6';document.getElementById('l2n').textContent=l2.toFixed(2);
+  }
+  el.addEventListener('input',draw);draw();
+})();
+
+</script>
+</body></html>

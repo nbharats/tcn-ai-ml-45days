@@ -1,0 +1,608 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Day 10: Boosting: learning from mistakes (XGBoost)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0A0E1A; --bg2:#111729; --panel:#161D33; --line:#243052; --line2:#2E3B62;
+  --ink:#EDF0FA; --ink2:#AEB7D3; --ink3:#7B86A8;
+  --amber:#FFB43A; --cyan:#4FD3F2; --rose:#FF6B8A; --lime:#9BE56B; --violet:#9D8CFF;
+  --glow:rgba(79,211,242,.18);
+  --display:'Syne',ui-sans-serif,system-ui,sans-serif;
+  --body:'Manrope',ui-sans-serif,system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#F3F5FB; --bg2:#FFFFFF; --panel:#FFFFFF; --line:#D7DDEE; --line2:#C3CBE3;
+    --ink:#0F1730; --ink2:#3B4666; --ink3:#6B7694;
+    --amber:#C97A00; --cyan:#0A8FB3; --rose:#D93A5D; --lime:#4E9A1E; --violet:#6A55E8;
+    --glow:rgba(10,143,179,.14);
+  }
+}
+:root[data-theme="light"]{
+  --bg:#F3F5FB; --bg2:#FFFFFF; --panel:#FFFFFF; --line:#D7DDEE; --line2:#C3CBE3;
+  --ink:#0F1730; --ink2:#3B4666; --ink3:#6B7694;
+  --amber:#C97A00; --cyan:#0A8FB3; --rose:#D93A5D; --lime:#4E9A1E; --violet:#6A55E8;
+  --glow:rgba(10,143,179,.14);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;padding-inline:clamp(16px,4vw,48px);padding-block:0 80px}
+a{color:var(--cyan)}
+h1,h2,h3,h4{font-family:var(--display);text-wrap:balance;line-height:1.08;margin:0}
+h2{font-size:clamp(30px,4.2vw,50px);font-weight:800;letter-spacing:-.01em}
+h3{font-size:clamp(20px,2.2vw,26px);font-weight:700}
+h4{font-size:17px;font-weight:700}
+p{max-width:68ch;margin:0}
+p+p{margin-top:12px}
+ul,ol{max-width:70ch}
+li{margin-bottom:6px}
+.wrap{max-width:1180px;margin:0 auto}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)}
+.eyebrow b{color:var(--amber);font-weight:600}
+code,.mono{font-family:var(--mono)}
+p code,li code,td code{font-size:.9em;background:var(--bg2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--cyan)}
+
+/* progress bar + nav */
+#bar{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);margin-inline:calc(-1*clamp(16px,4vw,48px));padding-inline:clamp(16px,4vw,48px)}
+#bar .wrap{display:flex;align-items:center;gap:14px;height:56px;overflow-x:auto;scrollbar-width:none}
+#bar .wrap::-webkit-scrollbar{display:none}
+#bar .brand{font-family:var(--display);font-weight:800;font-size:15px;white-space:nowrap}
+#bar .brand span{color:var(--amber)}
+#bar nav{display:flex;gap:4px;flex:1}
+#bar nav a{font-family:var(--mono);font-size:11.5px;text-decoration:none;color:var(--ink3);padding:6px 10px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+#bar nav a.on{color:var(--ink);border-color:var(--line2);background:var(--panel)}
+#bar nav a i{font-style:normal;color:var(--amber);margin-right:5px}
+#bar .clock{font-family:var(--mono);font-size:12px;color:var(--ink2);white-space:nowrap;display:flex;gap:8px;align-items:center}
+#bar .clock button{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line2);border-radius:6px;padding:4px 9px;cursor:pointer}
+#track{position:absolute;left:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--cyan),var(--amber));width:0}
+
+/* sections */
+section.s{padding-block:88px 40px;border-top:1px solid var(--line);position:relative}
+.head{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end;margin-bottom:38px}
+.time{font-family:var(--mono);font-size:12px;color:var(--ink3);text-align:right;line-height:1.5}
+.time b{display:block;font-size:22px;color:var(--amber);font-weight:600}
+.lead{font-size:clamp(18px,1.6vw,21px);color:var(--ink2);max-width:62ch;margin-top:16px}
+
+/* hero */
+#hero{padding-block:70px 60px;position:relative;overflow:hidden;margin-inline:calc(-1*clamp(16px,4vw,48px));padding-inline:clamp(16px,4vw,48px)}
+#hero canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.55;pointer-events:none}
+#hero .wrap{position:relative}
+#hero h1{font-size:clamp(40px,7vw,96px);font-weight:800;letter-spacing:-.03em;line-height:.98}
+#hero h1 em{font-style:normal;color:var(--amber)}
+#hero h1 .c{color:var(--cyan)}
+.hero-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:40px;align-items:end;margin-top:30px}
+.agenda{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
+.agenda h3{font-size:14px;font-family:var(--mono);font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-bottom:12px}
+.agenda ol{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.agenda li{display:grid;grid-template-columns:52px 1fr;gap:12px;font-size:15px;align-items:baseline;margin:0}
+.agenda li span{font-family:var(--mono);font-size:12px;color:var(--amber)}
+.agenda li a{color:var(--ink);text-decoration:none}
+.agenda li a:hover{color:var(--cyan)}
+
+/* generic blocks */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;transition:transform .25s,border-color .25s}
+.card:hover{border-color:var(--cyan)}
+.card h3{margin-bottom:8px}
+.card h4{margin-bottom:6px}
+.card p{font-size:15.5px;color:var(--ink2)}
+.card.amber{border-color:var(--amber)} .card.violet{border-color:var(--violet)} .card.lime{border-color:var(--lime)} .card.rose{border-color:var(--rose)}
+.tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid var(--line2);color:var(--ink3);margin-bottom:12px}
+.pill{display:inline-flex;gap:6px;align-items:center;font-family:var(--mono);font-size:12px;padding:5px 11px;border-radius:999px;background:var(--bg2);border:1px solid var(--line);color:var(--ink2);text-decoration:none;margin:4px 6px 4px 0}
+.pill:hover{border-color:var(--cyan);color:var(--ink)}
+.callout{border-left:4px solid var(--amber);background:var(--panel);border-radius:0 14px 14px 0;padding:16px 20px;margin-block:18px}
+.callout.cy{border-left-color:var(--cyan)} .callout.ro{border-left-color:var(--rose)} .callout.li{border-left-color:var(--lime)} .callout.vi{border-left-color:var(--violet)}
+.callout b.t{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);display:block;margin-bottom:6px}
+.callout.cy b.t{color:var(--cyan)} .callout.ro b.t{color:var(--rose)} .callout.li b.t{color:var(--lime)} .callout.vi b.t{color:var(--violet)}
+.callout p{font-size:15.5px;color:var(--ink2)}
+
+/* analogy strip */
+.analogy{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start;background:linear-gradient(135deg,color-mix(in srgb,var(--amber) 10%,var(--panel)),var(--panel));border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-block:22px}
+.analogy .em{font-size:38px;line-height:1}
+.analogy h4{margin-bottom:4px}
+.analogy p{font-size:15.5px;color:var(--ink2)}
+
+/* code */
+pre{background:var(--bg2);border:1px solid var(--line2);border-radius:12px;padding:16px 18px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.55;margin:0;color:var(--ink)}
+pre .c{color:var(--ink3)} pre .k{color:var(--violet)} pre .s{color:var(--lime)} pre .n{color:var(--amber)} pre .f{color:var(--cyan)}
+.codewrap{position:relative;margin-block:14px}
+.codewrap .lbl{position:absolute;top:8px;right:12px;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+
+/* tabs */
+.tabs{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel)}
+.tabs .tb{display:flex;gap:2px;border-bottom:1px solid var(--line);background:var(--bg2);overflow-x:auto}
+.tabs .tb button{font:600 13px var(--body);background:transparent;color:var(--ink3);border:0;padding:11px 16px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.tabs .tb button.on{color:var(--ink);border-bottom-color:var(--amber)}
+.tabs .tp{display:none;padding:18px}
+.tabs .tp.on{display:block}
+
+/* figures / charts */
+figure{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;overflow:hidden}
+figure svg{width:100%;height:auto;display:block}
+figcaption{font-family:var(--mono);font-size:11.5px;color:var(--ink3);margin-top:8px}
+.chart{position:relative;height:300px}
+.chart canvas{width:100%!important;height:100%!important}
+canvas.demo{width:100%;height:auto;background:var(--bg2);border:1px solid var(--line2);border-radius:14px;display:block;touch-action:none}
+.ctl{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.ctl label{font-family:var(--mono);font-size:12px;color:var(--ink2);display:flex;gap:8px;align-items:center}
+.ctl input[type=range]{accent-color:var(--amber)}
+.btn{font:600 14px var(--body);color:var(--bg);background:var(--amber);border:0;border-radius:9px;padding:10px 16px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line2)}
+.btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.stats{font-family:var(--mono);font-size:13px;color:var(--ink2);display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin-top:14px;font-variant-numeric:tabular-nums}
+.stats b{color:var(--cyan);font-weight:600}
+
+/* steps */
+.steps{display:grid;gap:10px;counter-reset:st}
+.steps>div{display:grid;grid-template-columns:32px 1fr;gap:12px;align-items:start;font-size:15px;color:var(--ink2)}
+.steps>div::before{counter-increment:st;content:counter(st);font-family:var(--mono);font-size:12px;color:var(--amber);border:1px solid var(--line2);border-radius:50%;width:26px;height:26px;display:grid;place-items:center}
+.steps b{color:var(--ink)}
+
+/* table */
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+th,td{padding:10px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);background:var(--bg2)}
+tr:last-child td{border-bottom:0}
+
+/* tools + career */
+.tools{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.tool{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:6px}
+.tool b{font-family:var(--display);font-size:16px}
+.tool span{font-size:14px;color:var(--ink2)}
+.tool a{font-family:var(--mono);font-size:12px;text-decoration:none}
+.career{border:1px solid var(--violet);background:linear-gradient(135deg,color-mix(in srgb,var(--violet) 12%,var(--panel)),var(--panel));border-radius:14px;padding:22px}
+.career .tag{border-color:var(--violet);color:var(--violet)}
+
+/* homework */
+.hw{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.hw .card{border-color:var(--line2)}
+.hw .lvl{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--lime);margin-bottom:6px;display:block}
+
+/* quiz */
+.quiz{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.q{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.q p{font-size:15px;margin-bottom:12px;color:var(--ink)}
+.q .opts{display:flex;gap:8px;flex-wrap:wrap}
+.q button{font:600 13px var(--body);padding:7px 12px;border-radius:8px;border:1px solid var(--line2);background:var(--bg2);color:var(--ink);cursor:pointer}
+.q button.ok{border-color:var(--lime);color:var(--lime)} .q button.bad{border-color:var(--rose);color:var(--rose)}
+.q .why{font-size:13.5px;color:var(--ink2);margin-top:10px;display:none}
+.q.done .why{display:block}
+
+/* details */
+details{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:0 18px;margin-block:10px}
+summary{cursor:pointer;padding:14px 0;font-family:var(--display);font-weight:700;font-size:16px}
+details[open] summary{border-bottom:1px solid var(--line);margin-bottom:12px}
+details>*:not(summary){padding-bottom:14px}
+
+/* footer */
+.fin{text-align:center;padding-block:60px 20px}
+.fin h2{font-size:clamp(28px,4vw,44px)}
+.fin p{margin:14px auto 0}
+
+/* reveal */
+.rv{opacity:1;transform:none;transition:opacity .6s ease,transform .6s ease}
+.js .rv:not(.in){opacity:.001;transform:translateY(18px)}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+@keyframes dash{to{stroke-dashoffset:0}}
+.flowline{stroke-dasharray:6 6;animation:flow 1.2s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-24}}
+@media (prefers-reduced-motion:reduce){.js .rv:not(.in){opacity:1;transform:none}.rv{transition:none}*{animation:none!important}}
+
+@media (max-width:980px){
+  .grid4,.tools,.hw{grid-template-columns:1fr 1fr}
+  .grid3,.quiz{grid-template-columns:1fr 1fr}
+}
+@media (max-width:720px){
+  .hero-grid,.grid2,.grid3,.grid4,.tools,.hw,.quiz,.analogy{grid-template-columns:1fr}
+  .head{grid-template-columns:1fr}.time{text-align:left}
+}
+</style></head><body>
+
+<div id="bar"><div class="wrap">
+  <div class="brand">AI <span>&amp;</span> ML Engineering · Day 10</div>
+  <nav id="nav"><!-- filled by JS from section[data-nav] --></nav>
+  <div class="clock"><span id="clk">00:00</span><button id="clkbtn" type="button">Start 60 min</button></div>
+</div><div id="track"></div></div>
+
+<!-- ============ HERO ============ -->
+<header id="hero"><canvas id="bgc"></canvas><div class="wrap">
+  <div class="eyebrow"><b>Day 10</b> · Phase 2 · Supervised ML · 60 minutes</div>
+  <h1 style="margin-top:18px">Boosting: <em>learning</em><br>from <span class="c">mistakes</span></h1>
+  <div class="hero-grid">
+    <p class="lead">Yesterday's forest was a crowd of strangers voting. Today's model is a relay team: each runner starts exactly where the last one stumbled. You will step through boosting rounds by hand, watch residuals shrink, understand why a small learning rate plus early stopping beats brute force, and train the model that wins most tabular Kaggle competitions and scores most loans in India: XGBoost.</p>
+    <div class="agenda"><h3>Today's route</h3><ol>
+      <li><span>00–05</span><a href="#hook">Hook: the Kaggle leaderboard secret</a></li>
+      <li><span>05–23</span><a href="#concept">Concept: AdaBoost → gradient boosting</a></li>
+      <li><span>23–33</span><a href="#deeper">Deeper: the maths, XGBoost's tricks</a></li>
+      <li><span>33–45</span><a href="#code">Code: XGBoost with early stopping</a></li>
+      <li><span>45–50</span><a href="#realworld">Real world &amp; tools</a></li>
+      <li><span>50–53</span><a href="#career">Career corner</a></li>
+      <li><span>53–56</span><a href="#quiz">Quiz</a></li>
+      <li><span>56–58</span><a href="#homework">Homework</a></li>
+      <li><span>58–60</span><a href="#next">Next: SVM</a></li>
+    </ol></div>
+  </div>
+</div></header>
+
+<!-- ============ 1. HOOK ============ -->
+<section class="s" id="hook" data-nav="Hook"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">01 · Hook</div><h2>Why does the same model keep winning?</h2><p class="lead">Open any Kaggle competition where the data is a spreadsheet: insurance claims, store sales, credit default, flight delays. Read the winners' write-ups. The names change, the stack does not: gradient boosted trees (XGBoost, LightGBM, CatBoost), a bit of feature engineering, and an ensemble of the three.</p></div><div class="time"><b>5</b>min</div></div>
+  <div class="grid2 rv">
+    <div class="card amber"><span class="tag">Projector · 2 min</span><h3>Open a winning solution</h3><p>Open the <a href="https://www.kaggle.com/competitions/home-credit-default-risk/discussion/64821" target="_blank" rel="noopener">Home Credit Default Risk 1st-place write-up ↗</a> (a loan-default problem, exactly what Indian NBFCs and banks solve). Search the page for "LightGBM" and "XGBoost". Then open the <a href="https://www.kaggle.com/competitions" target="_blank" rel="noopener">competitions list ↗</a> and ask: which of these are tables? Most. Boosting is the answer for tables the way CNNs are the answer for images.</p></div>
+    <div class="card"><span class="tag">Ask the class</span><h3>How do you become good at an exam?</h3><p>Not by doing 500 random questions. You do a mock test, mark what you got wrong, and spend the next session <b>only</b> on those. Then another mock, and again. Each session is small and focused, and each one fixes what the previous sessions left broken. That is boosting. The forest yesterday was 300 students doing the whole syllabus independently and voting. Boosting is one student improving in rounds.</p></div>
+  </div>
+  <div class="callout ro rv"><b class="t">Yesterday's ceiling</b><p>Random Forest on Telco churn: test AUC <b>0.827</b>. Today, same data, same 80/20 split: XGBoost with early stopping reaches <b>0.847</b>, and plain AdaBoost with 200 one-level stumps already reaches <b>0.842</b>. Two points of AUC on a churn model at a telecom with 10 million customers is a lot of customers.</p></div>
+</div></section>
+
+<!-- ============ 2. CONCEPT ============ -->
+<section class="s" id="concept" data-nav="Concept"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">02 · Concept</div><h2>From voting to correcting</h2><p class="lead">Bagging trains strong, independent trees in parallel and averages them to cut variance. Boosting trains <b>weak</b> learners in <b>sequence</b>, each one trained on whatever the ensemble so far still gets wrong, and adds them up to cut bias.</p></div><div class="time"><b>18</b>min</div></div>
+
+  <div class="analogy rv"><div class="em">🍛</div><div><h4>The dabbawala who learns your taste</h4><p>Week 1 the tiffin is too spicy. You say so. Week 2 he reduces chilli, but now it is too salty. He adjusts only the salt. Week 3, slightly less oil. He never re-cooks from scratch; each week he applies a <b>small correction</b> to the previous recipe, aimed precisely at your last complaint. After ten weeks the tiffin is exactly right. The complaints are the <b>residuals</b>. The size of each correction is the <b>learning rate</b>. Stopping when you stop complaining is <b>early stopping</b>. And if he over-reacts to one bad day (you were ill, not the food), he has <b>overfit to noise</b>.</p></div></div>
+
+  <h3 class="rv" style="margin-top:30px">Step through gradient boosting, one round at a time</h3>
+  <p class="rv" style="margin-top:8px">Sixty noisy points around a curve. Round 0 predicts the mean everywhere. Press <b>Next round</b>: the bottom panel shows the <b>residuals</b> (true − current prediction) and the small tree fitted to them; the top panel adds that tree, scaled by the learning rate, to the running prediction. Keep going and watch the residuals shrink towards a flat band of pure noise. Then push the learning rate to 1.0 and the depth to 4 and run 60 rounds: the curve starts chasing individual noisy points, and the test error on the chart turns upward. That turn is where early stopping should have stopped you.</p>
+  <figure class="rv" style="margin-top:14px">
+    <canvas id="gbc" class="demo" width="900" height="520" aria-label="Gradient boosting step-through: predictions and residuals"></canvas>
+    <div class="ctl">
+      <button class="btn" id="gb1" type="button">Next round</button>
+      <button class="btn ghost" id="gb10" type="button">+10 rounds</button>
+      <button class="btn ghost" id="gbauto" type="button">Auto-play</button>
+      <button class="btn ghost" id="gbreset" type="button">Reset</button>
+      <label>learning rate <input type="range" id="gblr" min="0.05" max="1" step="0.05" value="0.3"> <span id="gblrv">0.30</span></label>
+      <label>tree depth <input type="range" id="gbdepth" min="1" max="4" value="2"> <span id="gbdepthv">2</span></label>
+    </div>
+    <div class="stats">
+      <div>round: <b id="gb_m">0</b></div>
+      <div>train MSE: <b id="gb_tr">–</b></div>
+      <div>test MSE: <b id="gb_te">–</b></div>
+      <div>best test MSE at round: <b id="gb_best">–</b></div>
+    </div>
+    <figcaption>Top: data (dots), hidden true function (faint), current ensemble F<sub>m</sub>(x) (amber). Bottom: residuals y − F<sub>m</sub>(x) and the new tree h<sub>m</sub> fitted to them (rose). Each round: F<sub>m</sub> = F<sub>m−1</sub> + η·h<sub>m</sub>.</figcaption>
+  </figure>
+
+  <div class="grid2 rv" style="margin-top:26px">
+    <figure>
+      <div class="chart"><canvas id="mseChart"></canvas></div>
+      <figcaption>Live from the simulator: train error keeps falling every round (it always does), test error falls then rises. Early stopping = keep the model from the round where the held-out curve was lowest.</figcaption>
+    </figure>
+    <div>
+      <div class="callout"><b class="t">Key idea</b><p>Each new tree is fitted to the <b>residuals</b> of everything built so far, not to the original targets. The ensemble is a <b>sum</b>, not a vote: <span class="mono">F(x) = F₀ + η·h₁(x) + η·h₂(x) + …</span>. Trees are tiny (depth 1–6) because each only needs to fix a little.</p></div>
+      <div class="callout cy"><b class="t">Common confusion</b><p>"Lower learning rate = worse model." No: lower η means each tree contributes less, so you need <b>more</b> rounds, but the model generalises better because no single tree can over-commit to noise. The pair (η, n_estimators) is chosen together, and early stopping picks n_estimators for you. On churn: η=1.0 → AUC 0.80; η=0.03 → 0.845.</p></div>
+      <div class="callout li"><b class="t">Bagging vs boosting in one line each</b><p><b>Bagging</b> lowers variance: independent overfit trees, averaged, parallel. <b>Boosting</b> lowers bias: dependent underfit trees, summed, sequential. Boosting can overfit if you keep going; bagging cannot get worse with more trees.</p></div>
+    </div>
+  </div>
+
+  <h3 class="rv" style="margin-top:34px">AdaBoost, the 1995 original: reweight the hard examples</h3>
+  <p class="rv" style="margin-top:8px">Before "fit the residuals" there was "re-weight the misclassified". AdaBoost trains a stump, finds the points it got wrong, <b>increases their weight</b>, trains the next stump on the re-weighted data, and gives each stump a say <span class="mono">α</span> proportional to how accurate it was. Below, watch point sizes grow where the last stump failed.</p>
+  <figure class="rv" style="margin-top:12px">
+    <svg viewBox="0 0 900 250" role="img" aria-label="AdaBoost rounds: misclassified points get larger weights">
+      <defs><marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--ink3)"/></marker></defs>
+      <g id="ada" font-family="var(--mono)" font-size="11"></g>
+      <g stroke="var(--rose)" stroke-width="1.6" fill="none" marker-end="url(#arr2)"><path class="flowline" d="M270 125H320"/><path class="flowline" d="M570 125H620"/></g>
+      <text x="295" y="112" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--rose)">re-weight</text>
+      <text x="595" y="112" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--rose)">re-weight</text>
+    </svg>
+    <figcaption>Three AdaBoost rounds on the same 24 points. Dashed line = the stump chosen in that round (it minimises <i>weighted</i> error). Circles marked with a ring were misclassified and get heavier for the next round. Final classifier = sign(α₁h₁ + α₂h₂ + α₃h₃).</figcaption>
+  </figure>
+
+  <div class="tbl rv" style="margin-top:26px"><table>
+    <tr><th></th><th>AdaBoost (1995)</th><th>Gradient Boosting (2001)</th><th>XGBoost (2014) / LightGBM (2017) / CatBoost (2017)</th></tr>
+    <tr><td>What each round fits</td><td>a stump on <b>re-weighted</b> data</td><td>a small tree on the <b>negative gradient</b> of the loss (= residuals for squared error)</td><td>same, plus second-order gradients (Newton step) and regularised leaves</td></tr>
+    <tr><td>Loss</td><td>exponential</td><td>any differentiable: squared, log-loss, Huber, quantile…</td><td>any, including custom objectives</td></tr>
+    <tr><td>Speed tricks</td><td>–</td><td>–</td><td>histogram binning, column blocks, GPU, sparsity-aware splits, leaf-wise growth (LightGBM), ordered target stats (CatBoost)</td></tr>
+    <tr><td>sklearn / package</td><td><span class="mono">AdaBoostClassifier</span></td><td><span class="mono">GradientBoostingClassifier</span>, <span class="mono">HistGradientBoostingClassifier</span></td><td><span class="mono">xgboost</span>, <span class="mono">lightgbm</span>, <span class="mono">catboost</span></td></tr>
+  </table></div>
+
+  <div class="callout vi rv"><b class="t">Interview answer</b><p>"Boosting builds an additive model sequentially: each new weak learner is fitted to the errors, more precisely the negative gradient of the loss, of the ensemble so far, and added with a small learning rate. It reduces bias, unlike bagging which reduces variance. XGBoost adds second-order gradients, L1/L2 leaf regularisation, and engineering like histogram splits and column sampling, which is why it is fast and wins on tabular data."</p></div>
+</div></section>
+
+<!-- ============ 3. DEEPER ============ -->
+<section class="s" id="deeper" data-nav="Deeper"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">03 · Deeper</div><h2>Gradient descent, but in function space</h2><p class="lead">Day 04 you moved a parameter vector θ downhill on the loss. Boosting moves a <b>function</b> F downhill on the loss, and the "step" is a tree.</p></div><div class="time"><b>10</b>min</div></div>
+
+  <h3 class="rv">1. The additive model</h3>
+  <div class="callout rv" style="margin-block:12px"><p class="mono" style="font-size:17px;color:var(--ink)">F<sub>m</sub>(x) = F<sub>m−1</sub>(x) + η · h<sub>m</sub>(x),&nbsp;&nbsp; F<sub>0</sub>(x) = argmin<sub>c</sub> Σ L(y<sub>i</sub>, c)</p></div>
+  <p class="rv"><span class="mono">F<sub>m</sub></span> is the ensemble after <span class="mono">m</span> rounds, <span class="mono">h<sub>m</sub></span> the tree added in round <span class="mono">m</span>, <span class="mono">η</span> (eta, "learning rate", 0.01–0.3) shrinks each tree's contribution, and <span class="mono">F<sub>0</sub></span> is the best constant: the mean for squared error, the log-odds of the positive rate for log-loss.</p>
+
+  <h3 class="rv" style="margin-top:26px">2. What the tree is fitted to</h3>
+  <div class="callout cy rv" style="margin-block:12px"><p class="mono" style="font-size:17px;color:var(--ink)">r<sub>i</sub> = − ∂L(y<sub>i</sub>, F(x<sub>i</sub>)) / ∂F(x<sub>i</sub>)&nbsp;&nbsp;→&nbsp;&nbsp; for L = ½(y − F)²:&nbsp; r<sub>i</sub> = y<sub>i</sub> − F(x<sub>i</sub>)</p></div>
+  <p class="rv"><span class="mono">r<sub>i</sub></span> is the "pseudo-residual" for row <span class="mono">i</span>: the negative gradient of the loss with respect to the current prediction. For squared error it is literally the residual you saw in the simulator. For log-loss (classification) it is <span class="mono">y<sub>i</sub> − p<sub>i</sub></span>, the gap between the label and the current probability. The tree <span class="mono">h<sub>m</sub></span> is a regression tree fitted to these <span class="mono">r<sub>i</sub></span> values, whatever the task. That is why XGBoost's trees always output numbers, even for classification.</p>
+
+  <h3 class="rv" style="margin-top:26px">3. XGBoost's objective: loss + penalty on the tree itself</h3>
+  <div class="callout li rv" style="margin-block:12px"><p class="mono" style="font-size:17px;color:var(--ink)">Obj = Σ<sub>i</sub> L(y<sub>i</sub>, F(x<sub>i</sub>)) + Σ<sub>trees</sub> [ γ·T + ½ λ Σ<sub>leaves</sub> w<sub>j</sub>² + α Σ<sub>leaves</sub> |w<sub>j</sub>| ]</p></div>
+  <p class="rv"><span class="mono">T</span> is the number of leaves in a tree, <span class="mono">w<sub>j</sub></span> the value a leaf outputs, <span class="mono">γ</span> (gamma) the price of adding a leaf, <span class="mono">λ</span> (reg_lambda, default 1) an L2 penalty on leaf values and <span class="mono">α</span> (reg_alpha) an L1 penalty. XGBoost also uses the <b>second derivative</b> of the loss (like Newton's method) to compute the optimal leaf value <span class="mono">w<sub>j</sub> = −G<sub>j</sub> / (H<sub>j</sub> + λ)</span>, where <span class="mono">G<sub>j</sub></span>, <span class="mono">H<sub>j</sub></span> are the sums of first and second gradients of the rows in leaf <span class="mono">j</span>. Every split is scored by how much it improves this objective, so regularisation is built into tree growth rather than bolted on after.</p>
+
+  <div class="grid2 rv" style="margin-top:26px">
+    <figure>
+      <div class="chart"><canvas id="esChart"></canvas></div>
+      <figcaption>Real run: XGBoost on Telco churn, η=0.1, depth 4, log-loss on train vs validation per round. Validation is best at round ≈ 49 and drifts up afterwards while train keeps improving. <span class="mono">early_stopping_rounds=50</span> would stop near round 100 and keep round 49.</figcaption>
+    </figure>
+    <div>
+      <div class="tbl"><table>
+        <tr><th>Knob (XGBoost name)</th><th>What it does</th><th>Start here</th></tr>
+        <tr><td><span class="mono">learning_rate</span> (η)</td><td>shrink each tree; lower = more rounds, better generalisation</td><td>0.03–0.1</td></tr>
+        <tr><td><span class="mono">n_estimators</span></td><td>rounds; let early stopping choose</td><td>1000 + early stop</td></tr>
+        <tr><td><span class="mono">max_depth</span></td><td>interactions each tree can capture</td><td>3–6</td></tr>
+        <tr><td><span class="mono">subsample</span></td><td>row fraction per tree (stochastic GB)</td><td>0.7–0.9</td></tr>
+        <tr><td><span class="mono">colsample_bytree</span></td><td>feature fraction per tree (RF's trick)</td><td>0.7–0.9</td></tr>
+        <tr><td><span class="mono">min_child_weight</span></td><td>min hessian sum in a leaf; like min_samples_leaf</td><td>1–10</td></tr>
+        <tr><td><span class="mono">reg_lambda / reg_alpha</span></td><td>L2 / L1 on leaf values</td><td>1 / 0</td></tr>
+        <tr><td><span class="mono">scale_pos_weight</span></td><td>up-weight positives for imbalance</td><td>neg/pos ratio</td></tr>
+      </table></div>
+    </div>
+  </div>
+
+  <div class="callout vi rv" style="margin-top:22px"><b class="t">How to say this in an interview</b><p>"Gradient boosting is gradient descent in function space: each round fits a small tree to the negative gradient of the loss with respect to the current predictions, and adds it scaled by a learning rate. Train loss always falls, so I hold out a validation set and use early stopping to pick the number of rounds. XGBoost improves on this with second-order gradients, leaf-level L1/L2 regularisation and histogram-based splitting; LightGBM grows leaf-wise and is faster on large data; CatBoost handles categorical columns natively."</p></div>
+</div></section>
+
+<!-- ============ 4. CODE ============ -->
+<section class="s" id="code" data-nav="Code"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">04 · Code</div><h2>XGBoost on churn, the way it is done at work</h2><p class="lead">Same Telco churn data and split as Day 09 so every number is comparable. Full runnable version: open <code>Day_10_Boosting_XGBoost.ipynb</code> in Google Colab. XGBoost is preinstalled on Colab.</p></div><div class="time"><b>12</b>min</div></div>
+
+  <h3 class="rv">Snippet 1 · Gradient boosting in 12 lines (regression, from scratch)</h3>
+  <div class="codewrap rv"><span class="lbl">python</span><pre><span class="k">import</span> numpy <span class="k">as</span> np
+<span class="k">from</span> sklearn.tree <span class="k">import</span> DecisionTreeRegressor
+
+<span class="k">def</span> <span class="f">boost</span>(X, y, rounds=<span class="n">100</span>, lr=<span class="n">0.1</span>, depth=<span class="n">2</span>):
+    F0 = y.<span class="f">mean</span>()                       <span class="c"># F₀: best constant for squared error</span>
+    trees, F = [], np.<span class="f">full</span>(<span class="f">len</span>(y), F0)
+    <span class="k">for</span> m <span class="k">in</span> <span class="f">range</span>(rounds):
+        r = y - F                          <span class="c"># pseudo-residuals = negative gradient of ½(y−F)²</span>
+        h = <span class="f">DecisionTreeRegressor</span>(max_depth=depth).<span class="f">fit</span>(X, r)
+        F = F + lr * h.<span class="f">predict</span>(X)          <span class="c"># F_m = F_{m−1} + η·h_m</span>
+        trees.<span class="f">append</span>(h)
+    <span class="k">return</span> F0, trees
+
+<span class="k">def</span> <span class="f">predict</span>(model, X, lr=<span class="n">0.1</span>):
+    F0, trees = model
+    <span class="k">return</span> F0 + lr * <span class="f">sum</span>(h.<span class="f">predict</span>(X) <span class="k">for</span> h <span class="k">in</span> trees)</pre></div>
+
+  <h3 class="rv" style="margin-top:22px">Snippet 2 · XGBoost with early stopping (the pattern to memorise)</h3>
+  <div class="codewrap rv"><span class="lbl">python</span><pre><span class="k">import</span> xgboost <span class="k">as</span> xgb
+<span class="k">from</span> sklearn.model_selection <span class="k">import</span> train_test_split
+<span class="k">from</span> sklearn.metrics <span class="k">import</span> roc_auc_score
+
+<span class="c"># three-way split: the validation set is for early stopping, the test set is touched once</span>
+X_tr, X_te, y_tr, y_te = <span class="f">train_test_split</span>(X, y, test_size=<span class="n">0.2</span>, stratify=y, random_state=<span class="n">42</span>)
+X_fit, X_val, y_fit, y_val = <span class="f">train_test_split</span>(X_tr, y_tr, test_size=<span class="n">0.2</span>, stratify=y_tr, random_state=<span class="n">42</span>)
+
+model = xgb.<span class="f">XGBClassifier</span>(
+    n_estimators=<span class="n">2000</span>,            <span class="c"># an upper bound; early stopping decides the real number</span>
+    learning_rate=<span class="n">0.03</span>, max_depth=<span class="n">3</span>,
+    subsample=<span class="n">0.8</span>, colsample_bytree=<span class="n">0.8</span>,
+    eval_metric=<span class="s">"auc"</span>, early_stopping_rounds=<span class="n">50</span>,   <span class="c"># xgboost ≥ 2.0: both go in the constructor</span>
+    random_state=<span class="n">42</span>, n_jobs=-<span class="n">1</span>)
+model.<span class="f">fit</span>(X_fit, y_fit, eval_set=[(X_fit, y_fit), (X_val, y_val)], verbose=<span class="n">100</span>)
+
+<span class="k">print</span>(<span class="s">"stopped at round"</span>, model.best_iteration, <span class="s">"val AUC"</span>, <span class="f">round</span>(model.best_score, <span class="n">4</span>))
+<span class="k">print</span>(<span class="s">"test AUC"</span>, <span class="f">round</span>(<span class="f">roc_auc_score</span>(y_te, model.<span class="f">predict_proba</span>(X_te)[:, <span class="n">1</span>]), <span class="n">4</span>))
+<span class="c"># stopped at round 240  val AUC 0.854</span>
+<span class="c"># test AUC 0.847          ← Random Forest was 0.827, single tree 0.662</span></pre></div>
+
+  <h3 class="rv" style="margin-top:22px">Snippet 3 · Learning rate vs rounds, and what overfitting looks like</h3>
+  <div class="codewrap rv"><span class="lbl">python</span><pre><span class="c"># fixed 300 rounds, depth 3: too big a step overshoots, too small under-trains in 300 rounds</span>
+<span class="k">for</span> lr <span class="k">in</span> [<span class="n">1.0</span>, <span class="n">0.3</span>, <span class="n">0.1</span>, <span class="n">0.03</span>, <span class="n">0.01</span>]:
+    m = xgb.<span class="f">XGBClassifier</span>(n_estimators=<span class="n">300</span>, learning_rate=lr, max_depth=<span class="n">3</span>, random_state=<span class="n">42</span>).<span class="f">fit</span>(X_tr, y_tr)
+    <span class="k">print</span>(lr, <span class="f">round</span>(<span class="f">roc_auc_score</span>(y_te, m.<span class="f">predict_proba</span>(X_te)[:, <span class="n">1</span>]), <span class="n">3</span>))
+<span class="c"># 1.0→0.800   0.3→0.825   0.1→0.837   0.03→0.845   0.01→0.844</span>
+
+<span class="c"># deep trees + big steps + many rounds = memorisation</span>
+bad = xgb.<span class="f">XGBClassifier</span>(n_estimators=<span class="n">500</span>, learning_rate=<span class="n">0.3</span>, max_depth=<span class="n">8</span>, random_state=<span class="n">42</span>).<span class="f">fit</span>(X_tr, y_tr)
+<span class="k">print</span>(bad.<span class="f">score</span>(X_tr, y_tr), <span class="f">roc_auc_score</span>(y_te, bad.<span class="f">predict_proba</span>(X_te)[:, <span class="n">1</span>]))   <span class="c"># 0.997 train, 0.800 test AUC</span></pre></div>
+
+  <h3 class="rv" style="margin-top:22px">Snippet 4 · The family, same interface</h3>
+  <div class="tabs rv">
+    <div class="tb"><button class="on" type="button">sklearn HistGradientBoosting</button><button type="button">AdaBoost</button><button type="button">LightGBM</button><button type="button">CatBoost</button></div>
+    <div class="tp on"><div class="codewrap"><span class="lbl">python</span><pre><span class="c"># sklearn's fast histogram booster (inspired by LightGBM); handles NaN natively; no install needed</span>
+<span class="k">from</span> sklearn.ensemble <span class="k">import</span> HistGradientBoostingClassifier
+hgb = <span class="f">HistGradientBoostingClassifier</span>(learning_rate=<span class="n">0.05</span>, max_iter=<span class="n">1000</span>, max_depth=<span class="n">4</span>,
+                                     early_stopping=<span class="k">True</span>, validation_fraction=<span class="n">0.2</span>, n_iter_no_change=<span class="n">50</span>,
+                                     random_state=<span class="n">42</span>).<span class="f">fit</span>(X_tr, y_tr)
+<span class="k">print</span>(hgb.n_iter_, <span class="f">roc_auc_score</span>(y_te, hgb.<span class="f">predict_proba</span>(X_te)[:, <span class="n">1</span>]))</pre></div></div>
+    <div class="tp"><div class="codewrap"><span class="lbl">python</span><pre><span class="c"># AdaBoost with decision stumps (max_depth=1 is the default base estimator)</span>
+<span class="k">from</span> sklearn.ensemble <span class="k">import</span> AdaBoostClassifier
+ada = <span class="f">AdaBoostClassifier</span>(n_estimators=<span class="n">200</span>, learning_rate=<span class="n">0.5</span>, random_state=<span class="n">42</span>).<span class="f">fit</span>(X_tr, y_tr)
+<span class="k">print</span>(<span class="f">roc_auc_score</span>(y_te, ada.<span class="f">predict_proba</span>(X_te)[:, <span class="n">1</span>]))     <span class="c"># 0.842 with 200 one-split stumps!</span>
+<span class="k">print</span>(ada.estimator_weights_[:<span class="n">5</span>])   <span class="c"># α per stump: accurate stumps get a louder vote</span></pre></div></div>
+    <div class="tp"><div class="codewrap"><span class="lbl">python</span><pre><span class="c"># !pip install -q lightgbm   (leaf-wise growth, very fast on 100k+ rows)</span>
+<span class="k">import</span> lightgbm <span class="k">as</span> lgb
+lg = lgb.<span class="f">LGBMClassifier</span>(n_estimators=<span class="n">2000</span>, learning_rate=<span class="n">0.03</span>, num_leaves=<span class="n">15</span>,
+                        subsample=<span class="n">0.8</span>, colsample_bytree=<span class="n">0.8</span>, random_state=<span class="n">42</span>, verbose=-<span class="n">1</span>)
+lg.<span class="f">fit</span>(X_fit, y_fit, eval_set=[(X_val, y_val)], eval_metric=<span class="s">"auc"</span>,
+       callbacks=[lgb.<span class="f">early_stopping</span>(<span class="n">50</span>, verbose=<span class="k">False</span>)])
+<span class="k">print</span>(lg.best_iteration_, <span class="f">roc_auc_score</span>(y_te, lg.<span class="f">predict_proba</span>(X_te)[:, <span class="n">1</span>]))</pre></div></div>
+    <div class="tp"><div class="codewrap"><span class="lbl">python</span><pre><span class="c"># !pip install -q catboost   (feed raw categorical columns, no one-hot needed)</span>
+<span class="k">from</span> catboost <span class="k">import</span> CatBoostClassifier
+cat_cols = [c <span class="k">for</span> c <span class="k">in</span> df_raw.columns <span class="k">if</span> df_raw[c].dtype == <span class="s">"object"</span>]
+cb = <span class="f">CatBoostClassifier</span>(iterations=<span class="n">2000</span>, learning_rate=<span class="n">0.03</span>, depth=<span class="n">4</span>, eval_metric=<span class="s">"AUC"</span>,
+                        cat_features=cat_cols, early_stopping_rounds=<span class="n">50</span>, verbose=<span class="n">0</span>, random_seed=<span class="n">42</span>)
+cb.<span class="f">fit</span>(Xr_fit, y_fit, eval_set=(Xr_val, y_val))
+<span class="k">print</span>(cb.get_best_iteration(), <span class="f">roc_auc_score</span>(y_te, cb.<span class="f">predict_proba</span>(Xr_te)[:, <span class="n">1</span>]))</pre></div></div>
+  </div>
+
+  <h3 class="rv" style="margin-top:22px">Snippet 5 · Explain a single prediction with SHAP</h3>
+  <div class="codewrap rv"><span class="lbl">python</span><pre><span class="c"># !pip install -q shap</span>
+<span class="k">import</span> shap
+explainer = shap.<span class="f">TreeExplainer</span>(model)              <span class="c"># exact and fast for tree ensembles</span>
+sv = explainer.<span class="f">shap_values</span>(X_te)                   <span class="c"># one row per customer, one column per feature</span>
+shap.<span class="f">summary_plot</span>(sv, X_te, max_display=<span class="n">12</span>)        <span class="c"># global: which features push churn up/down</span>
+shap.<span class="f">plots</span>.<span class="f">waterfall</span>(explainer(X_te)[<span class="n">0</span>])           <span class="c"># local: why THIS customer is predicted to churn</span>
+<span class="c"># This is what the risk team shows the regulator: "loan declined because contract=month-to-month (+0.9), tenure&lt;6 (+0.6)…"</span></pre></div>
+</div></section>
+
+<!-- ============ 5. REAL WORLD ============ -->
+<section class="s" id="realworld" data-nav="Real world"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">05 · Real world &amp; tools</div><h2>The tabular workhorse</h2><p class="lead">Credit scoring at NBFCs, fraud at UPI scale, click-through prediction at ad platforms, ETA models at Swiggy and Zomato, demand forecasting at Flipkart. If the input is a table, one of these three libraries is probably in production.</p></div><div class="time"><b>5</b>min</div></div>
+  <div class="grid3 rv">
+    <div class="card"><span class="tag">Paper · 2016</span><h3>XGBoost: A Scalable Tree Boosting System</h3><p>Chen &amp; Guestrin. Section 2 has the regularised objective and the Newton-step leaf formula you saw above; section 3 explains the engineering.</p><a href="https://arxiv.org/abs/1603.02754" target="_blank" rel="noopener">arxiv.org/abs/1603.02754 ↗</a></div>
+    <div class="card"><span class="tag">Interactive</span><h3>MLU-Explain: Gradient Boosting</h3><p>Scroll-through explainer where residuals shrink round by round, with a section on the learning rate. Pairs with today's simulator.</p><a href="https://mlu-explain.github.io/gradient-boosting/" target="_blank" rel="noopener">mlu-explain.github.io ↗</a></div>
+    <div class="card"><span class="tag">Docs</span><h3>XGBoost Python API &amp; tutorials</h3><p>The parameter reference is the page to keep open while tuning. Also has GPU (<span class="mono">device="cuda"</span>) and Dask/Spark guides.</p><a href="https://xgboost.readthedocs.io/en/stable/python/index.html" target="_blank" rel="noopener">xgboost.readthedocs.io ↗</a></div>
+    <div class="card"><span class="tag">Library</span><h3>LightGBM &amp; CatBoost</h3><p>Microsoft's LightGBM for speed on big data; Yandex's CatBoost for categorical-heavy tables with almost no tuning. Learn all three; JDs list them by name.</p><a href="https://lightgbm.readthedocs.io/" target="_blank" rel="noopener">lightgbm.readthedocs.io ↗</a> · <a href="https://catboost.ai/" target="_blank" rel="noopener">catboost.ai ↗</a></div>
+    <div class="card"><span class="tag">Paper · 2022</span><h3>Why do tree-based models still outperform deep learning on tabular data?</h3><p>Grinsztajn et al. benchmark 45 datasets: boosted trees beat neural nets on medium-sized tables. Cite it when someone asks "why not a neural network?"</p><a href="https://arxiv.org/abs/2207.08815" target="_blank" rel="noopener">arxiv.org/abs/2207.08815 ↗</a></div>
+    <div class="card"><span class="tag">Dataset</span><h3>Home Credit Default Risk (Kaggle)</h3><p>A real loan-default problem with 300k applicants and 7 related tables. The classic "boosting + feature engineering" portfolio project for fintech roles.</p><a href="https://www.kaggle.com/competitions/home-credit-default-risk" target="_blank" rel="noopener">kaggle.com ↗</a></div>
+  </div>
+  <h3 class="rv" style="margin-top:32px;margin-bottom:12px">Modern tools for today's work</h3>
+  <div class="tools rv">
+    <div class="tool"><b>Optuna</b><span>Bayesian search over learning_rate, max_depth, subsample with early stopping inside each trial; 50 trials in minutes.</span><a href="https://optuna.org/" target="_blank" rel="noopener">optuna.org ↗</a></div>
+    <div class="tool"><b>SHAP</b><span>TreeExplainer gives exact per-prediction explanations for XGBoost/LightGBM/CatBoost.</span><a href="https://shap.readthedocs.io/" target="_blank" rel="noopener">shap.readthedocs.io ↗</a></div>
+    <div class="tool"><b>Weights &amp; Biases</b><span>Log every boosting run's validation curve; compare 30 experiments on one dashboard.</span><a href="https://wandb.ai/" target="_blank" rel="noopener">wandb.ai ↗</a></div>
+    <div class="tool"><b>Kaggle</b><span>Read winning solution write-ups; almost every tabular one is a boosting ensemble.</span><a href="https://www.kaggle.com/competitions" target="_blank" rel="noopener">kaggle.com/competitions ↗</a></div>
+    <div class="tool"><b>GitHub Copilot / Cursor</b><span>Autocomplete the early-stopping boilerplate; still read the parameter docs yourself.</span><a href="https://github.com/features/copilot" target="_blank" rel="noopener">github.com/features/copilot ↗</a></div>
+    <div class="tool"><b>Claude / ChatGPT</b><span>Paste your evals_result curve and ask "am I overfitting, and which knob first?" Then verify on the validation set.</span><a href="https://claude.ai/" target="_blank" rel="noopener">claude.ai ↗</a></div>
+  </div>
+</div></section>
+
+<!-- ============ 6. CAREER ============ -->
+<section class="s" id="career" data-nav="Career"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">06 · Career corner</div><h2>XGBoost is on the JD. Early stopping is in the interview.</h2></div><div class="time"><b>3</b>min</div></div>
+  <div class="career rv">
+    <span class="tag">In job descriptions</span>
+    <p>Roles: <b>Data Scientist (credit risk / fraud)</b>, <b>ML Engineer</b>, <b>Applied Scientist</b>, <b>Decision Scientist (fintech)</b>. Typical lines: "hands-on with XGBoost/LightGBM/CatBoost", "hyper-parameter tuning and cross-validation", "model explainability (SHAP)", "experience building credit scorecards / propensity models". Fintechs in Bengaluru, Mumbai and Pune (lending, BNPL, insurance) list these three library names verbatim.</p>
+    <div class="grid3" style="margin-top:18px">
+      <div class="card"><h4>Q: Bagging vs boosting?</h4><p>Bagging: independent, fully grown trees averaged in parallel; reduces variance. Boosting: dependent, shallow trees added sequentially to fix residuals; reduces bias. Boosting can overfit with too many rounds; bagging can't.</p></div>
+      <div class="card"><h4>Q: How do you choose n_estimators for XGBoost?</h4><p>I don't: I set a large upper bound, a low learning rate, hold out a validation set and use early_stopping_rounds, then read best_iteration. The learning rate and number of rounds trade off against each other.</p></div>
+      <div class="card"><h4>Q: Why does XGBoost beat a neural net on my 50k-row table?</h4><p>Trees handle heterogeneous, unscaled, skewed columns and sharp thresholds natively; NNs need heavy preprocessing and far more data. Grinsztajn et al. 2022 show this holds across 45 datasets.</p></div>
+    </div>
+    <div class="callout vi" style="margin-top:18px;margin-bottom:0"><b class="t">Job-hunt action for today (15 min)</b><p>Fork the notebook, add one Optuna cell (10 trials) or a LightGBM tab, and push it to GitHub as <span class="mono">churn-xgboost</span> with a README showing the RF → XGBoost AUC jump and a SHAP summary plot. Rewrite one resume bullet as: "Built a churn classifier (XGBoost, early stopping, SHAP) improving AUC from 0.83 to 0.85 over a Random Forest baseline on 7k customers." Numbers get interviews.</p></div>
+  </div>
+</div></section>
+
+<!-- ============ 7. QUIZ ============ -->
+<section class="s" id="quiz" data-nav="Quiz"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">07 · Quiz</div><h2>Three questions, thirty seconds each</h2></div><div class="time"><b>3</b>min</div></div>
+  <div class="quiz rv">
+    <div class="q" data-a="1"><p>In gradient boosting with squared-error loss, what is each new tree fitted to?</p><div class="opts"><button type="button">The original labels y</button><button type="button">The residuals y − F(x) of the current ensemble</button><button type="button">A bootstrap sample of y</button></div><div class="why">The negative gradient of ½(y − F)² is exactly y − F: the residual. Each tree learns what the ensemble so far still gets wrong.</div></div>
+    <div class="q" data-a="2"><p>You halve the learning rate from 0.1 to 0.05. To keep similar performance you should…</p><div class="opts"><button type="button">Halve the number of rounds</button><button type="button">Double max_depth</button><button type="button">Roughly double the number of rounds</button></div><div class="why">Smaller steps need more of them. That is why we pair a low η with a large n_estimators and let early stopping find the right count.</div></div>
+    <div class="q" data-a="0"><p>Training log-loss keeps falling but validation log-loss started rising at round 60. What do you do?</p><div class="opts"><button type="button">Keep the round-60 model (early stopping)</button><button type="button">Add more rounds until validation falls again</button><button type="button">Increase the learning rate</button></div><div class="why">The rise is overfitting. Train loss will always fall; only validation tells the truth. Early stopping with patience keeps the best round.</div></div>
+  </div>
+</div></section>
+
+<!-- ============ 8. HOMEWORK ============ -->
+<section class="s" id="homework" data-nav="Homework"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">08 · Homework</div><h2>Twenty to forty minutes, pick your level</h2></div><div class="time"><b>2</b>min</div></div>
+  <div class="hw rv">
+    <div class="card"><span class="lvl">Easy · 10 min</span><h4>The (η, rounds) grid</h4><p>For learning_rate in {0.3, 0.1, 0.03} run XGBoost with early stopping and record best_iteration and test AUC. Plot rounds vs η. One sentence: what pattern do you see?</p></div>
+    <div class="card"><span class="lvl">Medium · 20 min</span><h4>Beat the forest on tips</h4><p>Load seaborn's <span class="mono">tips</span> dataset and predict <span class="mono">tip</span> from the other columns. Compare RandomForestRegressor and XGBRegressor (RMSE on a held-out 20%). Then plot the XGBoost SHAP summary: does day or party size matter more?</p></div>
+    <div class="card"><span class="lvl">Stretch · job hunt</span><h4>Your daily commute, boosted</h4><p>Log 20+ days of commute (or delivery) times with hour, weekday, rain yes/no, mode. Fit XGBRegressor with early stopping, report MAE in minutes, and write a 3-line LinkedIn post: "I boosted my commute prediction to ±N minutes." Attach the residual plot.</p></div>
+  </div>
+  <p class="rv" style="margin-top:14px;color:var(--ink3);font-size:14px">Homework starter cells are at the bottom of the Colab notebook.</p>
+</div></section>
+
+<!-- ============ 9. NEXT ============ -->
+<section class="s" id="next" data-nav="Next"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">09 · Next</div><h2>Tomorrow: Support Vector Machines</h2></div><div class="time"><b>2</b>min</div></div>
+  <div class="fin rv">
+    <h2>Day 11 · Support Vector Machines</h2>
+    <p>Trees cut space into boxes. Tomorrow's model draws the widest possible street between two classes, and with the kernel trick it bends that street into curves without ever computing the curve. Margin, support vectors, C and gamma: the most-asked classical interview topic.</p>
+    <div class="card" style="max-width:560px;margin:26px auto 0;text-align:left"><span class="tag">Before next class</span>
+      <ul style="margin:0;padding-left:18px">
+        <li>Run today's notebook; note your XGBoost best_iteration and test AUC.</li>
+        <li>Do the Easy homework (the η vs rounds pattern). Bring the plot.</li>
+        <li>Watch the first 4 minutes of StatQuest "Support Vector Machines, Clearly Explained": <a href="https://www.youtube.com/watch?v=efR1C6CvhmE" target="_blank" rel="noopener">youtube.com ↗</a></li>
+      </ul></div>
+  </div>
+</div></section>
+
+<script>
+/* ===== Gradient boosting step-through ===== */
+(function(){
+const cv=document.getElementById('gbc');if(!cv)return;const ctx=cv.getContext('2d');
+const col=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let seed=99;function rnd(){seed=(seed*1664525+1013904223)%4294967296;return seed/4294967296;}
+function gauss(){const u=rnd()||1e-9,v=rnd();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+const truth=x=>0.5+0.32*Math.sin(2.2*Math.PI*x)*Math.exp(-0.6*x)+0.12*(x>0.72?1:0);
+function mk(n){const X=[],Y=[];for(let i=0;i<n;i++){const x=rnd();X.push(x);Y.push(truth(x)+0.07*gauss());}return{X,Y};}
+const tr=mk(60),te=mk(200);
+/* regression tree on 1-D residuals */
+function fit(idx,r,depth,maxd){const mean=idx.reduce((a,i)=>a+r[i],0)/idx.length;if(depth>=maxd||idx.length<4)return{leaf:true,v:mean};
+  const s=idx.slice().sort((a,b)=>tr.X[a]-tr.X[b]);let bs=Infinity,bt=null,bk=-1;let ls=0,lq=0;const tot=idx.reduce((a,i)=>a+r[i],0),totq=idx.reduce((a,i)=>a+r[i]*r[i],0);
+  for(let k=0;k<s.length-1;k++){ls+=r[s[k]];lq+=r[s[k]]*r[s[k]];const nl=k+1,nr=s.length-nl;if(nl<2||nr<2)continue;const sse=(lq-ls*ls/nl)+((totq-lq)-(tot-ls)*(tot-ls)/nr);if(sse<bs){bs=sse;bt=(tr.X[s[k]]+tr.X[s[k+1]])/2;bk=k;}}
+  if(bt===null)return{leaf:true,v:mean};const L=s.slice(0,bk+1),R=s.slice(bk+1);return{leaf:false,t:bt,l:fit(L,r,depth+1,maxd),r:fit(R,r,depth+1,maxd)};}
+function ev(n,x){while(!n.leaf)n=x<=n.t?n.l:n.r;return n.v;}
+let F0=0,trees=[],Ftr=[],Fte=[],hist=[],last=null,auto=null;
+const P=()=>({lr:+document.getElementById('gblr').value,d:+document.getElementById('gbdepth').value});
+function mse(F,Y){let s=0;for(let i=0;i<Y.length;i++)s+=(F[i]-Y[i])**2;return s/Y.length;}
+function reset(){F0=tr.Y.reduce((a,b)=>a+b,0)/tr.Y.length;trees=[];Ftr=tr.Y.map(()=>F0);Fte=te.Y.map(()=>F0);hist=[{m:0,tr:mse(Ftr,tr.Y),te:mse(Fte,te.Y)}];last=null;if(auto){clearInterval(auto);auto=null;document.getElementById('gbauto').textContent='Auto-play';}upd();}
+function round(){const p=P();const r=tr.Y.map((y,i)=>y-Ftr[i]);const h=fit(tr.X.map((_,i)=>i),r,0,p.d);
+  Ftr=Ftr.map((f,i)=>f+p.lr*ev(h,tr.X[i]));Fte=Fte.map((f,i)=>f+p.lr*ev(h,te.X[i]));trees.push({h,lr:p.lr});last={r,h};hist.push({m:trees.length,tr:mse(Ftr,tr.Y),te:mse(Fte,te.Y)});upd();}
+function predict(x){let f=F0;for(const t of trees)f+=t.lr*ev(t.h,x);return f;}
+const el=id=>document.getElementById(id);
+function upd(){const h=hist[hist.length-1];el('gb_m').textContent=trees.length;el('gb_tr').textContent=h.tr.toFixed(4);el('gb_te').textContent=h.te.toFixed(4);
+  let bi=0;hist.forEach((v,i)=>{if(v.te<hist[bi].te)bi=i;});el('gb_best').textContent=hist[bi].m+' ('+hist[bi].te.toFixed(4)+')';chartUpd();}
+function draw(){const W=cv.width,H=cv.height;ctx.clearRect(0,0,W,H);const A=col('--amber'),C=col('--cyan'),R=col('--rose'),I3=col('--ink3'),L2=col('--line2');
+  const px=50,pw=W-70;const p1={y:20,h:280},p2={y:330,h:170};
+  const sx=x=>px+x*pw;const sy1=y=>p1.y+p1.h-(y-0.0)/1.0*p1.h;const sy2=y=>p2.y+p2.h/2-y*(p2.h/0.9);
+  ctx.strokeStyle=L2;ctx.strokeRect(px,p1.y,pw,p1.h);ctx.strokeRect(px,p2.y,pw,p2.h);
+  ctx.font='11px JetBrains Mono, monospace';ctx.fillStyle=I3;ctx.fillText('y and F_m(x)',px+6,p1.y+14);ctx.fillText('residuals y − F_m(x)  and new tree h_m',px+6,p2.y+14);
+  /* truth */
+  ctx.strokeStyle=I3;ctx.globalAlpha=.35;ctx.setLineDash([3,4]);ctx.beginPath();for(let i=0;i<=200;i++){const x=i/200;const y=sy1(truth(x));i?ctx.lineTo(sx(x),y):ctx.moveTo(sx(x),y);}ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
+  /* ensemble */
+  ctx.strokeStyle=A;ctx.lineWidth=2.2;ctx.beginPath();for(let i=0;i<=300;i++){const x=i/300;const y=sy1(predict(x));i?ctx.lineTo(sx(x),y):ctx.moveTo(sx(x),y);}ctx.stroke();ctx.lineWidth=1;
+  /* points */
+  for(let i=0;i<tr.X.length;i++){ctx.fillStyle=C;ctx.beginPath();ctx.arc(sx(tr.X[i]),sy1(tr.Y[i]),3.2,0,7);ctx.fill();}
+  /* residual panel */
+  ctx.strokeStyle=L2;ctx.beginPath();ctx.moveTo(px,sy2(0));ctx.lineTo(px+pw,sy2(0));ctx.stroke();
+  const r=tr.Y.map((y,i)=>y-Ftr[i]);
+  for(let i=0;i<tr.X.length;i++){const y0=sy2(0),y1=sy2(r[i]);ctx.strokeStyle=C;ctx.globalAlpha=.35;ctx.beginPath();ctx.moveTo(sx(tr.X[i]),y0);ctx.lineTo(sx(tr.X[i]),y1);ctx.stroke();ctx.globalAlpha=1;ctx.fillStyle=C;ctx.beginPath();ctx.arc(sx(tr.X[i]),y1,2.6,0,7);ctx.fill();}
+  if(last){ctx.strokeStyle=R;ctx.lineWidth=2;ctx.beginPath();for(let i=0;i<=300;i++){const x=i/300;const y=sy2(ev(last.h,x));i?ctx.lineTo(sx(x),y):ctx.moveTo(sx(x),y);}ctx.stroke();ctx.lineWidth=1;
+    ctx.fillStyle=R;ctx.fillText('h_'+trees.length+' fitted to the residuals BEFORE this round (then added ×'+trees[trees.length-1].lr.toFixed(2)+')',px+6,p2.y+p2.h-8);}
+  ctx.fillStyle=A;ctx.fillText('F_'+trees.length+'(x)',px+pw-70,p1.y+14);
+  requestAnimationFrame(draw);}
+let chart=null;function chartUpd(){if(!window.Chart)return;const labels=hist.map(h=>h.m);const d1=hist.map(h=>+h.tr.toFixed(4)),d2=hist.map(h=>+h.te.toFixed(4));
+  if(!chart){chart=new Chart(document.getElementById('mseChart'),{type:'line',data:{labels,datasets:[{label:'train MSE',data:d1,borderColor:col('--cyan'),pointRadius:0,tension:.2},{label:'test MSE',data:d2,borderColor:col('--amber'),pointRadius:0,tension:.2}]},options:{animation:false,responsive:true,maintainAspectRatio:false,scales:{x:{title:{display:true,text:'boosting round'}},y:{title:{display:true,text:'MSE'},beginAtZero:true}},plugins:{legend:{position:'bottom'}}}});}
+  else{chart.data.labels=labels;chart.data.datasets[0].data=d1;chart.data.datasets[1].data=d2;chart.update();}}
+el('gb1').onclick=round;el('gb10').onclick=()=>{for(let i=0;i<10;i++)round();};el('gbreset').onclick=reset;
+el('gbauto').onclick=()=>{if(auto){clearInterval(auto);auto=null;el('gbauto').textContent='Auto-play';return;}el('gbauto').textContent='Stop';auto=setInterval(()=>{round();if(trees.length>=150){clearInterval(auto);auto=null;el('gbauto').textContent='Auto-play';}},220);};
+el('gblr').oninput=e=>el('gblrv').textContent=(+e.target.value).toFixed(2);el('gbdepth').oninput=e=>el('gbdepthv').textContent=e.target.value;
+reset();draw();
+})();
+/* ===== AdaBoost three-round SVG ===== */
+(function(){const g=document.getElementById('ada');if(!g)return;
+let seed=5;function rnd(){seed=(seed*1664525+1013904223)%4294967296;return seed/4294967296;}
+const pts=[];for(let i=0;i<24;i++){const x=rnd(),y=rnd();let c=(x+0.35*y>0.62)?1:-1;if(i%7===3)c=-c;pts.push({x,y,c});}
+let w=pts.map(()=>1/24);let out='';const panels=[{x:20},{x:320},{x:620}];const alphas=[];
+function stump(w){let best={err:1,f:'x',t:0.5,s:1};for(const f of ['x','y'])for(let k=1;k<10;k++){const t=k/10;for(const s of [1,-1]){let e=0;pts.forEach((p,i)=>{const pred=s*((p[f]>t)?1:-1);if(pred!==p.c)e+=w[i];});if(e<best.err)best={err:e,f,t,s};}}return best;}
+for(let r=0;r<3;r++){const st=stump(w);const eps=Math.max(st.err,1e-6);const a=0.5*Math.log((1-eps)/eps);alphas.push(a);const P=panels[r];const S=230;
+  out+='<rect x="'+P.x+'" y="20" width="'+S+'" height="200" rx="10" fill="var(--bg2)" stroke="var(--line2)"/>';
+  out+='<text x="'+(P.x+8)+'" y="36" fill="var(--ink3)">round '+(r+1)+' · ε='+eps.toFixed(2)+' · α='+a.toFixed(2)+'</text>';
+  if(st.f==='x'){const X=P.x+st.t*S;out+='<line x1="'+X+'" y1="42" x2="'+X+'" y2="216" stroke="var(--rose)" stroke-dasharray="5 4" stroke-width="1.6"/>';}else{const Y=220-st.t*176;out+='<line x1="'+(P.x+4)+'" y1="'+Y+'" x2="'+(P.x+S-4)+'" y2="'+Y+'" stroke="var(--rose)" stroke-dasharray="5 4" stroke-width="1.6"/>';}
+  const wrong=[];pts.forEach((p,i)=>{const pred=st.s*((p[st.f]>st.t)?1:-1);const bad=pred!==p.c;if(bad)wrong.push(i);const cx=P.x+p.x*S,cy=220-p.y*176;const rad=3+Math.sqrt(w[i]*24)*3.2;
+    out+='<circle cx="'+cx+'" cy="'+cy+'" r="'+rad.toFixed(1)+'" fill="'+(p.c>0?'var(--amber)':'var(--cyan)')+'" opacity=".9"/>';if(bad)out+='<circle cx="'+cx+'" cy="'+cy+'" r="'+(rad+4).toFixed(1)+'" fill="none" stroke="var(--rose)" stroke-width="1.5"/>';});
+  const nw=w.map((wi,i)=>wi*Math.exp(wrong.includes(i)?a:-a));const Z=nw.reduce((s,v)=>s+v,0);w=nw.map(v=>v/Z);}
+out+='<text x="20" y="242" fill="var(--ink2)">final: sign( '+alphas.map((a,i)=>a.toFixed(2)+'·h'+(i+1)).join(' + ')+' )  — larger circle = larger weight</text>';
+g.innerHTML=out;})();
+/* ===== Early-stopping chart (real XGBoost run on Telco churn) ===== */
+(function(){if(!window.Chart)return;const c=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const tr=[0.552,0.409,0.385,0.371,0.361,0.352,0.343,0.334,0.326,0.319,0.311,0.305,0.299,0.293,0.288,0.282,0.277,0.273,0.269,0.264,0.26,0.256,0.251,0.247,0.243,0.239,0.235,0.232,0.229,0.226];
+const va=[0.555,0.423,0.408,0.407,0.408,0.41,0.411,0.412,0.414,0.415,0.418,0.419,0.419,0.421,0.424,0.426,0.428,0.429,0.43,0.431,0.433,0.436,0.437,0.439,0.441,0.442,0.443,0.444,0.446,0.449];
+const labels=tr.map((_,i)=>i*20);
+new Chart(document.getElementById('esChart'),{type:'line',data:{labels,datasets:[{label:'train log-loss',data:tr,borderColor:c('--cyan'),pointRadius:0,tension:.3},{label:'validation log-loss',data:va,borderColor:c('--amber'),pointRadius:0,tension:.3}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{title:{display:true,text:'boosting round'}},y:{title:{display:true,text:'log-loss (lower is better)'}}},plugins:{legend:{position:'bottom'}}}});})();
+</script>
+
+<script>
+document.documentElement.classList.add('js');
+/* nav from sections */
+(function(){const nav=document.getElementById('nav');document.querySelectorAll('section.s[data-nav]').forEach((s,i)=>{const a=document.createElement('a');a.href='#'+s.id;a.innerHTML='<i>'+String(i+1).padStart(2,'0')+'</i>'+s.dataset.nav;nav.appendChild(a);});
+const links=[...nav.querySelectorAll('a')];const secs=[...document.querySelectorAll('section.s[data-nav]')];
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle('on',l.getAttribute('href')==='#'+e.target.id));}})},{rootMargin:'-40% 0px -55% 0px'});secs.forEach(s=>io.observe(s));
+window.addEventListener('scroll',()=>{const h=document.documentElement;document.getElementById('track').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';},{passive:true});})();
+/* reveal */
+(function(){const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:.1});document.querySelectorAll('.rv').forEach(el=>io.observe(el));})();
+/* class timer */
+(function(){let t=0,id=null;const el=document.getElementById('clk'),b=document.getElementById('clkbtn');b.onclick=()=>{if(id){clearInterval(id);id=null;b.textContent='Resume';return;}b.textContent='Pause';id=setInterval(()=>{t++;el.textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');if(t>=3600){clearInterval(id);el.textContent='60:00';b.textContent='Done';}},1000);};})();
+/* hero particles */
+(function(){const c=document.getElementById('bgc');if(!c)return;const x=c.getContext('2d');let w,h,P=[];function rs(){w=c.width=c.offsetWidth;h=c.height=c.offsetHeight;P=Array.from({length:Math.min(70,w/14)},()=>({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-.5)*.4,vy:(Math.random()-.5)*.4}));}rs();window.addEventListener('resize',rs);const col=()=>getComputedStyle(document.documentElement).getPropertyValue('--cyan').trim();function f(){x.clearRect(0,0,w,h);const cc=col();for(const p of P){p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>w)p.vx*=-1;if(p.y<0||p.y>h)p.vy*=-1;}for(let i=0;i<P.length;i++){for(let j=i+1;j<P.length;j++){const d=Math.hypot(P[i].x-P[j].x,P[i].y-P[j].y);if(d<120){x.strokeStyle=cc;x.globalAlpha=(1-d/120)*.35;x.beginPath();x.moveTo(P[i].x,P[i].y);x.lineTo(P[j].x,P[j].y);x.stroke();}}}x.globalAlpha=1;x.fillStyle=cc;for(const p of P){x.beginPath();x.arc(p.x,p.y,1.8,0,7);x.fill();}requestAnimationFrame(f);}if(!matchMedia('(prefers-reduced-motion:reduce)').matches)f();})();
+/* tabs */
+document.querySelectorAll('.tabs').forEach(t=>{const bs=t.querySelectorAll('.tb button'),ps=t.querySelectorAll('.tp');bs.forEach((b,i)=>b.onclick=()=>{bs.forEach(x=>x.classList.remove('on'));ps.forEach(x=>x.classList.remove('on'));b.classList.add('on');ps[i].classList.add('on');});});
+/* quiz: <div class="q" data-a="1"> with .opts buttons; index of correct answer in data-a */
+document.querySelectorAll('.q').forEach(q=>{const a=+q.dataset.a;q.querySelectorAll('.opts button').forEach((b,i)=>b.onclick=()=>{if(q.classList.contains('done'))return;q.classList.add('done');b.classList.add(i===a?'ok':'bad');if(i!==a)q.querySelectorAll('.opts button')[a].classList.add('ok');});});
+/* Chart.js theme defaults */
+if(window.Chart){const cs=getComputedStyle(document.documentElement);Chart.defaults.color=cs.getPropertyValue('--ink2').trim();Chart.defaults.borderColor=cs.getPropertyValue('--line').trim();Chart.defaults.font.family=cs.getPropertyValue('--mono').trim();}
+</script>
+</body></html>

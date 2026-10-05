@@ -1,0 +1,647 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Day 09: Wisdom of crowds: bagging & Random Forest</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0A0E1A; --bg2:#111729; --panel:#161D33; --line:#243052; --line2:#2E3B62;
+  --ink:#EDF0FA; --ink2:#AEB7D3; --ink3:#7B86A8;
+  --amber:#FFB43A; --cyan:#4FD3F2; --rose:#FF6B8A; --lime:#9BE56B; --violet:#9D8CFF;
+  --glow:rgba(79,211,242,.18);
+  --display:'Syne',ui-sans-serif,system-ui,sans-serif;
+  --body:'Manrope',ui-sans-serif,system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#F3F5FB; --bg2:#FFFFFF; --panel:#FFFFFF; --line:#D7DDEE; --line2:#C3CBE3;
+    --ink:#0F1730; --ink2:#3B4666; --ink3:#6B7694;
+    --amber:#C97A00; --cyan:#0A8FB3; --rose:#D93A5D; --lime:#4E9A1E; --violet:#6A55E8;
+    --glow:rgba(10,143,179,.14);
+  }
+}
+:root[data-theme="light"]{
+  --bg:#F3F5FB; --bg2:#FFFFFF; --panel:#FFFFFF; --line:#D7DDEE; --line2:#C3CBE3;
+  --ink:#0F1730; --ink2:#3B4666; --ink3:#6B7694;
+  --amber:#C97A00; --cyan:#0A8FB3; --rose:#D93A5D; --lime:#4E9A1E; --violet:#6A55E8;
+  --glow:rgba(10,143,179,.14);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;padding-inline:clamp(16px,4vw,48px);padding-block:0 80px}
+a{color:var(--cyan)}
+h1,h2,h3,h4{font-family:var(--display);text-wrap:balance;line-height:1.08;margin:0}
+h2{font-size:clamp(30px,4.2vw,50px);font-weight:800;letter-spacing:-.01em}
+h3{font-size:clamp(20px,2.2vw,26px);font-weight:700}
+h4{font-size:17px;font-weight:700}
+p{max-width:68ch;margin:0}
+p+p{margin-top:12px}
+ul,ol{max-width:70ch}
+li{margin-bottom:6px}
+.wrap{max-width:1180px;margin:0 auto}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)}
+.eyebrow b{color:var(--amber);font-weight:600}
+code,.mono{font-family:var(--mono)}
+p code,li code,td code{font-size:.9em;background:var(--bg2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--cyan)}
+
+/* progress bar + nav */
+#bar{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);margin-inline:calc(-1*clamp(16px,4vw,48px));padding-inline:clamp(16px,4vw,48px)}
+#bar .wrap{display:flex;align-items:center;gap:14px;height:56px;overflow-x:auto;scrollbar-width:none}
+#bar .wrap::-webkit-scrollbar{display:none}
+#bar .brand{font-family:var(--display);font-weight:800;font-size:15px;white-space:nowrap}
+#bar .brand span{color:var(--amber)}
+#bar nav{display:flex;gap:4px;flex:1}
+#bar nav a{font-family:var(--mono);font-size:11.5px;text-decoration:none;color:var(--ink3);padding:6px 10px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+#bar nav a.on{color:var(--ink);border-color:var(--line2);background:var(--panel)}
+#bar nav a i{font-style:normal;color:var(--amber);margin-right:5px}
+#bar .clock{font-family:var(--mono);font-size:12px;color:var(--ink2);white-space:nowrap;display:flex;gap:8px;align-items:center}
+#bar .clock button{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line2);border-radius:6px;padding:4px 9px;cursor:pointer}
+#track{position:absolute;left:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--cyan),var(--amber));width:0}
+
+/* sections */
+section.s{padding-block:88px 40px;border-top:1px solid var(--line);position:relative}
+.head{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end;margin-bottom:38px}
+.time{font-family:var(--mono);font-size:12px;color:var(--ink3);text-align:right;line-height:1.5}
+.time b{display:block;font-size:22px;color:var(--amber);font-weight:600}
+.lead{font-size:clamp(18px,1.6vw,21px);color:var(--ink2);max-width:62ch;margin-top:16px}
+
+/* hero */
+#hero{padding-block:70px 60px;position:relative;overflow:hidden;margin-inline:calc(-1*clamp(16px,4vw,48px));padding-inline:clamp(16px,4vw,48px)}
+#hero canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.55;pointer-events:none}
+#hero .wrap{position:relative}
+#hero h1{font-size:clamp(40px,7vw,96px);font-weight:800;letter-spacing:-.03em;line-height:.98}
+#hero h1 em{font-style:normal;color:var(--amber)}
+#hero h1 .c{color:var(--cyan)}
+.hero-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:40px;align-items:end;margin-top:30px}
+.agenda{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
+.agenda h3{font-size:14px;font-family:var(--mono);font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-bottom:12px}
+.agenda ol{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.agenda li{display:grid;grid-template-columns:52px 1fr;gap:12px;font-size:15px;align-items:baseline;margin:0}
+.agenda li span{font-family:var(--mono);font-size:12px;color:var(--amber)}
+.agenda li a{color:var(--ink);text-decoration:none}
+.agenda li a:hover{color:var(--cyan)}
+
+/* generic blocks */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;transition:transform .25s,border-color .25s}
+.card:hover{border-color:var(--cyan)}
+.card h3{margin-bottom:8px}
+.card h4{margin-bottom:6px}
+.card p{font-size:15.5px;color:var(--ink2)}
+.card.amber{border-color:var(--amber)} .card.violet{border-color:var(--violet)} .card.lime{border-color:var(--lime)} .card.rose{border-color:var(--rose)}
+.tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid var(--line2);color:var(--ink3);margin-bottom:12px}
+.pill{display:inline-flex;gap:6px;align-items:center;font-family:var(--mono);font-size:12px;padding:5px 11px;border-radius:999px;background:var(--bg2);border:1px solid var(--line);color:var(--ink2);text-decoration:none;margin:4px 6px 4px 0}
+.pill:hover{border-color:var(--cyan);color:var(--ink)}
+.callout{border-left:4px solid var(--amber);background:var(--panel);border-radius:0 14px 14px 0;padding:16px 20px;margin-block:18px}
+.callout.cy{border-left-color:var(--cyan)} .callout.ro{border-left-color:var(--rose)} .callout.li{border-left-color:var(--lime)} .callout.vi{border-left-color:var(--violet)}
+.callout b.t{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);display:block;margin-bottom:6px}
+.callout.cy b.t{color:var(--cyan)} .callout.ro b.t{color:var(--rose)} .callout.li b.t{color:var(--lime)} .callout.vi b.t{color:var(--violet)}
+.callout p{font-size:15.5px;color:var(--ink2)}
+
+/* analogy strip */
+.analogy{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start;background:linear-gradient(135deg,color-mix(in srgb,var(--amber) 10%,var(--panel)),var(--panel));border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-block:22px}
+.analogy .em{font-size:38px;line-height:1}
+.analogy h4{margin-bottom:4px}
+.analogy p{font-size:15.5px;color:var(--ink2)}
+
+/* code */
+pre{background:var(--bg2);border:1px solid var(--line2);border-radius:12px;padding:16px 18px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.55;margin:0;color:var(--ink)}
+pre .c{color:var(--ink3)} pre .k{color:var(--violet)} pre .s{color:var(--lime)} pre .n{color:var(--amber)} pre .f{color:var(--cyan)}
+.codewrap{position:relative;margin-block:14px}
+.codewrap .lbl{position:absolute;top:8px;right:12px;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+
+/* tabs */
+.tabs{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel)}
+.tabs .tb{display:flex;gap:2px;border-bottom:1px solid var(--line);background:var(--bg2);overflow-x:auto}
+.tabs .tb button{font:600 13px var(--body);background:transparent;color:var(--ink3);border:0;padding:11px 16px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.tabs .tb button.on{color:var(--ink);border-bottom-color:var(--amber)}
+.tabs .tp{display:none;padding:18px}
+.tabs .tp.on{display:block}
+
+/* figures / charts */
+figure{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;overflow:hidden}
+figure svg{width:100%;height:auto;display:block}
+figcaption{font-family:var(--mono);font-size:11.5px;color:var(--ink3);margin-top:8px}
+.chart{position:relative;height:300px}
+.chart canvas{width:100%!important;height:100%!important}
+canvas.demo{width:100%;height:auto;background:var(--bg2);border:1px solid var(--line2);border-radius:14px;display:block;touch-action:none}
+.ctl{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.ctl label{font-family:var(--mono);font-size:12px;color:var(--ink2);display:flex;gap:8px;align-items:center}
+.ctl input[type=range]{accent-color:var(--amber)}
+.btn{font:600 14px var(--body);color:var(--bg);background:var(--amber);border:0;border-radius:9px;padding:10px 16px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line2)}
+.btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.stats{font-family:var(--mono);font-size:13px;color:var(--ink2);display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin-top:14px;font-variant-numeric:tabular-nums}
+.stats b{color:var(--cyan);font-weight:600}
+
+/* steps */
+.steps{display:grid;gap:10px;counter-reset:st}
+.steps>div{display:grid;grid-template-columns:32px 1fr;gap:12px;align-items:start;font-size:15px;color:var(--ink2)}
+.steps>div::before{counter-increment:st;content:counter(st);font-family:var(--mono);font-size:12px;color:var(--amber);border:1px solid var(--line2);border-radius:50%;width:26px;height:26px;display:grid;place-items:center}
+.steps b{color:var(--ink)}
+
+/* table */
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+th,td{padding:10px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);background:var(--bg2)}
+tr:last-child td{border-bottom:0}
+
+/* tools + career */
+.tools{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.tool{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:6px}
+.tool b{font-family:var(--display);font-size:16px}
+.tool span{font-size:14px;color:var(--ink2)}
+.tool a{font-family:var(--mono);font-size:12px;text-decoration:none}
+.career{border:1px solid var(--violet);background:linear-gradient(135deg,color-mix(in srgb,var(--violet) 12%,var(--panel)),var(--panel));border-radius:14px;padding:22px}
+.career .tag{border-color:var(--violet);color:var(--violet)}
+
+/* homework */
+.hw{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.hw .card{border-color:var(--line2)}
+.hw .lvl{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--lime);margin-bottom:6px;display:block}
+
+/* quiz */
+.quiz{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.q{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.q p{font-size:15px;margin-bottom:12px;color:var(--ink)}
+.q .opts{display:flex;gap:8px;flex-wrap:wrap}
+.q button{font:600 13px var(--body);padding:7px 12px;border-radius:8px;border:1px solid var(--line2);background:var(--bg2);color:var(--ink);cursor:pointer}
+.q button.ok{border-color:var(--lime);color:var(--lime)} .q button.bad{border-color:var(--rose);color:var(--rose)}
+.q .why{font-size:13.5px;color:var(--ink2);margin-top:10px;display:none}
+.q.done .why{display:block}
+
+/* details */
+details{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:0 18px;margin-block:10px}
+summary{cursor:pointer;padding:14px 0;font-family:var(--display);font-weight:700;font-size:16px}
+details[open] summary{border-bottom:1px solid var(--line);margin-bottom:12px}
+details>*:not(summary){padding-bottom:14px}
+
+/* footer */
+.fin{text-align:center;padding-block:60px 20px}
+.fin h2{font-size:clamp(28px,4vw,44px)}
+.fin p{margin:14px auto 0}
+
+/* reveal */
+.rv{opacity:1;transform:none;transition:opacity .6s ease,transform .6s ease}
+.js .rv:not(.in){opacity:.001;transform:translateY(18px)}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+@keyframes dash{to{stroke-dashoffset:0}}
+.flowline{stroke-dasharray:6 6;animation:flow 1.2s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-24}}
+@media (prefers-reduced-motion:reduce){.js .rv:not(.in){opacity:1;transform:none}.rv{transition:none}*{animation:none!important}}
+
+@media (max-width:980px){
+  .grid4,.tools,.hw{grid-template-columns:1fr 1fr}
+  .grid3,.quiz{grid-template-columns:1fr 1fr}
+}
+@media (max-width:720px){
+  .hero-grid,.grid2,.grid3,.grid4,.tools,.hw,.quiz,.analogy{grid-template-columns:1fr}
+  .head{grid-template-columns:1fr}.time{text-align:left}
+}
+</style></head><body>
+
+<div id="bar"><div class="wrap">
+  <div class="brand">AI <span>&amp;</span> ML Engineering · Day 09</div>
+  <nav id="nav"><!-- filled by JS from section[data-nav] --></nav>
+  <div class="clock"><span id="clk">00:00</span><button id="clkbtn" type="button">Start 60 min</button></div>
+</div><div id="track"></div></div>
+
+<!-- ============ HERO ============ -->
+<header id="hero"><canvas id="bgc"></canvas><div class="wrap">
+  <div class="eyebrow"><b>Day 09</b> · Phase 2 · Supervised ML · 60 minutes</div>
+  <h1 style="margin-top:18px">Wisdom of <em>crowds</em>:<br>bagging &amp; the <span class="c">Random Forest</span></h1>
+  <div class="hero-grid">
+    <p class="lead">Yesterday one decision tree memorised the training data and fell apart on new customers. Today you will grow hundreds of deliberately imperfect trees, make them vote, and watch the errors cancel out. By the end you will know why Random Forest is the first model most working data scientists reach for, how to read its out-of-bag score without a validation set, and which of its two "feature importance" numbers to trust.</p>
+    <div class="agenda"><h3>Today's route</h3><ol>
+      <li><span>00–05</span><a href="#hook">Hook: the ox, the crowd and the cricket poll</a></li>
+      <li><span>05–23</span><a href="#concept">Concept: bootstrap → bag → vote</a></li>
+      <li><span>23–33</span><a href="#deeper">Deeper: why variance falls, OOB, importance</a></li>
+      <li><span>33–45</span><a href="#code">Code: tree vs forest on churn data</a></li>
+      <li><span>45–50</span><a href="#realworld">Real world &amp; tools</a></li>
+      <li><span>50–53</span><a href="#career">Career corner</a></li>
+      <li><span>53–56</span><a href="#quiz">Quiz</a></li>
+      <li><span>56–58</span><a href="#homework">Homework</a></li>
+      <li><span>58–60</span><a href="#next">Next: boosting</a></li>
+    </ol></div>
+  </div>
+</div></header>
+
+<!-- ============ 1. HOOK ============ -->
+<section class="s" id="hook" data-nav="Hook"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">01 · Hook</div><h2>787 wrong guesses that were exactly right</h2><p class="lead">In 1906 the statistician Francis Galton visited a county fair in England where 787 people paid to guess the weight of an ox. Butchers, farmers, clerks, children. Individually they were all wrong. The average of their guesses was 1,197 pounds. The ox weighed 1,198.</p></div><div class="time"><b>5</b>min</div></div>
+  <div class="grid2 rv">
+    <div class="card"><span class="tag">Ask the class</span><h3>Why did the average beat the experts?</h3><p>Each person's error was partly random: one over-estimated because the ox looked tall, another under-estimated because it was standing far away. Random errors in different directions <b>cancel</b> when you average. The bias that everyone shares (say, everyone ignores that the ox has not eaten) does not cancel. Hold this sentence: <b>averaging kills variance, not bias.</b> Today's whole lesson sits on it.</p>
+    <p style="margin-top:12px">You already trust crowds. IPL fantasy leagues aggregate lakhs of team picks. Google Maps' "23 minutes" is an average over thousands of drivers' phones. Zomato's 4.2 stars is a vote. A Random Forest is the same trick applied to decision trees.</p></div>
+    <div class="card amber"><span class="tag">Projector demo · 2 min</span><h3>Open the interactive Random Forest explainer</h3><p>Open <a href="https://mlu-explain.github.io/random-forest/" target="_blank" rel="noopener">MLU-Explain: Random Forest ↗</a> (Amazon's Machine Learning University). Scroll to the section where individual trees draw jagged decision boundaries and the forest's boundary smooths them out. Ask students: "which single tree would you deploy?" None of them. Then the forest. That reaction is the whole day.</p>
+    <p style="margin-top:12px">Backup if the network fails: the live simulator further down this page does the same thing offline.</p></div>
+  </div>
+  <div class="callout ro rv"><b class="t">Yesterday's problem, restated</b><p>Day 08's unpruned tree on the Telco churn data scored <b>99.8% on training</b> and <b>74.2% on test</b>. Its ROC-AUC was 0.66, barely better than sorting customers at random. A tree is a low-bias, <b>high-variance</b> learner: change 5% of the rows and it grows a completely different shape. Today we turn that weakness into the raw material of a stronger model.</p></div>
+</div></section>
+
+<!-- ============ 2. CONCEPT ============ -->
+<section class="s" id="concept" data-nav="Concept"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">02 · Concept</div><h2>Bootstrap, bag, vote</h2><p class="lead">Three moves. Resample the data with replacement (bootstrap). Train one tree per resample (bagging = <b>b</b>ootstrap <b>agg</b>regating). Let them vote. Random Forest adds a fourth move: at every split, each tree may only look at a random handful of features.</p></div><div class="time"><b>18</b>min</div></div>
+
+  <div class="analogy rv"><div class="em">🫖</div><div><h4>The chai-tasting panel</h4><p>A tea estate wants to grade 150 chai samples. One expert taster (a single deep tree) is precise but moody: give her the same 150 cups tomorrow in a different order and her grades shift. So the estate hires 100 tasters. Each taster gets a <b>random tray of 150 cups drawn with replacement</b> from the same 150 (some cups appear twice, about a third never appear on that tray). And each taster is only allowed to judge a <b>random subset of qualities</b> (aroma, colour, strength) per sip, so they cannot all copy the loudest signal. Final grade: majority vote. No single taster is great. The panel is excellent and, crucially, stable.</p></div></div>
+
+  <h3 class="rv" style="margin-top:30px">Watch a forest grow, one tree at a time</h3>
+  <p class="rv" style="margin-top:8px">Below is a two-class dataset with a wavy boundary and some label noise (the real world). Press <b>Grow 1 tree</b>: the training points that land in this tree's bootstrap sample light up (bigger ring = drawn more than once, faded = left out). The tree is fitted on that sample only and its decision region appears as a small tile on the right. The big panel shows the <b>majority vote of all trees grown so far</b>. Keep pressing and watch the ensemble boundary calm down while the individual tiles stay jagged.</p>
+  <figure class="rv" style="margin-top:14px">
+    <canvas id="rfc" class="demo" width="900" height="470" aria-label="Random forest bootstrap and voting simulator"></canvas>
+    <div class="ctl">
+      <button class="btn" id="rf1" type="button">Grow 1 tree</button>
+      <button class="btn ghost" id="rf10" type="button">Grow 10</button>
+      <button class="btn ghost" id="rf50" type="button">Grow 50</button>
+      <button class="btn ghost" id="rfreset" type="button">Reset</button>
+      <label>max_depth <input type="range" id="rfdepth" min="1" max="5" value="3"> <span id="rfdepthv">3</span></label>
+      <label><input type="checkbox" id="rfboot" checked> bootstrap</label>
+      <label><input type="checkbox" id="rffeat" checked> random feature subset (max_features=1)</label>
+    </div>
+    <div class="stats">
+      <div>trees grown: <b id="st_n">0</b></div>
+      <div>last tree test accuracy: <b id="st_last">–</b></div>
+      <div>mean single-tree accuracy: <b id="st_mean">–</b></div>
+      <div>forest (vote) test accuracy: <b id="st_ens">–</b></div>
+      <div>out-of-bag (OOB) accuracy: <b id="st_oob">–</b></div>
+      <div>points never sampled by last tree: <b id="st_oobn">–</b></div>
+    </div>
+    <figcaption>Left: 150 training points (amber = class 1, cyan = class 0) over the forest's current majority-vote region; darker shade = more agreement. Right: the last 12 individual trees. Try: untick "bootstrap" and "random feature subset" and grow 50: every tile is identical and the forest gains nothing. Then tick both again.</figcaption>
+  </figure>
+
+  <div class="grid2 rv" style="margin-top:26px">
+    <figure>
+      <div class="chart"><canvas id="accChart"></canvas></div>
+      <figcaption>Live from the simulator: test accuracy of the vote as trees are added (solid) vs the average accuracy of one tree (dashed). The curve climbs fast, then plateaus. More trees never hurt accuracy; they only cost time.</figcaption>
+    </figure>
+    <div>
+      <div class="callout"><b class="t">Key idea</b><p>Every tree sees a <b>different</b> version of the data and a <b>different</b> subset of features, so every tree makes <b>different</b> mistakes. Mistakes that are different cancel in a vote. Mistakes that are shared do not. Bagging manufactures diversity on purpose.</p></div>
+      <div class="callout cy"><b class="t">Common confusion</b><p>"More trees will overfit." No. Adding trees to a Random Forest cannot increase variance; the vote converges to a limit as <span class="mono">n_estimators → ∞</span>. What overfits is each tree's <b>depth</b>, and even that is mostly tamed by the averaging. The usual rule at work: 200–500 trees, then stop because training time grows linearly.</p></div>
+      <div class="callout li"><b class="t">Why the feature subset matters</b><p>If one feature is very strong (like <span class="mono">tenure</span> in churn data), every bootstrap tree would split on it first and all trees would look alike. Correlated trees do not cancel each other's errors. <span class="mono">max_features='sqrt'</span> forces each split to pick from a random handful, so different trees discover different, weaker signals. That is the difference between plain bagging and a Random Forest.</p></div>
+    </div>
+  </div>
+
+  <h3 class="rv" style="margin-top:34px">Bootstrap in 20 cups: who gets left out?</h3>
+  <p class="rv" style="margin-top:8px">Draw 20 cups <b>with replacement</b> from a tray of 20. Some cups get picked twice or thrice; some not at all. The ones never picked are that tree's <b>out-of-bag</b> (OOB) cups, free test data the tree never saw. Press the button a few times: the left-out share hovers around <b>37%</b>, because the chance one cup is never picked in 20 draws is (1 − 1/20)<sup>20</sup> ≈ e<sup>−1</sup> ≈ 0.368.</p>
+  <figure class="rv" style="margin-top:12px">
+    <svg id="bootsvg" viewBox="0 0 900 120" role="img" aria-label="Bootstrap sampling of 20 cups"></svg>
+    <div class="ctl"><button class="btn" id="bootbtn" type="button">Draw a bootstrap sample</button><span class="mono" style="font-size:13px;color:var(--ink2)">left out this draw: <b id="bootout" style="color:var(--cyan)">–</b> · running average left out: <b id="bootavg" style="color:var(--amber)">–</b></span></div>
+    <figcaption>Number inside each cup = how many times it was drawn. Grey ring = not drawn (out-of-bag). Across many draws the average settles near 36.8%, so each tree is trained on roughly 63.2% of the unique rows.</figcaption>
+  </figure>
+
+  <h3 class="rv" style="margin-top:34px">Two architectures: parallel vs sequential</h3>
+  <figure class="rv" style="margin-top:12px">
+    <svg viewBox="0 0 900 300" role="img" aria-label="Bagging trains trees in parallel and votes; boosting trains sequentially, each fixing the previous errors">
+      <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--ink3)"/></marker></defs>
+      <text x="20" y="28" font-family="var(--mono)" font-size="12" fill="var(--amber)" letter-spacing="2">BAGGING (TODAY) · PARALLEL · REDUCES VARIANCE</text>
+      <rect x="20" y="120" width="90" height="52" rx="10" fill="var(--bg2)" stroke="var(--line2)"/><text x="65" y="141" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--ink2)">training</text><text x="65" y="158" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--ink2)">data D</text>
+      <g stroke="var(--cyan)" stroke-width="1.6" fill="none" marker-end="url(#arr)"><path class="flowline" d="M110 146 C150 146 150 62 190 62"/><path class="flowline" d="M110 146 C150 146 150 118 190 118"/><path class="flowline" d="M110 146 C150 146 150 174 190 174"/><path class="flowline" d="M110 146 C150 146 150 230 190 230"/></g>
+      <g font-family="var(--mono)" font-size="11" fill="var(--ink2)"><rect x="192" y="44" width="66" height="36" rx="8" fill="var(--bg2)" stroke="var(--line2)"/><text x="225" y="66" text-anchor="middle">D₁*</text><rect x="192" y="100" width="66" height="36" rx="8" fill="var(--bg2)" stroke="var(--line2)"/><text x="225" y="122" text-anchor="middle">D₂*</text><rect x="192" y="156" width="66" height="36" rx="8" fill="var(--bg2)" stroke="var(--line2)"/><text x="225" y="178" text-anchor="middle">D₃*</text><rect x="192" y="212" width="66" height="36" rx="8" fill="var(--bg2)" stroke="var(--line2)"/><text x="225" y="234" text-anchor="middle">D_B*</text></g>
+      <g stroke="var(--ink3)" stroke-width="1.4" fill="none" marker-end="url(#arr)"><path d="M258 62H300"/><path d="M258 118H300"/><path d="M258 174H300"/><path d="M258 230H300"/></g>
+      <g font-family="var(--mono)" font-size="11" fill="var(--ink)"><rect x="302" y="44" width="70" height="36" rx="8" fill="color-mix(in srgb,var(--lime) 18%,var(--panel))" stroke="var(--lime)"/><text x="337" y="66" text-anchor="middle">tree 1</text><rect x="302" y="100" width="70" height="36" rx="8" fill="color-mix(in srgb,var(--lime) 18%,var(--panel))" stroke="var(--lime)"/><text x="337" y="122" text-anchor="middle">tree 2</text><rect x="302" y="156" width="70" height="36" rx="8" fill="color-mix(in srgb,var(--lime) 18%,var(--panel))" stroke="var(--lime)"/><text x="337" y="178" text-anchor="middle">tree 3</text><rect x="302" y="212" width="70" height="36" rx="8" fill="color-mix(in srgb,var(--lime) 18%,var(--panel))" stroke="var(--lime)"/><text x="337" y="234" text-anchor="middle">tree B</text></g>
+      <text x="337" y="205" text-anchor="middle" font-family="var(--mono)" font-size="14" fill="var(--ink3)">⋮</text>
+      <g stroke="var(--amber)" stroke-width="1.6" fill="none" marker-end="url(#arr)"><path class="flowline" d="M372 62 C410 62 410 146 450 146"/><path class="flowline" d="M372 118 C410 118 410 146 450 146"/><path class="flowline" d="M372 174 C410 174 410 146 450 146"/><path class="flowline" d="M372 230 C410 230 410 146 450 146"/></g>
+      <rect x="452" y="124" width="96" height="44" rx="10" fill="color-mix(in srgb,var(--amber) 20%,var(--panel))" stroke="var(--amber)"/><text x="500" y="143" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--ink)">majority vote</text><text x="500" y="159" text-anchor="middle" font-family="var(--mono)" font-size="11" fill="var(--ink)">/ average</text>
+      <text x="20" y="286" font-family="var(--mono)" font-size="11" fill="var(--ink3)">all trees are independent → trains in parallel on all CPU cores (n_jobs=-1)</text>
+      <line x1="590" y1="20" x2="590" y2="290" stroke="var(--line)" stroke-dasharray="4 4"/>
+      <text x="612" y="28" font-family="var(--mono)" font-size="12" fill="var(--rose)" letter-spacing="2">BOOSTING (TOMORROW)</text>
+      <text x="612" y="46" font-family="var(--mono)" font-size="11" fill="var(--ink3)">SEQUENTIAL · REDUCES BIAS</text>
+      <g font-family="var(--mono)" font-size="11" fill="var(--ink)"><rect x="612" y="70" width="80" height="34" rx="8" fill="color-mix(in srgb,var(--rose) 16%,var(--panel))" stroke="var(--rose)"/><text x="652" y="91" text-anchor="middle">weak 1</text><rect x="612" y="130" width="80" height="34" rx="8" fill="color-mix(in srgb,var(--rose) 16%,var(--panel))" stroke="var(--rose)"/><text x="652" y="151" text-anchor="middle">weak 2</text><rect x="612" y="190" width="80" height="34" rx="8" fill="color-mix(in srgb,var(--rose) 16%,var(--panel))" stroke="var(--rose)"/><text x="652" y="211" text-anchor="middle">weak 3</text></g>
+      <g stroke="var(--rose)" stroke-width="1.6" fill="none" marker-end="url(#arr)"><path class="flowline" d="M652 104V128"/><path class="flowline" d="M652 164V188"/></g>
+      <g font-family="var(--mono)" font-size="10.5" fill="var(--ink2)"><text x="705" y="121">fix errors of weak 1</text><text x="705" y="181">fix errors of weak 2</text></g>
+      <text x="612" y="256" font-family="var(--mono)" font-size="11" fill="var(--ink3)">each learner depends on the last → sequential, weighted sum</text>
+      <text x="612" y="274" font-family="var(--mono)" font-size="11" fill="var(--ink3)">(Day 10: AdaBoost, gradient boosting, XGBoost)</text>
+    </svg>
+    <figcaption>Bagging: many strong, overfit trees trained independently on bootstrap samples, then averaged. Boosting: many weak learners trained in sequence, each on the previous one's mistakes. Same word "ensemble", opposite philosophy.</figcaption>
+  </figure>
+
+  <div class="callout vi rv"><b class="t">Interview answer</b><p>"Random Forest is bagging of decision trees plus random feature selection at each split. Bootstrapping and feature subsampling de-correlate the trees, so averaging their predictions reduces variance without increasing bias much. It gives a free validation estimate through the out-of-bag score and needs very little tuning, which is why it is a strong default for tabular data."</p></div>
+</div></section>
+
+<!-- ============ 3. DEEPER ============ -->
+<section class="s" id="deeper" data-nav="Deeper"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">03 · Deeper</div><h2>Why averaging works, in one formula</h2><p class="lead">The mechanics are short. Three formulas, each decoded in plain words, then the two practical outputs you will actually use at work: OOB score and feature importance.</p></div><div class="time"><b>10</b>min</div></div>
+
+  <h3 class="rv">1. Variance of an average of correlated trees</h3>
+  <p class="rv" style="margin-top:8px">Suppose each tree's prediction has variance <span class="mono">σ²</span> and any two trees have correlation <span class="mono">ρ</span>. The variance of the average of <span class="mono">B</span> trees is</p>
+  <div class="callout rv" style="margin-block:12px"><p class="mono" style="font-size:17px;color:var(--ink)">Var(average) = ρ·σ² + (1 − ρ)·σ² / B</p></div>
+  <p class="rv">Decode it: <span class="mono">σ²</span> is how wobbly one tree is, <span class="mono">B</span> is the number of trees, <span class="mono">ρ</span> is how similar the trees are to each other. As <span class="mono">B</span> grows the second term vanishes, but the first term <span class="mono">ρ·σ²</span> stays. <b>If the trees are identical (ρ = 1), a million of them are no better than one.</b> Bootstrapping lowers ρ a bit; random feature subsets lower it a lot. That is the entire design rationale of Random Forest, and it is why the simulator gains nothing when you switch both tricks off.</p>
+
+  <h3 class="rv" style="margin-top:28px">2. Out-of-bag: a validation set you did not have to hold out</h3>
+  <p class="rv" style="margin-top:8px">A bootstrap sample of <span class="mono">n</span> rows drawn <span class="mono">n</span> times with replacement misses each specific row with probability</p>
+  <div class="callout cy rv" style="margin-block:12px"><p class="mono" style="font-size:17px;color:var(--ink)">P(row left out) = (1 − 1/n)<sup>n</sup> → 1/e ≈ 0.368</p></div>
+  <p class="rv">So every tree has ~37% of rows it never saw. To score row <span class="mono">i</span> out-of-bag, take only the trees that did <b>not</b> train on <span class="mono">i</span>, let them vote, and compare with the true label. Do this for all rows and you get <span class="mono">oob_score_</span>: an honest generalisation estimate for free, close to what K-fold cross-validation would give. On Telco churn our 300-tree forest reported OOB accuracy <b>78.9%</b> and the held-out test accuracy was <b>79.0%</b>. It is not a replacement for a final test set (you still tune hyper-parameters against it, which leaks a little), but it makes quick experiments cheap.</p>
+
+  <h3 class="rv" style="margin-top:28px">3. Feature importance: two numbers, one of them lies</h3>
+  <div class="grid2 rv" style="margin-top:10px">
+    <div>
+      <p><b>Mean decrease in impurity</b> (<span class="mono">rf.feature_importances_</span>) sums, over all trees, how much Gini impurity each feature's splits removed, weighted by how many rows reached the split, normalised to 1. It is computed on <b>training</b> data and it is <b>biased toward features with many possible split points</b>: a continuous column or a high-cardinality ID can look important because it offers thousands of places to cut, not because it predicts anything.</p>
+      <p style="margin-top:10px"><b>Permutation importance</b> (<span class="mono">sklearn.inspection.permutation_importance</span>) shuffles one column of the <b>test</b> set, re-scores the trained model, and reports how much the score fell. If shuffling <span class="mono">gender</span> changes nothing, gender was not being used, whatever the impurity number said.</p>
+    </div>
+    <figure>
+      <div class="chart"><canvas id="impChart"></canvas></div>
+      <figcaption>Telco churn, 300-tree forest, real run. Impurity importance ranks <span class="mono">gender_Male</span> 7th; permutation importance on the test set says it contributes ~0. Continuous columns (<span class="mono">TotalCharges</span>, <span class="mono">MonthlyCharges</span>) are inflated by impurity importance for the same reason.</figcaption>
+    </figure>
+  </div>
+
+  <div class="tbl rv" style="margin-top:26px"><table>
+    <tr><th>Question</th><th>Single decision tree</th><th>Bagging (BaggingClassifier)</th><th>Random Forest</th><th>Extra-Trees</th></tr>
+    <tr><td>Rows per tree</td><td>all</td><td>bootstrap sample</td><td>bootstrap sample</td><td>all (by default)</td></tr>
+    <tr><td>Features per split</td><td>all</td><td>all</td><td>random subset (<span class="mono">sqrt</span> for classification)</td><td>random subset</td></tr>
+    <tr><td>Split threshold</td><td>best</td><td>best</td><td>best within subset</td><td>random, then best of random</td></tr>
+    <tr><td>Bias / variance</td><td>low / very high</td><td>low / lower</td><td>low / much lower</td><td>slightly higher / lowest</td></tr>
+    <tr><td>Telco test accuracy · AUC</td><td>74.2% · 0.66</td><td>78.7% · 0.82</td><td>79.0% · 0.83</td><td>77.6% · 0.80</td></tr>
+    <tr><td>Interpretable?</td><td>fully (plot it)</td><td>no</td><td>via importances / SHAP</td><td>via importances / SHAP</td></tr>
+  </table></div>
+
+  <div class="callout vi rv"><b class="t">How to say this in an interview</b><p>"A single tree has high variance. Averaging B trees divides the independent part of that variance by B, but the correlated part ρσ² remains, so Random Forest de-correlates trees with bootstrap rows and random feature subsets per split. Out-of-bag samples, roughly 37% of rows per tree, give a free validation score. For feature importance I prefer permutation importance on held-out data because impurity importance is biased toward high-cardinality features."</p></div>
+</div></section>
+
+<!-- ============ 4. CODE ============ -->
+<section class="s" id="code" data-nav="Code"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">04 · Code</div><h2>Tree vs forest on real churn data</h2><p class="lead">Telco customer churn: 7,043 customers, 20 columns, 26.5% churned. The same dataset returns for Mini Project 1 on Day 17, so this code is an investment. Full runnable version: open <code>Day_09_Ensembles_RandomForest.ipynb</code> in Google Colab.</p></div><div class="time"><b>12</b>min</div></div>
+
+  <h3 class="rv">Snippet 1 · Load and prepare</h3>
+  <div class="codewrap rv"><span class="lbl">python</span><pre><span class="c"># Telco churn CSV hosted by IBM on GitHub (stable raw URL)</span>
+<span class="k">import</span> pandas <span class="k">as</span> pd
+url = <span class="s">"https://raw.githubusercontent.com/IBM/telco-customer-churn-on-icp4d/master/data/Telco-Customer-Churn.csv"</span>
+df = pd.<span class="f">read_csv</span>(url)
+
+<span class="c"># TotalCharges has 11 blank strings → coerce to NaN, fill with median</span>
+df[<span class="s">"TotalCharges"</span>] = pd.<span class="f">to_numeric</span>(df[<span class="s">"TotalCharges"</span>], errors=<span class="s">"coerce"</span>)
+df[<span class="s">"TotalCharges"</span>] = df[<span class="s">"TotalCharges"</span>].<span class="f">fillna</span>(df[<span class="s">"TotalCharges"</span>].<span class="f">median</span>())
+
+y = (df[<span class="s">"Churn"</span>] == <span class="s">"Yes"</span>).<span class="f">astype</span>(<span class="n">int</span>)
+X = pd.<span class="f">get_dummies</span>(df.<span class="f">drop</span>(columns=[<span class="s">"customerID"</span>, <span class="s">"Churn"</span>]), drop_first=<span class="k">True</span>).<span class="f">astype</span>(<span class="n">float</span>)
+<span class="k">print</span>(X.shape, <span class="s">"churn rate:"</span>, y.<span class="f">mean</span>().<span class="f">round</span>(<span class="n">3</span>))   <span class="c"># (7043, 30) churn rate: 0.265</span></pre></div>
+
+  <h3 class="rv" style="margin-top:22px">Snippet 2 · One tree vs a forest (the headline result)</h3>
+  <div class="codewrap rv"><span class="lbl">python</span><pre><span class="k">from</span> sklearn.model_selection <span class="k">import</span> train_test_split
+<span class="k">from</span> sklearn.tree <span class="k">import</span> DecisionTreeClassifier
+<span class="k">from</span> sklearn.ensemble <span class="k">import</span> RandomForestClassifier
+<span class="k">from</span> sklearn.metrics <span class="k">import</span> accuracy_score, roc_auc_score
+
+X_tr, X_te, y_tr, y_te = <span class="f">train_test_split</span>(X, y, test_size=<span class="n">0.2</span>, stratify=y, random_state=<span class="n">42</span>)
+
+tree = <span class="f">DecisionTreeClassifier</span>(random_state=<span class="n">42</span>).<span class="f">fit</span>(X_tr, y_tr)        <span class="c"># unpruned, like Day 08</span>
+rf   = <span class="f">RandomForestClassifier</span>(n_estimators=<span class="n">300</span>, oob_score=<span class="k">True</span>,      <span class="c"># 300 trees, ask for OOB</span>
+                              n_jobs=-<span class="n">1</span>, random_state=<span class="n">42</span>).<span class="f">fit</span>(X_tr, y_tr)
+
+<span class="k">for</span> name, m <span class="k">in</span> [(<span class="s">"tree"</span>, tree), (<span class="s">"forest"</span>, rf)]:
+    p = m.<span class="f">predict_proba</span>(X_te)[:, <span class="n">1</span>]
+    <span class="k">print</span>(<span class="s">f"{name:7s} train={m.score(X_tr, y_tr):.3f}  test={accuracy_score(y_te, p &gt; 0.5):.3f}  AUC={roc_auc_score(y_te, p):.3f}"</span>)
+<span class="k">print</span>(<span class="s">"forest OOB score:"</span>, <span class="f">round</span>(rf.oob_score_, <span class="n">3</span>))
+<span class="c"># tree    train=0.998  test=0.742  AUC=0.662</span>
+<span class="c"># forest  train=0.998  test=0.790  AUC=0.827</span>
+<span class="c"># forest OOB score: 0.789   ← matches test without touching it</span></pre></div>
+  <p class="rv" style="margin-top:10px">Notice the forest also reaches 99.8% on training. That is expected: each tree is still grown to purity. The difference is what happens on unseen rows, and that is the only number a business cares about.</p>
+
+  <h3 class="rv" style="margin-top:22px">Snippet 3 · How many trees are enough?</h3>
+  <div class="codewrap rv"><span class="lbl">python</span><pre><span class="c"># Sweep n_estimators; watch test AUC saturate. warm_start=True reuses trees already grown.</span>
+rf = <span class="f">RandomForestClassifier</span>(warm_start=<span class="k">True</span>, oob_score=<span class="k">True</span>, n_jobs=-<span class="n">1</span>, random_state=<span class="n">42</span>)
+<span class="k">for</span> n <span class="k">in</span> [<span class="n">1</span>, <span class="n">5</span>, <span class="n">10</span>, <span class="n">25</span>, <span class="n">50</span>, <span class="n">100</span>, <span class="n">200</span>, <span class="n">300</span>, <span class="n">500</span>]:
+    rf.<span class="f">set_params</span>(n_estimators=n)
+    rf.<span class="f">fit</span>(X_tr, y_tr)                              <span class="c"># only grows the extra trees</span>
+    auc = <span class="f">roc_auc_score</span>(y_te, rf.<span class="f">predict_proba</span>(X_te)[:, <span class="n">1</span>])
+    <span class="k">print</span>(<span class="s">f"{n:4d} trees  test AUC={auc:.3f}"</span>)
+<span class="c">#   1 trees  test AUC=0.662     10 trees  0.796     100 trees  0.825</span>
+<span class="c">#   5 trees  test AUC=0.773     50 trees  0.820     300 trees  0.827   (flat after ~200)</span></pre></div>
+
+  <h3 class="rv" style="margin-top:22px">Snippet 4 · Which importance to trust</h3>
+  <div class="codewrap rv"><span class="lbl">python</span><pre><span class="k">from</span> sklearn.inspection <span class="k">import</span> permutation_importance
+
+imp_gini = pd.<span class="f">Series</span>(rf.feature_importances_, index=X.columns).<span class="f">sort_values</span>(ascending=<span class="k">False</span>)
+
+<span class="c"># shuffle each column of the TEST set 5 times, measure the drop in AUC</span>
+pi = <span class="f">permutation_importance</span>(rf, X_te, y_te, scoring=<span class="s">"roc_auc"</span>, n_repeats=<span class="n">5</span>, random_state=<span class="n">42</span>, n_jobs=-<span class="n">1</span>)
+imp_perm = pd.<span class="f">Series</span>(pi.importances_mean, index=X.columns).<span class="f">sort_values</span>(ascending=<span class="k">False</span>)
+
+<span class="k">print</span>(pd.<span class="f">concat</span>([imp_gini.<span class="f">head</span>(<span class="n">8</span>), imp_perm.<span class="f">head</span>(<span class="n">8</span>)], axis=<span class="n">1</span>, keys=[<span class="s">"impurity"</span>, <span class="s">"permutation"</span>]))
+<span class="c"># impurity says gender_Male = 0.029 (rank 7); permutation says gender_Male ≈ 0.000.</span>
+<span class="c"># permutation top-3: tenure, Contract_Two year, TotalCharges → these drive churn.</span></pre></div>
+
+  <h3 class="rv" style="margin-top:22px">Snippet 5 · The knobs that matter (and the three cousins)</h3>
+  <div class="tabs rv">
+    <div class="tb"><button class="on" type="button">RandomForest, tuned</button><button type="button">BaggingClassifier</button><button type="button">ExtraTrees</button><button type="button">Regression</button></div>
+    <div class="tp on"><div class="codewrap"><span class="lbl">python</span><pre><span class="c"># Defaults: n_estimators=100, max_features='sqrt' (classification), max_depth=None, bootstrap=True</span>
+rf = <span class="f">RandomForestClassifier</span>(
+    n_estimators=<span class="n">300</span>,          <span class="c"># more = smoother, slower; 200–500 is typical</span>
+    max_features=<span class="s">"sqrt"</span>,       <span class="c"># features per split; try 0.3–0.5 of columns for regression</span>
+    min_samples_leaf=<span class="n">5</span>,        <span class="c"># stops tiny noisy leaves; the most useful regulariser</span>
+    class_weight=<span class="s">"balanced"</span>,   <span class="c"># churners are 26% → up-weight them (raises recall, AUC 0.843)</span>
+    n_jobs=-<span class="n">1</span>, random_state=<span class="n">42</span>, oob_score=<span class="k">True</span>)
+rf.<span class="f">fit</span>(X_tr, y_tr)
+<span class="k">print</span>(rf.oob_score_, <span class="f">roc_auc_score</span>(y_te, rf.<span class="f">predict_proba</span>(X_te)[:, <span class="n">1</span>]))</pre></div></div>
+    <div class="tp"><div class="codewrap"><span class="lbl">python</span><pre><span class="c"># Plain bagging: bootstrap rows, but every split sees ALL features (no de-correlation trick)</span>
+<span class="k">from</span> sklearn.ensemble <span class="k">import</span> BaggingClassifier
+bag = <span class="f">BaggingClassifier</span>(estimator=<span class="f">DecisionTreeClassifier</span>(),
+                        n_estimators=<span class="n">300</span>, n_jobs=-<span class="n">1</span>, random_state=<span class="n">42</span>).<span class="f">fit</span>(X_tr, y_tr)
+<span class="k">print</span>(<span class="f">roc_auc_score</span>(y_te, bag.<span class="f">predict_proba</span>(X_te)[:, <span class="n">1</span>]))   <span class="c"># 0.819 &lt; forest's 0.827</span>
+<span class="c"># Bagging works with ANY base model: swap in LogisticRegression, KNN, SVC...</span></pre></div></div>
+    <div class="tp"><div class="codewrap"><span class="lbl">python</span><pre><span class="c"># Extra-Trees: random thresholds instead of best thresholds → even lower variance, faster</span>
+<span class="k">from</span> sklearn.ensemble <span class="k">import</span> ExtraTreesClassifier
+et = <span class="f">ExtraTreesClassifier</span>(n_estimators=<span class="n">300</span>, n_jobs=-<span class="n">1</span>, random_state=<span class="n">42</span>).<span class="f">fit</span>(X_tr, y_tr)
+<span class="k">print</span>(<span class="f">roc_auc_score</span>(y_te, et.<span class="f">predict_proba</span>(X_te)[:, <span class="n">1</span>]))   <span class="c"># 0.801 here; wins on some noisy datasets</span></pre></div></div>
+    <div class="tp"><div class="codewrap"><span class="lbl">python</span><pre><span class="c"># Same idea for numbers: each tree predicts a value, the forest returns the mean</span>
+<span class="k">from</span> sklearn.ensemble <span class="k">import</span> RandomForestRegressor
+<span class="k">from</span> sklearn.datasets <span class="k">import</span> fetch_california_housing
+H = <span class="f">fetch_california_housing</span>()
+rfr = <span class="f">RandomForestRegressor</span>(n_estimators=<span class="n">200</span>, max_features=<span class="n">0.5</span>, n_jobs=-<span class="n">1</span>, random_state=<span class="n">42</span>)
+<span class="c"># default max_features for regression is 1.0 (all features); 0.3–0.5 usually de-correlates better</span></pre></div></div>
+  </div>
+  <div class="callout rv" style="margin-top:18px"><b class="t">Production habit</b><p>Random Forest does not need feature scaling, handles mixed numeric/categorical (after encoding), tolerates outliers, and rarely breaks. That is why it is the "first model" at work: train it in two minutes, use its OOB score as a baseline, then decide whether XGBoost (tomorrow) or a neural network is worth the extra effort.</p></div>
+</div></section>
+
+<!-- ============ 5. REAL WORLD ============ -->
+<section class="s" id="realworld" data-nav="Real world"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">05 · Real world &amp; tools</div><h2>Where forests are quietly running</h2><p class="lead">Credit scoring, churn, fraud, medical triage, remote sensing. Anywhere the data is a table and someone must explain the model to a regulator.</p></div><div class="time"><b>5</b>min</div></div>
+  <div class="grid3 rv">
+    <div class="card"><span class="tag">Original paper · 2001</span><h3>Breiman, "Random Forests"</h3><p>Leo Breiman's paper introduced the algorithm, the OOB estimate and the correlation-strength argument you saw in the formula. Readable for a first paper; sections 1–3 are enough.</p><a href="https://link.springer.com/article/10.1023/A:1010933404324" target="_blank" rel="noopener">Springer (Machine Learning, 45) ↗</a></div>
+    <div class="card"><span class="tag">Interactive</span><h3>MLU-Explain · Random Forest</h3><p>Amazon MLU's scroll-through explainer with animated bootstrap draws and boundary plots. Pairs with the simulator on this page.</p><a href="https://mlu-explain.github.io/random-forest/" target="_blank" rel="noopener">mlu-explain.github.io ↗</a></div>
+    <div class="card"><span class="tag">Docs</span><h3>scikit-learn ensembles guide</h3><p>The user guide section on bagging, forests, Extra-Trees, OOB and importance. Bookmark it; it is the reference you will search from at work.</p><a href="https://scikit-learn.org/stable/modules/ensemble.html" target="_blank" rel="noopener">scikit-learn.org ↗</a></div>
+    <div class="card"><span class="tag">Dataset</span><h3>Telco Customer Churn on Kaggle</h3><p>The same data as today's notebook, with 1,000+ public notebooks to compare your approach against. Good for a first Kaggle upload of your own notebook.</p><a href="https://www.kaggle.com/datasets/blastchar/telco-customer-churn" target="_blank" rel="noopener">kaggle.com ↗</a></div>
+    <div class="card"><span class="tag">Free textbook</span><h3>ISLR, Chapter 8: Tree-based methods</h3><p>"An Introduction to Statistical Learning" (Python edition) has the cleanest treatment of bagging, RF and boosting with labs. Free PDF from the authors.</p><a href="https://www.statlearning.com/" target="_blank" rel="noopener">statlearning.com ↗</a></div>
+    <div class="card"><span class="tag">Read the pitfall</span><h3>Permutation importance vs impurity</h3><p>scikit-learn's own example showing impurity importance ranking a random number column above real features. Ten-minute read that makes you sound senior.</p><a href="https://scikit-learn.org/stable/auto_examples/inspection/plot_permutation_importance.html" target="_blank" rel="noopener">sklearn example ↗</a></div>
+  </div>
+  <h3 class="rv" style="margin-top:32px;margin-bottom:12px">Modern tools for today's work</h3>
+  <div class="tools rv">
+    <div class="tool"><b>Google Colab</b><span>Free CPUs are enough for a 500-tree forest on 7k rows; set n_jobs=-1.</span><a href="https://colab.research.google.com/" target="_blank" rel="noopener">colab.research.google.com ↗</a></div>
+    <div class="tool"><b>Optuna</b><span>Tune min_samples_leaf / max_features against the OOB score in 30 trials (formal treatment on Day 13).</span><a href="https://optuna.org/" target="_blank" rel="noopener">optuna.org ↗</a></div>
+    <div class="tool"><b>SHAP</b><span>Per-prediction explanations for tree ensembles (TreeExplainer is exact and fast for forests).</span><a href="https://shap.readthedocs.io/" target="_blank" rel="noopener">shap.readthedocs.io ↗</a></div>
+    <div class="tool"><b>MLflow</b><span>Log each forest run (params, OOB, AUC) so you can prove which setting won.</span><a href="https://mlflow.org/" target="_blank" rel="noopener">mlflow.org ↗</a></div>
+    <div class="tool"><b>Claude / ChatGPT</b><span>Paste your feature-importance table and ask for a business explanation of the top 5, then check it against permutation importance.</span><a href="https://claude.ai/" target="_blank" rel="noopener">claude.ai ↗</a></div>
+    <div class="tool"><b>Kaggle</b><span>Publish today's notebook as a public kernel; recruiters do click those links.</span><a href="https://www.kaggle.com/code" target="_blank" rel="noopener">kaggle.com/code ↗</a></div>
+  </div>
+</div></section>
+
+<!-- ============ 6. CAREER ============ -->
+<section class="s" id="career" data-nav="Career"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">06 · Career corner</div><h2>"Built a churn model" is a line on 10,000 resumes. Make yours different.</h2></div><div class="time"><b>3</b>min</div></div>
+  <div class="career rv">
+    <span class="tag">In job descriptions</span>
+    <p>Roles: <b>Data Scientist (fintech / telecom)</b>, <b>ML Engineer</b>, <b>Risk Analytics Analyst</b>, <b>Decision Scientist</b>. Typical lines: "experience with tree-based ensembles (Random Forest, XGBoost)", "model explainability for regulated decisions", "feature importance and SHAP". Banks in Mumbai and Bengaluru run forests for credit risk because a regulator can audit feature importances; a neural network is much harder to defend.</p>
+    <div class="grid3" style="margin-top:18px">
+      <div class="card"><h4>Q: Why does Random Forest overfit less than a single tree?</h4><p>Each tree is high-variance; averaging B de-correlated trees divides the independent variance by B. Bootstrap rows and random feature subsets keep the correlation ρ low, so the ρσ² floor is small.</p></div>
+      <div class="card"><h4>Q: What is the OOB score and when would you still use a test set?</h4><p>Each tree misses ~37% of rows; predicting those rows with only the trees that never saw them gives a free CV-like estimate. You still need a test set for the final report, because you tuned against OOB.</p></div>
+      <div class="card"><h4>Q: Your RF says customer ID is the most important feature. What happened?</h4><p>Impurity importance is biased toward high-cardinality columns; an ID has one split point per row. Drop it and use permutation importance on held-out data to check the rest.</p></div>
+    </div>
+    <div class="callout vi" style="margin-top:18px;margin-bottom:0"><b class="t">Job-hunt action for today (10 min)</b><p>Run the notebook, screenshot the impurity-vs-permutation importance chart, and post it on LinkedIn with three lines: what the dataset is, which feature "lied", and what you would tell the business. Add <b>Random Forest</b>, <b>Ensemble Methods</b> and <b>Model Interpretability</b> to your LinkedIn Skills. Hiring managers search those exact phrases.</p></div>
+  </div>
+</div></section>
+
+<!-- ============ 7. QUIZ ============ -->
+<section class="s" id="quiz" data-nav="Quiz"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">07 · Quiz</div><h2>Three questions, thirty seconds each</h2></div><div class="time"><b>3</b>min</div></div>
+  <div class="quiz rv">
+    <div class="q" data-a="2"><p>You increase n_estimators from 100 to 1000. What happens to test error?</p><div class="opts"><button type="button">Rises: more trees overfit</button><button type="button">Falls steadily forever</button><button type="button">Falls, then plateaus</button></div><div class="why">Averaging cannot increase variance; error drops and converges to a limit set by the tree correlation ρ. After ~200–500 trees you only pay in time.</div></div>
+    <div class="q" data-a="1"><p>Roughly what fraction of unique training rows does one bootstrap sample contain?</p><div class="opts"><button type="button">100%</button><button type="button">~63%</button><button type="button">~37%</button></div><div class="why">A row is left out with probability (1 − 1/n)ⁿ → 1/e ≈ 0.368, so about 63.2% of unique rows appear; the missing 36.8% are the tree's OOB rows.</div></div>
+    <div class="q" data-a="0"><p>What does max_features='sqrt' change compared with plain bagging?</p><div class="opts"><button type="button">Each split considers a random subset of features, de-correlating trees</button><button type="button">Each tree trains on √n rows</button><button type="button">The tree depth is capped at √(features)</button></div><div class="why">Bagging alone lets every tree grab the same dominant feature at the root. Restricting each split to a random √p features forces diversity, which is the "random" in Random Forest.</div></div>
+  </div>
+</div></section>
+
+<!-- ============ 8. HOMEWORK ============ -->
+<section class="s" id="homework" data-nav="Homework"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">08 · Homework</div><h2>Twenty to forty minutes, pick your level</h2></div><div class="time"><b>2</b>min</div></div>
+  <div class="hw rv">
+    <div class="card"><span class="lvl">Easy · 10 min</span><h4>Sweep min_samples_leaf</h4><p>In the notebook, train forests with min_samples_leaf in {1, 2, 5, 10, 20, 50}. Plot OOB score vs the value. Write one sentence: where does regularising start to hurt?</p></div>
+    <div class="card"><span class="lvl">Medium · 20 min</span><h4>Bag something that is not a tree</h4><p>Use BaggingClassifier with LogisticRegression and with KNeighborsClassifier (k=5) on the churn data. Compare AUC with the single versions. Which model benefits from bagging and why? (Hint: which one has high variance?)</p></div>
+    <div class="card"><span class="lvl">Stretch · job hunt</span><h4>Your own "job offer" forest</h4><p>Build a CSV of 30–50 job postings you have looked at (columns: role, city, min CTC, years exp, remote, skills count, you_applied yes/no). Train a forest to predict you_applied, print permutation importance, and post the top-3 reasons you apply on LinkedIn. It is a real data project about your own decisions.</p></div>
+  </div>
+  <p class="rv" style="margin-top:14px;color:var(--ink3);font-size:14px">Homework starter cells are at the bottom of the Colab notebook.</p>
+</div></section>
+
+<!-- ============ 9. NEXT ============ -->
+<section class="s" id="next" data-nav="Next"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">09 · Next</div><h2>Tomorrow: Boosting, learning from mistakes</h2></div><div class="time"><b>2</b>min</div></div>
+  <div class="fin rv">
+    <h2>Day 10 · Boosting &amp; XGBoost</h2>
+    <p>Today's trees voted as equals and ignored each other. Tomorrow each tree studies the previous one's mistakes and fixes them. That small change is why XGBoost and LightGBM win most tabular Kaggle competitions and score most loans in India.</p>
+    <div class="card" style="max-width:560px;margin:26px auto 0;text-align:left"><span class="tag">Before next class</span>
+      <ul style="margin:0;padding-left:18px">
+        <li>Run today's notebook end to end; note your forest's OOB score and test AUC.</li>
+        <li>Do the Easy homework (min_samples_leaf sweep). Bring the plot.</li>
+        <li>Read the first two screens of <a href="https://mlu-explain.github.io/random-forest/" target="_blank" rel="noopener">MLU-Explain RF</a> if you missed the projector demo.</li>
+      </ul></div>
+  </div>
+</div></section>
+
+<script>
+/* ===== Random Forest simulator ===== */
+(function(){
+const cv=document.getElementById('rfc');if(!cv)return;const ctx=cv.getContext('2d');
+const css=()=>getComputedStyle(document.documentElement);
+const col=n=>css().getPropertyValue(n).trim();
+let seed=20240907;function rnd(){seed=(seed*1664525+1013904223)%4294967296;return seed/4294967296;}
+function gauss(){const u=rnd()||1e-9,v=rnd();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+function makeData(n){const X=[],Y=[];for(let i=0;i<n;i++){const a=rnd(),b=rnd();const bd=0.5+0.22*Math.sin(2*Math.PI*a)+0.07*gauss();X.push([a,b]);Y.push(b>bd?1:0);}return{X,Y};}
+const tr=makeData(150),te=makeData(400);
+const GW=60,GH=40;
+function gini(a,b){const n=a+b;if(!n)return 0;const p=a/n;return 1-p*p-(1-p)*(1-p);}
+function fit(idx,depth,P){
+  let c1=0;for(const i of idx)c1+=tr.Y[i];const c0=idx.length-c1;
+  const leaf={leaf:true,cls:c1>c0?1:0};
+  if(depth>=P.depth||c0===0||c1===0||idx.length<2)return leaf;
+  const feats=P.maxf===2?[0,1]:[rnd()<0.5?0:1];
+  let best={g:gini(c0,c1),f:-1,t:0};
+  for(const f of feats){const s=idx.slice().sort((a,b)=>tr.X[a][f]-tr.X[b][f]);let l0=0,l1=0;
+    for(let k=0;k<s.length-1;k++){if(tr.Y[s[k]])l1++;else l0++;const va=tr.X[s[k]][f],vb=tr.X[s[k+1]][f];if(va===vb)continue;
+      const r0=c0-l0,r1=c1-l1;const g=((l0+l1)*gini(l0,l1)+(r0+r1)*gini(r0,r1))/idx.length;if(g<best.g-1e-9)best={g,f,t:(va+vb)/2};}}
+  if(best.f<0)return leaf;
+  const L=idx.filter(i=>tr.X[i][best.f]<=best.t),R=idx.filter(i=>tr.X[i][best.f]>best.t);if(!L.length||!R.length)return leaf;
+  return{leaf:false,f:best.f,t:best.t,l:fit(L,depth+1,P),r:fit(R,depth+1,P)};}
+function pred(n,x){while(!n.leaf)n=x[n.f]<=n.t?n.l:n.r;return n.cls;}
+let trees=[],votes=new Float32Array(GW*GH),oobV=[],singleAccs=[],hist=[],anim=null,counts=null;
+function reset(){trees=[];votes=new Float32Array(GW*GH);oobV=tr.Y.map(()=>[0,0]);singleAccs=[];hist=[];anim=null;counts=null;seed=20240907+1;upd();chartUpd();}
+function grow(){
+  const P={depth:+document.getElementById('rfdepth').value,maxf:document.getElementById('rffeat').checked?1:2,boot:document.getElementById('rfboot').checked};
+  let idx=[];counts=new Uint8Array(tr.X.length);
+  if(P.boot){for(let i=0;i<tr.X.length;i++){const j=Math.floor(rnd()*tr.X.length);idx.push(j);counts[j]++;}}else{idx=tr.X.map((_,i)=>i);counts.fill(1);}
+  const t=fit(idx,0,P);const grid=new Uint8Array(GW*GH);
+  for(let gy=0;gy<GH;gy++)for(let gx=0;gx<GW;gx++){const c=pred(t,[(gx+.5)/GW,(gy+.5)/GH]);grid[gy*GW+gx]=c;votes[gy*GW+gx]+=c;}
+  let ok=0;for(let i=0;i<te.X.length;i++)if(pred(t,te.X[i])===te.Y[i])ok++;const acc=ok/te.X.length;
+  let oobn=0;for(let i=0;i<tr.X.length;i++)if(!counts[i]){oobn++;oobV[i][pred(t,tr.X[i])]++;}
+  trees.push({grid,acc});singleAccs.push(acc);
+  hist.push(ensAcc());
+  anim={t0:performance.now(),oobn};upd();chartUpd();}
+/* ensemble accuracy via the vote grid (same region that is drawn) */
+function ensAcc(){if(!trees.length)return NaN;let ok=0;for(let i=0;i<te.X.length;i++){
+  const gx=Math.min(GW-1,Math.floor(te.X[i][0]*GW)),gy=Math.min(GH-1,Math.floor(te.X[i][1]*GH));const c=votes[gy*GW+gx]*2>trees.length?1:0;if(c===te.Y[i])ok++;}return ok/te.X.length;}
+function oobAcc(){let n=0,ok=0;for(let i=0;i<tr.X.length;i++){const v=oobV[i];if(v[0]+v[1]===0)continue;n++;if((v[1]>v[0]?1:0)===tr.Y[i])ok++;}return n?ok/n:NaN;}
+const el=id=>document.getElementById(id);const pct=v=>isNaN(v)?'–':(v*100).toFixed(1)+'%';
+function upd(){el('st_n').textContent=trees.length;el('st_last').textContent=trees.length?pct(trees[trees.length-1].acc):'–';
+  el('st_mean').textContent=singleAccs.length?pct(singleAccs.reduce((a,b)=>a+b,0)/singleAccs.length):'–';el('st_ens').textContent=pct(ensAcc());el('st_oob').textContent=pct(oobAcc());
+  el('st_oobn').textContent=anim?anim.oobn+' / 150':'–';}
+function draw(){
+  const W=cv.width,H=cv.height;ctx.clearRect(0,0,W,H);
+  const C1=col('--amber'),C0=col('--cyan'),INK3=col('--ink3'),LINE=col('--line2');
+  const px=20,py=20,pw=540,ph=430;
+  // ensemble region
+  const cw=pw/GW,ch=ph/GH;
+  for(let gy=0;gy<GH;gy++)for(let gx=0;gx<GW;gx++){const v=votes[gy*GW+gx];const n=trees.length;let a=0.08,c=C0;if(n){const p=v/n;c=p>0.5?C1:C0;a=0.08+0.32*Math.abs(p-0.5)*2;}ctx.globalAlpha=a;ctx.fillStyle=c;ctx.fillRect(px+gx*cw,py+ph-(gy+1)*ch,cw+0.5,ch+0.5);}
+  ctx.globalAlpha=1;ctx.strokeStyle=LINE;ctx.strokeRect(px,py,pw,ph);
+  // points
+  const now=performance.now();const hl=anim&&(now-anim.t0<1400);
+  for(let i=0;i<tr.X.length;i++){const x=px+tr.X[i][0]*pw,y=py+ph-tr.X[i][1]*ph;const c=tr.Y[i]?C1:C0;
+    if(hl&&counts){const k=counts[i];if(k===0){ctx.globalAlpha=0.25;ctx.fillStyle=c;ctx.beginPath();ctx.arc(x,y,3,0,7);ctx.fill();ctx.globalAlpha=1;ctx.strokeStyle=INK3;ctx.beginPath();ctx.arc(x,y,6,0,7);ctx.stroke();}
+      else{const pulse=0.5+0.5*Math.sin((now-anim.t0)/120);ctx.fillStyle=c;ctx.beginPath();ctx.arc(x,y,3+k*1.2+pulse,0,7);ctx.fill();ctx.strokeStyle=c;ctx.globalAlpha=.5;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(x,y,6+k*2,0,7);ctx.stroke();ctx.globalAlpha=1;ctx.lineWidth=1;}}
+    else{ctx.fillStyle=c;ctx.beginPath();ctx.arc(x,y,3.4,0,7);ctx.fill();}}
+  ctx.fillStyle=INK3;ctx.font='11px JetBrains Mono, monospace';ctx.fillText(hl?'bootstrap sample of this tree (ring size = times drawn, faded = out-of-bag)':'majority vote of '+trees.length+' tree'+(trees.length===1?'':'s'),px+6,py+ph+16);
+  // tiles
+  const tx=580,ty=20,tw=98,th=88,gap=8;const last=trees.slice(-12);
+  for(let k=0;k<12;k++){const r=Math.floor(k/3),cidx=k%3;const x=tx+cidx*(tw+gap),y=ty+r*(th+gap);ctx.strokeStyle=LINE;ctx.strokeRect(x,y,tw,th);
+    const t=last[k];if(!t){ctx.fillStyle=INK3;ctx.font='10px JetBrains Mono, monospace';ctx.fillText('tree '+(trees.length+k-last.length+1),x+6,y+14);continue;}
+    const step=2;for(let gy=0;gy<GH;gy+=step)for(let gx=0;gx<GW;gx+=step){const c=t.grid[gy*GW+gx];ctx.globalAlpha=.45;ctx.fillStyle=c?C1:C0;ctx.fillRect(x+gx/GW*tw,y+th-(gy+step)/GH*th,tw/GW*step+.5,th/GH*step+.5);}
+    ctx.globalAlpha=1;ctx.fillStyle=col('--ink');ctx.font='10px JetBrains Mono, monospace';ctx.fillText('#'+(trees.length-last.length+k+1)+' '+(t.acc*100).toFixed(0)+'%',x+5,y+13);
+    if(k===last.length-1){ctx.strokeStyle=C1;ctx.lineWidth=2;ctx.strokeRect(x+1,y+1,tw-2,th-2);ctx.lineWidth=1;}}
+  ctx.fillStyle=INK3;ctx.font='11px JetBrains Mono, monospace';ctx.fillText('last 12 individual trees (test acc.)',tx,ty+4*(th+gap)+8);
+  requestAnimationFrame(draw);}
+let chart=null;function chartUpd(){if(!window.Chart)return;const labels=hist.map((_,i)=>i+1);const mean=singleAccs.length?singleAccs.reduce((a,b)=>a+b,0)/singleAccs.length:NaN;
+  const d1=hist.map(v=>+(v*100).toFixed(1)),d2=hist.map(()=>+(mean*100).toFixed(1));
+  if(!chart){chart=new Chart(document.getElementById('accChart'),{type:'line',data:{labels,datasets:[{label:'forest vote',data:d1,borderColor:col('--amber'),backgroundColor:col('--amber'),tension:.25,pointRadius:2},{label:'mean single tree',data:d2,borderColor:col('--cyan'),borderDash:[6,4],pointRadius:0}]},options:{animation:false,responsive:true,maintainAspectRatio:false,scales:{x:{title:{display:true,text:'number of trees'}},y:{title:{display:true,text:'test accuracy %'},suggestedMin:70,suggestedMax:95}},plugins:{legend:{position:'bottom'}}}});}
+  else{chart.data.labels=labels;chart.data.datasets[0].data=d1;chart.data.datasets[1].data=d2;chart.update();}}
+function growN(n){let k=0;(function step(){grow();if(++k<n)setTimeout(step,n>20?40:160);})();}
+el('rf1').onclick=()=>grow();el('rf10').onclick=()=>growN(10);el('rf50').onclick=()=>growN(50);el('rfreset').onclick=reset;
+el('rfdepth').oninput=e=>el('rfdepthv').textContent=e.target.value;
+reset();draw();
+})();
+/* ===== Bootstrap cups ===== */
+(function(){const svg=document.getElementById('bootsvg');if(!svg)return;const N=20;let draws=0,outTotal=0;
+function render(counts){let s='';for(let i=0;i<N;i++){const x=32+i*44,c=counts?counts[i]:null;const out=counts&&c===0;
+  s+='<g><circle cx="'+x+'" cy="52" r="17" fill="'+(counts?(out?'var(--bg2)':'color-mix(in srgb,var(--amber) '+(20+c*25)+'%,var(--panel))'):'var(--bg2)')+'" stroke="'+(out?'var(--ink3)':'var(--amber)')+'" stroke-width="'+(out?2:1.5)+'"'+(out?' stroke-dasharray="4 3"':'')+'/>';
+  s+='<text x="'+x+'" y="57" text-anchor="middle" font-family="var(--mono)" font-size="13" fill="var(--ink)">'+(counts?c:'')+'</text>';
+  s+='<text x="'+x+'" y="92" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="var(--ink3)">cup '+(i+1)+'</text></g>';}
+  svg.innerHTML=s;}
+render(null);
+document.getElementById('bootbtn').onclick=()=>{const c=new Array(N).fill(0);for(let k=0;k<N;k++)c[Math.floor(Math.random()*N)]++;render(c);const out=c.filter(v=>v===0).length;draws++;outTotal+=out;
+  document.getElementById('bootout').textContent=out+' / 20 ('+(out/N*100).toFixed(0)+'%)';document.getElementById('bootavg').textContent=(outTotal/draws/N*100).toFixed(1)+'% over '+draws+' draw'+(draws>1?'s':'');};
+})();
+/* ===== Importance chart (real numbers from the notebook run) ===== */
+(function(){if(!window.Chart)return;const cs=getComputedStyle(document.documentElement);const c=n=>cs.getPropertyValue(n).trim();
+const labels=['tenure','Contract_Two year','TotalCharges','InternetService_Fiber','MonthlyCharges','PaymentMethod_E-check','gender_Male','OnlineSecurity_Yes'];
+const gini=[0.170,0.032,0.194,0.039,0.168,0.039,0.029,0.027];const perm=[0.031,0.021,0.012,0.011,0.000,0.001,0.000,0.002];
+new Chart(document.getElementById('impChart'),{type:'bar',data:{labels,datasets:[{label:'impurity (train)',data:gini,backgroundColor:c('--violet')},{label:'permutation ΔAUC (test)',data:perm,backgroundColor:c('--amber')}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:{x:{title:{display:true,text:'importance (different scales; compare rank, not size)'}}}}});})();
+</script>
+
+<script>
+document.documentElement.classList.add('js');
+/* nav from sections */
+(function(){const nav=document.getElementById('nav');document.querySelectorAll('section.s[data-nav]').forEach((s,i)=>{const a=document.createElement('a');a.href='#'+s.id;a.innerHTML='<i>'+String(i+1).padStart(2,'0')+'</i>'+s.dataset.nav;nav.appendChild(a);});
+const links=[...nav.querySelectorAll('a')];const secs=[...document.querySelectorAll('section.s[data-nav]')];
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle('on',l.getAttribute('href')==='#'+e.target.id));}})},{rootMargin:'-40% 0px -55% 0px'});secs.forEach(s=>io.observe(s));
+window.addEventListener('scroll',()=>{const h=document.documentElement;document.getElementById('track').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';},{passive:true});})();
+/* reveal */
+(function(){const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:.1});document.querySelectorAll('.rv').forEach(el=>io.observe(el));})();
+/* class timer */
+(function(){let t=0,id=null;const el=document.getElementById('clk'),b=document.getElementById('clkbtn');b.onclick=()=>{if(id){clearInterval(id);id=null;b.textContent='Resume';return;}b.textContent='Pause';id=setInterval(()=>{t++;el.textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');if(t>=3600){clearInterval(id);el.textContent='60:00';b.textContent='Done';}},1000);};})();
+/* hero particles */
+(function(){const c=document.getElementById('bgc');if(!c)return;const x=c.getContext('2d');let w,h,P=[];function rs(){w=c.width=c.offsetWidth;h=c.height=c.offsetHeight;P=Array.from({length:Math.min(70,w/14)},()=>({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-.5)*.4,vy:(Math.random()-.5)*.4}));}rs();window.addEventListener('resize',rs);const col=()=>getComputedStyle(document.documentElement).getPropertyValue('--cyan').trim();function f(){x.clearRect(0,0,w,h);const cc=col();for(const p of P){p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>w)p.vx*=-1;if(p.y<0||p.y>h)p.vy*=-1;}for(let i=0;i<P.length;i++){for(let j=i+1;j<P.length;j++){const d=Math.hypot(P[i].x-P[j].x,P[i].y-P[j].y);if(d<120){x.strokeStyle=cc;x.globalAlpha=(1-d/120)*.35;x.beginPath();x.moveTo(P[i].x,P[i].y);x.lineTo(P[j].x,P[j].y);x.stroke();}}}x.globalAlpha=1;x.fillStyle=cc;for(const p of P){x.beginPath();x.arc(p.x,p.y,1.8,0,7);x.fill();}requestAnimationFrame(f);}if(!matchMedia('(prefers-reduced-motion:reduce)').matches)f();})();
+/* tabs */
+document.querySelectorAll('.tabs').forEach(t=>{const bs=t.querySelectorAll('.tb button'),ps=t.querySelectorAll('.tp');bs.forEach((b,i)=>b.onclick=()=>{bs.forEach(x=>x.classList.remove('on'));ps.forEach(x=>x.classList.remove('on'));b.classList.add('on');ps[i].classList.add('on');});});
+/* quiz: <div class="q" data-a="1"> with .opts buttons; index of correct answer in data-a */
+document.querySelectorAll('.q').forEach(q=>{const a=+q.dataset.a;q.querySelectorAll('.opts button').forEach((b,i)=>b.onclick=()=>{if(q.classList.contains('done'))return;q.classList.add('done');b.classList.add(i===a?'ok':'bad');if(i!==a)q.querySelectorAll('.opts button')[a].classList.add('ok');});});
+/* Chart.js theme defaults */
+if(window.Chart){const cs=getComputedStyle(document.documentElement);Chart.defaults.color=cs.getPropertyValue('--ink2').trim();Chart.defaults.borderColor=cs.getPropertyValue('--line').trim();Chart.defaults.font.family=cs.getPropertyValue('--mono').trim();}
+</script>
+</body></html>

@@ -1,0 +1,625 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Day 04: How a machine learns a line</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@500;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0A0E1A; --bg2:#111729; --panel:#161D33; --line:#243052; --line2:#2E3B62;
+  --ink:#EDF0FA; --ink2:#AEB7D3; --ink3:#7B86A8;
+  --amber:#FFB43A; --cyan:#4FD3F2; --rose:#FF6B8A; --lime:#9BE56B; --violet:#9D8CFF;
+  --glow:rgba(79,211,242,.18);
+  --display:'Syne',ui-sans-serif,system-ui,sans-serif;
+  --body:'Manrope',ui-sans-serif,system-ui,sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#F3F5FB; --bg2:#FFFFFF; --panel:#FFFFFF; --line:#D7DDEE; --line2:#C3CBE3;
+    --ink:#0F1730; --ink2:#3B4666; --ink3:#6B7694;
+    --amber:#C97A00; --cyan:#0A8FB3; --rose:#D93A5D; --lime:#4E9A1E; --violet:#6A55E8;
+    --glow:rgba(10,143,179,.14);
+  }
+}
+:root[data-theme="light"]{
+  --bg:#F3F5FB; --bg2:#FFFFFF; --panel:#FFFFFF; --line:#D7DDEE; --line2:#C3CBE3;
+  --ink:#0F1730; --ink2:#3B4666; --ink3:#6B7694;
+  --amber:#C97A00; --cyan:#0A8FB3; --rose:#D93A5D; --lime:#4E9A1E; --violet:#6A55E8;
+  --glow:rgba(10,143,179,.14);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;padding-inline:clamp(16px,4vw,48px);padding-block:0 80px}
+a{color:var(--cyan)}
+h1,h2,h3,h4{font-family:var(--display);text-wrap:balance;line-height:1.08;margin:0}
+h2{font-size:clamp(30px,4.2vw,50px);font-weight:800;letter-spacing:-.01em}
+h3{font-size:clamp(20px,2.2vw,26px);font-weight:700}
+h4{font-size:17px;font-weight:700}
+p{max-width:68ch;margin:0}
+p+p{margin-top:12px}
+ul,ol{max-width:70ch}
+li{margin-bottom:6px}
+.wrap{max-width:1180px;margin:0 auto}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)}
+.eyebrow b{color:var(--amber);font-weight:600}
+code,.mono{font-family:var(--mono)}
+p code,li code,td code{font-size:.9em;background:var(--bg2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;color:var(--cyan)}
+
+/* progress bar + nav */
+#bar{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);margin-inline:calc(-1*clamp(16px,4vw,48px));padding-inline:clamp(16px,4vw,48px)}
+#bar .wrap{display:flex;align-items:center;gap:14px;height:56px;overflow-x:auto;scrollbar-width:none}
+#bar .wrap::-webkit-scrollbar{display:none}
+#bar .brand{font-family:var(--display);font-weight:800;font-size:15px;white-space:nowrap}
+#bar .brand span{color:var(--amber)}
+#bar nav{display:flex;gap:4px;flex:1}
+#bar nav a{font-family:var(--mono);font-size:11.5px;text-decoration:none;color:var(--ink3);padding:6px 10px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+#bar nav a.on{color:var(--ink);border-color:var(--line2);background:var(--panel)}
+#bar nav a i{font-style:normal;color:var(--amber);margin-right:5px}
+#bar .clock{font-family:var(--mono);font-size:12px;color:var(--ink2);white-space:nowrap;display:flex;gap:8px;align-items:center}
+#bar .clock button{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line2);border-radius:6px;padding:4px 9px;cursor:pointer}
+#track{position:absolute;left:0;bottom:-1px;height:2px;background:linear-gradient(90deg,var(--cyan),var(--amber));width:0}
+
+/* sections */
+section.s{padding-block:88px 40px;border-top:1px solid var(--line);position:relative}
+.head{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end;margin-bottom:38px}
+.time{font-family:var(--mono);font-size:12px;color:var(--ink3);text-align:right;line-height:1.5}
+.time b{display:block;font-size:22px;color:var(--amber);font-weight:600}
+.lead{font-size:clamp(18px,1.6vw,21px);color:var(--ink2);max-width:62ch;margin-top:16px}
+
+/* hero */
+#hero{padding-block:70px 60px;position:relative;overflow:hidden;margin-inline:calc(-1*clamp(16px,4vw,48px));padding-inline:clamp(16px,4vw,48px)}
+#hero canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.55;pointer-events:none}
+#hero .wrap{position:relative}
+#hero h1{font-size:clamp(40px,7vw,96px);font-weight:800;letter-spacing:-.03em;line-height:.98}
+#hero h1 em{font-style:normal;color:var(--amber)}
+#hero h1 .c{color:var(--cyan)}
+.hero-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:40px;align-items:end;margin-top:30px}
+.agenda{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
+.agenda h3{font-size:14px;font-family:var(--mono);font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-bottom:12px}
+.agenda ol{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.agenda li{display:grid;grid-template-columns:52px 1fr;gap:12px;font-size:15px;align-items:baseline;margin:0}
+.agenda li span{font-family:var(--mono);font-size:12px;color:var(--amber)}
+.agenda li a{color:var(--ink);text-decoration:none}
+.agenda li a:hover{color:var(--cyan)}
+
+/* generic blocks */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;transition:transform .25s,border-color .25s}
+.card:hover{border-color:var(--cyan)}
+.card h3{margin-bottom:8px}
+.card h4{margin-bottom:6px}
+.card p{font-size:15.5px;color:var(--ink2)}
+.card.amber{border-color:var(--amber)} .card.violet{border-color:var(--violet)} .card.lime{border-color:var(--lime)} .card.rose{border-color:var(--rose)}
+.tag{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid var(--line2);color:var(--ink3);margin-bottom:12px}
+.pill{display:inline-flex;gap:6px;align-items:center;font-family:var(--mono);font-size:12px;padding:5px 11px;border-radius:999px;background:var(--bg2);border:1px solid var(--line);color:var(--ink2);text-decoration:none;margin:4px 6px 4px 0}
+.pill:hover{border-color:var(--cyan);color:var(--ink)}
+.callout{border-left:4px solid var(--amber);background:var(--panel);border-radius:0 14px 14px 0;padding:16px 20px;margin-block:18px}
+.callout.cy{border-left-color:var(--cyan)} .callout.ro{border-left-color:var(--rose)} .callout.li{border-left-color:var(--lime)} .callout.vi{border-left-color:var(--violet)}
+.callout b.t{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--amber);display:block;margin-bottom:6px}
+.callout.cy b.t{color:var(--cyan)} .callout.ro b.t{color:var(--rose)} .callout.li b.t{color:var(--lime)} .callout.vi b.t{color:var(--violet)}
+.callout p{font-size:15.5px;color:var(--ink2)}
+
+/* analogy strip */
+.analogy{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start;background:linear-gradient(135deg,color-mix(in srgb,var(--amber) 10%,var(--panel)),var(--panel));border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-block:22px}
+.analogy .em{font-size:38px;line-height:1}
+.analogy h4{margin-bottom:4px}
+.analogy p{font-size:15.5px;color:var(--ink2)}
+
+/* code */
+pre{background:var(--bg2);border:1px solid var(--line2);border-radius:12px;padding:16px 18px;overflow-x:auto;font-family:var(--mono);font-size:13.5px;line-height:1.55;margin:0;color:var(--ink)}
+pre .c{color:var(--ink3)} pre .k{color:var(--violet)} pre .s{color:var(--lime)} pre .n{color:var(--amber)} pre .f{color:var(--cyan)}
+.codewrap{position:relative;margin-block:14px}
+.codewrap .lbl{position:absolute;top:8px;right:12px;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+
+/* tabs */
+.tabs{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel)}
+.tabs .tb{display:flex;gap:2px;border-bottom:1px solid var(--line);background:var(--bg2);overflow-x:auto}
+.tabs .tb button{font:600 13px var(--body);background:transparent;color:var(--ink3);border:0;padding:11px 16px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap}
+.tabs .tb button.on{color:var(--ink);border-bottom-color:var(--amber)}
+.tabs .tp{display:none;padding:18px}
+.tabs .tp.on{display:block}
+
+/* figures / charts */
+figure{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;overflow:hidden}
+figure svg{width:100%;height:auto;display:block}
+figcaption{font-family:var(--mono);font-size:11.5px;color:var(--ink3);margin-top:8px}
+.chart{position:relative;height:300px}
+.chart canvas{width:100%!important;height:100%!important}
+canvas.demo{width:100%;height:auto;background:var(--bg2);border:1px solid var(--line2);border-radius:14px;display:block;touch-action:none}
+.ctl{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.ctl label{font-family:var(--mono);font-size:12px;color:var(--ink2);display:flex;gap:8px;align-items:center}
+.ctl input[type=range]{accent-color:var(--amber)}
+.btn{font:600 14px var(--body);color:var(--bg);background:var(--amber);border:0;border-radius:9px;padding:10px 16px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line2)}
+.btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.stats{font-family:var(--mono);font-size:13px;color:var(--ink2);display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin-top:14px;font-variant-numeric:tabular-nums}
+.stats b{color:var(--cyan);font-weight:600}
+
+/* steps */
+.steps{display:grid;gap:10px;counter-reset:st}
+.steps>div{display:grid;grid-template-columns:32px 1fr;gap:12px;align-items:start;font-size:15px;color:var(--ink2)}
+.steps>div::before{counter-increment:st;content:counter(st);font-family:var(--mono);font-size:12px;color:var(--amber);border:1px solid var(--line2);border-radius:50%;width:26px;height:26px;display:grid;place-items:center}
+.steps b{color:var(--ink)}
+
+/* table */
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+th,td{padding:10px 14px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);background:var(--bg2)}
+tr:last-child td{border-bottom:0}
+
+/* tools + career */
+.tools{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.tool{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:6px}
+.tool b{font-family:var(--display);font-size:16px}
+.tool span{font-size:14px;color:var(--ink2)}
+.tool a{font-family:var(--mono);font-size:12px;text-decoration:none}
+.career{border:1px solid var(--violet);background:linear-gradient(135deg,color-mix(in srgb,var(--violet) 12%,var(--panel)),var(--panel));border-radius:14px;padding:22px}
+.career .tag{border-color:var(--violet);color:var(--violet)}
+
+/* homework */
+.hw{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.hw .card{border-color:var(--line2)}
+.hw .lvl{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--lime);margin-bottom:6px;display:block}
+
+/* quiz */
+.quiz{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.q{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.q p{font-size:15px;margin-bottom:12px;color:var(--ink)}
+.q .opts{display:flex;gap:8px;flex-wrap:wrap}
+.q button{font:600 13px var(--body);padding:7px 12px;border-radius:8px;border:1px solid var(--line2);background:var(--bg2);color:var(--ink);cursor:pointer}
+.q button.ok{border-color:var(--lime);color:var(--lime)} .q button.bad{border-color:var(--rose);color:var(--rose)}
+.q .why{font-size:13.5px;color:var(--ink2);margin-top:10px;display:none}
+.q.done .why{display:block}
+
+/* details */
+details{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:0 18px;margin-block:10px}
+summary{cursor:pointer;padding:14px 0;font-family:var(--display);font-weight:700;font-size:16px}
+details[open] summary{border-bottom:1px solid var(--line);margin-bottom:12px}
+details>*:not(summary){padding-bottom:14px}
+
+/* footer */
+.fin{text-align:center;padding-block:60px 20px}
+.fin h2{font-size:clamp(28px,4vw,44px)}
+.fin p{margin:14px auto 0}
+
+/* reveal */
+.rv{opacity:1;transform:none;transition:opacity .6s ease,transform .6s ease}
+.js .rv:not(.in){opacity:.001;transform:translateY(18px)}
+@keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+@keyframes dash{to{stroke-dashoffset:0}}
+.flowline{stroke-dasharray:6 6;animation:flow 1.2s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-24}}
+@media (prefers-reduced-motion:reduce){.js .rv:not(.in){opacity:1;transform:none}.rv{transition:none}*{animation:none!important}}
+
+@media (max-width:980px){
+  .grid4,.tools,.hw{grid-template-columns:1fr 1fr}
+  .grid3,.quiz{grid-template-columns:1fr 1fr}
+}
+@media (max-width:720px){
+  .hero-grid,.grid2,.grid3,.grid4,.tools,.hw,.quiz,.analogy{grid-template-columns:1fr}
+  .head{grid-template-columns:1fr}.time{text-align:left}
+}
+</style><style>
+/* Day 04 extras */
+.gd{display:grid;grid-template-columns:1.5fr 1fr;gap:14px;align-items:start}
+.gd .side{display:grid;gap:10px}
+.gd canvas.demo{aspect-ratio:auto}
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden}
+.seg button{font:600 12px var(--mono);background:var(--bg2);color:var(--ink2);border:0;padding:6px 10px;cursor:pointer}
+.seg button.on{background:var(--amber);color:var(--bg)}
+.lrval{font-family:var(--mono);font-size:13px;color:var(--amber);min-width:64px;display:inline-block}
+.formula{font-family:var(--mono);font-size:clamp(14px,1.6vw,18px);background:var(--bg2);border:1px solid var(--line2);border-radius:12px;padding:14px 18px;margin-block:12px;overflow-x:auto;color:var(--ink)}
+.formula b{color:var(--amber);font-weight:600}
+.formula i{color:var(--cyan);font-style:normal}
+.decode{font-size:15px;color:var(--ink2);display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin-top:8px}
+.decode span{font-family:var(--mono);color:var(--cyan)}
+@media (max-width:860px){.gd{grid-template-columns:1fr}}
+</style>
+</head><body>
+
+<div id="bar"><div class="wrap">
+  <div class="brand">AI <span>&amp;</span> ML Engineering · Day 04</div>
+  <nav id="nav"><!-- filled by JS from section[data-nav] --></nav>
+  <div class="clock"><span id="clk">00:00</span><button id="clkbtn" type="button">Start 60 min</button></div>
+</div><div id="track"></div></div>
+
+
+
+<!-- ============ HERO ============ -->
+<header id="hero"><canvas id="bgc"></canvas><div class="wrap">
+  <div class="eyebrow"><b>Day 04</b> · Phase 2 · Supervised ML · 60 minutes</div>
+  <h1 style="margin-top:18px">How a machine <em>learns</em><br>a <span class="c">line.</span></h1>
+  <div class="hero-grid">
+    <p class="lead">Three days of Python were the tools. Today the machine learns. Not a neural network yet: one straight line through thirty points, "years of experience versus salary". But the recipe that fits that line, guess → measure the error → nudge downhill → repeat, is exactly the recipe that trains GPT. By the end you will implement gradient descent from scratch in NumPy, watch the learning rate make it converge, crawl or explode, and explain it in an interview in three sentences.</p>
+    <div class="agenda"><h3>Today's route</h3><ol>
+      <li><span>00–05</span><a href="#hook">Hook: the fresher-salary question</a></li>
+      <li><span>05–23</span><a href="#concept">Concept: guess, measure, nudge</a></li>
+      <li><span>23–33</span><a href="#deeper">Deeper: the math, decoded</a></li>
+      <li><span>33–45</span><a href="#code">Code: from scratch, then sklearn</a></li>
+      <li><span>45–50</span><a href="#realworld">Real world &amp; tools</a></li>
+      <li><span>50–53</span><a href="#career">Career corner</a></li>
+      <li><span>53–56</span><a href="#quiz">Quiz</a></li>
+      <li><span>56–58</span><a href="#homework">Homework</a></li>
+      <li><span>58–60</span><a href="#next">Next</a></li>
+    </ol></div>
+  </div>
+</div></header>
+
+<!-- ============ HOOK ============ -->
+<section class="s" id="hook" data-nav="Hook"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">01 · Hook</div><h2>"What salary should I ask for?"</h2><p class="lead">Every one of you will face this question in an HR round within months. Thirty people told us their years of experience and their salary. Draw the line, read off your number. But which line? Put <a href="https://playground.tensorflow.org/" target="_blank" rel="noopener">TensorFlow Playground</a> on the projector, press play, and watch the loss fall: the same mechanism you will build by hand today, on a harder problem.</p></div><div class="time"><b>5</b>min</div></div>
+  <div class="grid2 rv">
+    <div class="card amber"><span class="tag">The story</span><h3>Riya's counter-offer</h3><p>Riya, ECE 2025, gets an offer of 4.2 LPA. Her senior says "ask for more". More how much? She collects thirty data points from friends and seniors (experience, LPA) and plots them. The cloud clearly slopes upward. A line through it would let her say: "the market rate for my experience is about X". That line has two numbers, a slope and an intercept, and there are infinitely many candidates. Picking the best one <em>from the data</em>, automatically, is the first machine-learning algorithm ever written, and it is what we build today.</p><p style="margin-top:10px">Everything later in this course (logistic regression, trees, neural networks, LLMs) changes what the "line" looks like. The way it is found stays the same.</p></div>
+    <div class="card"><span class="tag">Try on the projector</span><h3>Three tabs to open</h3>
+      <p><a href="https://www.youtube.com/watch?v=IHZwWFHWa-w" target="_blank" rel="noopener">3Blue1Brown: Gradient descent, how neural networks learn</a>: the 20-minute version of today, with the ball rolling down the hill. Play 0:00–4:30 if the class has not watched it.</p>
+      <p><a href="https://playground.tensorflow.org/" target="_blank" rel="noopener">TensorFlow Playground</a>: change the learning rate dropdown from 0.03 to 3 and watch training explode. Then to 0.0001 and watch it crawl.</p>
+      <p><a href="https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html" target="_blank" rel="noopener">sklearn LinearRegression docs</a>: the two-line version we end with. Notice <code>fit_intercept=True</code> is the <code>b</code> we are about to meet.</p>
+    </div>
+  </div>
+  <div class="callout cy rv"><b class="t">Framing for today</b><p>A machine "learns" when it adjusts numbers inside itself to reduce a measured error. That is the whole definition. Today the numbers are two (<code>w</code>, <code>b</code>), the error is mean squared error, and the adjustment rule is gradient descent. On Day 19 the numbers become millions and the rule gets a new name, backpropagation, but it is the same rule.</p></div>
+</div></section>
+
+<!-- ============ CONCEPT ============ -->
+<section class="s" id="concept" data-nav="Concept"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">02 · Concept</div><h2>Guess, measure, nudge, repeat</h2><p class="lead">Four ideas: a <b>hypothesis</b> (the shape of the answer), a <b>cost</b> (how wrong we are), a <b>gradient</b> (which way is downhill), and a <b>learning rate</b> (how big a step to take).</p></div><div class="time"><b>18</b>min</div></div>
+
+  <h3 class="rv">1. Hypothesis space: what shapes are we allowed to guess?</h3>
+  <p class="rv" style="margin-top:8px">Before learning anything, we decide the <em>form</em> of the answer. Today: a straight line, <span class="mono">ŷ = w·x + b</span>. Every choice of <code>w</code> (slope) and <code>b</code> (intercept) is one line; the set of all such lines is the <b>hypothesis space</b>. Learning means searching that space for the line with the lowest cost. A bigger hypothesis space (curves, neural nets) can fit more shapes but is harder to search and easier to overfit; Day 05 is about that trade-off.</p>
+
+  <h3 class="rv" style="margin-top:30px">2. Cost: one number that says how wrong the line is</h3>
+  <div class="analogy rv"><div class="em">🎯</div><div><h4>The Zomato delivery-time analogy</h4><p>Zomato promises "32 minutes" and the order arrives in 40. Error: 8. Another arrives 5 minutes early: error −5. If you just add the errors, +8 and −5 partly cancel and the app looks better than it is. So you <em>square</em> each error (64 and 25, both positive, and the big miss hurts more than the small one), and take the mean over all deliveries. That is <b>mean squared error</b>. A better time-prediction model is one with lower MSE. Our line is a prediction model for salary; its MSE is the average squared gap between the line and the thirty dots.</p></div></div>
+
+  <h3 class="rv" style="margin-top:30px">3. Gradient descent: the blindfolded hill walk</h3>
+  <div class="analogy rv"><div class="em">⛰️</div><div><h4>Fog on the hill</h4><p>You are on a hillside in thick fog; you cannot see the valley, but you can feel the slope under your feet. Take a step in the steepest downhill direction. Feel the slope again. Step again. The <b>gradient</b> is the slope under your feet (which direction, how steep); <b>descent</b> is stepping against it; the <b>learning rate</b> is your stride length. Tiny strides: you get there, eventually, in ten thousand steps. Huge strides: you leap across the valley to the opposite hillside, higher than you started, and the next leap is worse. That is what the slider below lets you feel.</p></div></div>
+
+  <figure class="rv">
+    <div class="gd">
+      <div><canvas class="demo" id="fit" width="760" height="440"></canvas></div>
+      <div class="side">
+        <canvas class="demo" id="lossc" width="420" height="200"></canvas>
+        <div class="stats" style="margin-top:0;grid-template-columns:1fr 1fr"><div>epoch <b id="gdEp">0</b></div><div>MSE <b id="gdJ">–</b></div><div>w (slope) <b id="gdW">0.00</b></div><div>b (intercept) <b id="gdB">0.00</b></div><div style="grid-column:1/-1">status <b id="gdMsg">not started</b></div></div>
+      </div>
+    </div>
+    <div class="ctl">
+      <label>learning rate α <input type="range" id="gdLr" min="0" max="100" value="45"> <span class="lrval" id="gdLrV">0.01</span></label>
+      <span class="seg" id="gdMode"><button class="on" type="button" data-m="batch">batch</button><button type="button" data-m="mini">mini-batch (5)</button><button type="button" data-m="sgd">stochastic</button></span>
+      <label><input type="checkbox" id="gdScale"> standardise x (feature scaling)</label>
+    </div>
+    <div class="ctl">
+      <button class="btn" id="gdPlay" type="button">Play ▶</button><button class="btn ghost" id="gdStep" type="button">Step 1 epoch</button><button class="btn ghost" id="gdReset" type="button">Reset</button>
+      <label>speed <input type="range" id="gdSpeed" min="1" max="20" value="6"></label>
+    </div>
+    <figcaption>Interactive: thirty (experience, salary) points. The line starts flat at zero and gradient descent nudges <code>w</code> and <code>b</code> every epoch; the small panel is the loss curve. Drag the learning rate: around 0.01 it converges smoothly; above roughly 0.045 the steps overshoot and the line flails and explodes (MSE → ∞). Tick "standardise x": the bowl becomes round and learning rates up to about 2 are safe, converging in a handful of epochs. Switch to stochastic to see the noisy but fast path of updating after every single point.</figcaption>
+  </figure>
+
+  <div class="callout ro rv"><b class="t">Common confusion</b><p>"Gradient descent is the model." No. The <em>model</em> is the line (<code>w</code>, <code>b</code>). The <em>cost</em> is how we score a line. <em>Gradient descent</em> is one of several ways to search for the lowest-cost line; for a straight line there is even a closed-form formula (the normal equation). We teach descent because it is the only method that still works when the model has a billion parameters.</p></div>
+
+  <h3 class="rv" style="margin-top:34px">4. Why the learning rate matters: the bowl</h3>
+  <p class="rv" style="margin-top:8px">Fix <code>b</code> and look at cost as a function of <code>w</code> alone. It is a bowl (a parabola), because cost is a sum of squares. The gradient at any point is the slope of the bowl there: large far from the bottom, zero at the bottom. So gradient descent automatically takes big steps when far away and small steps when close, <em>if</em> the learning rate is sane.</p>
+  <figure class="rv" style="margin-top:14px">
+    <canvas class="demo" id="bowl" width="900" height="300"></canvas>
+    <div class="ctl"><label>learning rate α <input type="range" id="bowlLr" min="1" max="100" value="20"> <span class="lrval" id="bowlLrV"></span></label><button class="btn" id="bowlPlay" type="button">Roll ▶</button><button class="btn ghost" id="bowlReset" type="button">Reset</button><span class="mono" id="bowlMsg" style="font-size:12.5px;color:var(--ink2)"></span></div>
+    <figcaption>Animated: cost J(w) with b held at its best value. The ball starts at w = −3. Small α: many tiny steps. Medium α: fast, smooth convergence. Large α: each step overshoots to the other side, higher than before, and the ball leaves the bowl. The dashed arrow is the gradient at the current position: its length is the slope, so steps shrink naturally near the bottom.</figcaption>
+  </figure>
+
+  <div class="grid2 rv" style="margin-top:20px">
+    <div class="chart"><canvas id="lrChart"></canvas></div>
+    <div><p>The loss curve is the ECG of training. Computed live in this page on the same thirty points: α = 0.002 crawls (still far from the floor at 100 epochs), α = 0.02 converges within a few dozen epochs, α = 0.05 diverges within ten (clipped to the top of the chart). When you train anything from Day 18 onwards, the first thing you look at is this curve, and the first knob you turn is α.</p>
+      <div class="callout li" style="margin-top:14px"><b class="t">Key idea</b><p>Loss going down smoothly: good. Loss flat: α too small or you are done. Loss jumping up or NaN: α too large. Loss down on training but up on validation: overfitting (Day 05). That one curve diagnoses most training problems.</p></div>
+    </div>
+  </div>
+
+  <div class="callout rv"><b class="t">Interview answer</b><p>"How does gradient descent work?" — Start with random parameters, compute the cost on the data, compute the gradient of the cost with respect to each parameter (the direction that increases cost fastest), then move each parameter a small step in the opposite direction, scaled by the learning rate. Repeat until the cost stops improving. The learning rate trades speed for stability: too small is slow, too large overshoots and diverges.</p></div>
+</div></section>
+
+<!-- ============ DEEPER ============ -->
+<section class="s" id="deeper" data-nav="Deeper"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">03 · Deeper</div><h2>The math, decoded symbol by symbol</h2><p class="lead">Four formulas. Each one is followed by a sentence that says what every symbol means. If you can read these, Day 19's backpropagation is the same four formulas with a chain rule inside.</p></div><div class="time"><b>10</b>min</div></div>
+
+  <h3 class="rv">Hypothesis</h3>
+  <div class="formula rv">ŷ<sub>i</sub> = <b>w</b>·x<sub>i</sub> + <b>b</b></div>
+  <p class="rv">The prediction ŷ (read "y-hat") for example <i>i</i> is the input x<sub>i</sub> times the weight <b>w</b> plus the bias <b>b</b>. The two amber symbols are the only things the machine is allowed to change.</p>
+
+  <h3 class="rv" style="margin-top:26px">Cost (mean squared error)</h3>
+  <div class="formula rv">J(<b>w</b>, <b>b</b>) = <i>1/(2m)</i> · Σ<sub>i=1..m</sub> (ŷ<sub>i</sub> − y<sub>i</sub>)²</div>
+  <p class="rv">Cost J is a function of the parameters. For each of the <i>m</i> examples, take the gap between prediction and truth, square it, add them all up, divide by m (mean) and by 2. The 2 is cosmetic: it cancels the 2 that appears when we differentiate a square, so the gradient looks cleaner. It does not change where the minimum is.</p>
+
+  <h3 class="rv" style="margin-top:26px">Gradients (which way is uphill)</h3>
+  <div class="formula rv">∂J/∂<b>w</b> = <i>1/m</i> · Σ (ŷ<sub>i</sub> − y<sub>i</sub>) · x<sub>i</sub> &nbsp;&nbsp;&nbsp;&nbsp; ∂J/∂<b>b</b> = <i>1/m</i> · Σ (ŷ<sub>i</sub> − y<sub>i</sub>)</div>
+  <p class="rv">The partial derivative of J with respect to w says how much J changes if w changes a little. Read it as: "average of (error × input)". If the errors are mostly positive where x is large, increasing w would make things worse, so the gradient is positive, so we should <em>decrease</em> w. The bias gradient is just the average error: if we are predicting too high on average, lower b. In NumPy the two lines are <code>(err * x).mean()</code> and <code>err.mean()</code>.</p>
+
+  <h3 class="rv" style="margin-top:26px">Update rule (step downhill)</h3>
+  <div class="formula rv"><b>w</b> := <b>w</b> − <i>α</i> · ∂J/∂<b>w</b> &nbsp;&nbsp;&nbsp;&nbsp; <b>b</b> := <b>b</b> − <i>α</i> · ∂J/∂<b>b</b> &nbsp;&nbsp;&nbsp;&nbsp; (both at once, using the old values)</div>
+  <p class="rv">Move each parameter against its gradient by a fraction α (alpha, the learning rate). The minus sign is what makes it <em>descent</em>. Compute both gradients from the current (w, b) before updating either; updating w and then using the new w to compute b's gradient is a subtle, common bug.</p>
+
+  <div class="tbl rv" style="margin-top:22px"><table>
+    <thead><tr><th>Variant</th><th>Examples per update</th><th>Updates per epoch (m = 1000)</th><th>Path</th><th>Used for</th></tr></thead>
+    <tbody>
+      <tr><td><b>Batch GD</b></td><td>all m</td><td>1</td><td>Smooth, exact gradient, slow per step on big data</td><td>Small datasets, convex problems</td></tr>
+      <tr><td><b>Stochastic GD</b></td><td>1</td><td>1000</td><td>Noisy, zig-zags, escapes shallow bumps, cheap per step</td><td>Streaming data, online learning</td></tr>
+      <tr><td><b>Mini-batch GD</b></td><td>32–512</td><td>m / batch</td><td>Best of both: noise averaged out, GPU-friendly</td><td>Every neural network you will train</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3 class="rv" style="margin-top:26px">Feature scaling: why the bowl's shape matters</h3>
+  <p class="rv" style="margin-top:8px">With two parameters the cost is a bowl in 3-D. If x ranges 0–10 while the intercept direction "ranges" 0–1, the bowl is a long narrow valley: steep across, flat along. One learning rate cannot suit both: small enough for the steep wall means crawling along the valley floor. Standardising x (<span class="mono">x' = (x − mean) / std</span>) makes the bowl round, so any sensible α works and convergence is 10–100× faster. That is why every sklearn pipeline starts with <code>StandardScaler</code> and why the demo above tolerates α ≈ 2 once you tick the box. In the demo's data, the safe limit is about α &lt; 2/λ<sub>max</sub> where λ<sub>max</sub> ≈ 45 for raw x (so α &lt; 0.045) and ≈ 1 after scaling (so α &lt; 2).</p>
+
+  <h3 class="rv" style="margin-top:26px">The closed form (for a line only)</h3>
+  <div class="formula rv"><b>w</b> = Σ (x<sub>i</sub> − x̄)(y<sub>i</sub> − ȳ) / Σ (x<sub>i</sub> − x̄)² &nbsp;&nbsp;&nbsp;&nbsp; <b>b</b> = ȳ − <b>w</b>·x̄</div>
+  <p class="rv">For simple linear regression you can solve for the minimum directly: the slope is the covariance of x and y divided by the variance of x, and the intercept makes the line pass through the mean point (x̄, ȳ). <code>sklearn.linear_model.LinearRegression</code> uses the matrix version of this (least squares via SVD), not gradient descent. Gradient descent earns its keep when there is no closed form or the data is too big for one.</p>
+
+  <div class="callout rv"><b class="t">How to say this in an interview</b><p>"Linear regression assumes ŷ = wx + b and picks w, b to minimise mean squared error. The gradient of MSE is the average of error times input for w, and the average error for b; gradient descent subtracts α times these each iteration. I standardise features first so the loss surface is well-conditioned and a single learning rate works, and I watch the loss curve: smooth decrease means it is working, oscillation or NaN means α is too high."</p></div>
+</div></section>
+
+<!-- ============ CODE ============ -->
+<section class="s" id="code" data-nav="Code"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">04 · Code</div><h2>Build: gradient descent from scratch, then sklearn</h2><p class="lead">Twelve lines of NumPy that learn. <b>Full runnable version with the animated loss curve: open <code>Day_04_How_Machines_Learn.ipynb</code> in Google Colab.</b></p></div><div class="time"><b>12</b>min</div></div>
+
+  <h3 class="rv">Snippet 1 — data and the cost function</h3>
+  <div class="codewrap rv"><span class="lbl">python</span><pre><span class="k">import</span> numpy <span class="k">as</span> np
+rng = np.random.default_rng(<span class="n">4</span>)
+x = rng.uniform(<span class="n">0</span>, <span class="n">10</span>, <span class="n">30</span>)                       <span class="c"># years of experience</span>
+y = <span class="n">3</span> + <span class="n">1.8</span> * x + rng.normal(<span class="n">0</span>, <span class="n">1.2</span>, <span class="n">30</span>)         <span class="c"># salary in LPA (true line + noise)</span>
+
+<span class="k">def</span> <span class="f">predict</span>(x, w, b):
+    <span class="k">return</span> w * x + b                             <span class="c"># hypothesis, vectorised over all 30 points</span>
+
+<span class="k">def</span> <span class="f">cost</span>(x, y, w, b):
+    err = predict(x, w, b) - y
+    <span class="k">return</span> (err ** <span class="n">2</span>).mean() / <span class="n">2</span>                   <span class="c"># J = 1/(2m) Σ (ŷ − y)²</span>
+
+<span class="f">print</span>(cost(x, y, <span class="n">0</span>, <span class="n">0</span>), cost(x, y, <span class="n">1.8</span>, <span class="n">3</span>))         <span class="c"># bad line vs true line: ~100 vs ~0.7</span></pre></div>
+
+  <h3 class="rv" style="margin-top:26px">Snippet 2 — gradient descent, the whole algorithm</h3>
+  <div class="codewrap rv"><span class="lbl">python</span><pre><span class="k">def</span> <span class="f">gradient_descent</span>(x, y, lr=<span class="n">0.01</span>, epochs=<span class="n">200</span>):
+    w, b = <span class="n">0.0</span>, <span class="n">0.0</span>                                <span class="c"># start anywhere</span>
+    history = []
+    <span class="k">for</span> epoch <span class="k">in</span> <span class="f">range</span>(epochs):
+        err = predict(x, w, b) - y                   <span class="c"># (ŷ − y) for every point, shape (30,)</span>
+        dw = (err * x).mean()                        <span class="c"># ∂J/∂w = mean(error · x)</span>
+        db = err.mean()                              <span class="c"># ∂J/∂b = mean(error)</span>
+        w -= lr * dw                                 <span class="c"># step downhill</span>
+        b -= lr * db                                 <span class="c"># (dw, db both computed from the OLD w, b)</span>
+        history.append(cost(x, y, w, b))
+    <span class="k">return</span> w, b, history
+
+w, b, hist = gradient_descent(x, y, lr=<span class="n">0.01</span>)
+<span class="f">print</span>(<span class="s">f"w={w:.3f}  b={b:.3f}  final cost={hist[-1]:.3f}"</span>)   <span class="c"># → w≈1.9, b≈2.5 after 200 epochs; keeps improving</span></pre></div>
+
+  <h3 class="rv" style="margin-top:26px">Snippet 3 — three ways to get the same line</h3>
+  <div class="tabs rv">
+    <div class="tb"><button class="on" type="button">closed form (NumPy)</button><button type="button">sklearn LinearRegression</button><button type="button">sklearn SGDRegressor</button></div>
+    <div class="tp on"><div class="codewrap"><span class="lbl">python</span><pre>w_cf = ((x - x.mean()) * (y - y.mean())).sum() / ((x - x.mean()) ** <span class="n">2</span>).sum()
+b_cf = y.mean() - w_cf * x.mean()
+<span class="f">print</span>(w_cf, b_cf)                    <span class="c"># the exact minimum, no iterations: ≈ 1.736, 3.345</span></pre></div></div>
+    <div class="tp"><div class="codewrap"><span class="lbl">python · what you'll use at work</span><pre><span class="k">from</span> sklearn.linear_model <span class="k">import</span> LinearRegression
+X = x.reshape(-<span class="n">1</span>, <span class="n">1</span>)                  <span class="c"># sklearn wants a 2-D matrix: (n_samples, n_features)</span>
+model = LinearRegression().fit(X, y)  <span class="c"># least squares under the hood (SVD), not GD</span>
+<span class="f">print</span>(model.coef_, model.intercept_)  <span class="c"># [1.736] 3.345 — identical to the closed form</span>
+model.predict([[<span class="n">2.0</span>]])               <span class="c"># Riya, 2 years: ≈ 6.8 LPA</span>
+model.score(X, y)                     <span class="c"># R² (Day 12): fraction of variance explained</span></pre></div></div>
+    <div class="tp"><div class="codewrap"><span class="lbl">python · gradient descent, but sklearn's</span><pre><span class="k">from</span> sklearn.linear_model <span class="k">import</span> SGDRegressor
+<span class="k">from</span> sklearn.preprocessing <span class="k">import</span> StandardScaler
+<span class="k">from</span> sklearn.pipeline <span class="k">import</span> make_pipeline
+sgd = make_pipeline(StandardScaler(),                      <span class="c"># scale first: SGD needs it</span>
+                    SGDRegressor(learning_rate=<span class="s">"constant"</span>, eta0=<span class="n">0.01</span>, max_iter=<span class="n">1000</span>, random_state=<span class="n">0</span>))
+sgd.fit(X, y)
+<span class="f">print</span>(sgd.predict([[<span class="n">2.0</span>]]))                              <span class="c"># ≈ 6.8 again; eta0 is α</span></pre></div></div>
+  </div>
+
+  <h3 class="rv" style="margin-top:26px">Snippet 4 — feature scaling, and why the notebook's α = 0.5 works</h3>
+  <div class="codewrap rv"><span class="lbl">python</span><pre>x_s = (x - x.mean()) / x.std()                        <span class="c"># standardise: mean 0, std 1</span>
+w_s, b_s, hist_s = gradient_descent(x_s, y, lr=<span class="n">0.5</span>, epochs=<span class="n">30</span>)   <span class="c"># 50× larger α, 7× fewer epochs, converged</span>
+<span class="f">print</span>(hist_s[-1])                                     <span class="c"># ≈ 0.47, the floor</span>
+
+<span class="c"># to predict for a raw x, scale it the same way (with the TRAINING mean/std!)</span>
+riya = (<span class="n">2.0</span> - x.mean()) / x.std()
+<span class="f">print</span>(predict(riya, w_s, b_s))                         <span class="c"># ≈ 6.8 LPA</span></pre></div>
+
+  <div class="callout cy rv"><b class="t">Key idea</b><p>Look at how little code it is: a <b>predict</b>, a <b>cost</b>, a <b>gradient</b>, an <b>update</b>. On Day 19 <code>predict</code> becomes a stack of matrix multiplies and <code>dw</code> comes from the chain rule, but the loop is unchanged. If you understand Snippet 2 you understand what <code>optimizer.step()</code> does in PyTorch.</p></div>
+</div></section>
+
+<!-- ============ REAL WORLD ============ -->
+<section class="s" id="realworld" data-nav="Real world"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">05 · Real world &amp; tools</div><h2>See it, play with it, read it</h2><p class="lead">Direct links, all open in a browser.</p></div><div class="time"><b>5</b>min</div></div>
+  <div class="grid3 rv">
+    <div class="card"><span class="tag">Watch</span><h3>3Blue1Brown: Gradient descent</h3><p>The ball on the hill, the loss landscape, and why "learning" is just calculus. Best 20 minutes you will spend this week.</p><a href="https://www.youtube.com/watch?v=IHZwWFHWa-w" target="_blank" rel="noopener">youtube.com ↗</a></div>
+    <div class="card"><span class="tag">Play</span><h3>TensorFlow Playground</h3><p>A neural net in the browser with a learning-rate dropdown. Set it to 3 and watch the loss explode; set it to 0.0001 and watch it crawl.</p><a href="https://playground.tensorflow.org/" target="_blank" rel="noopener">playground.tensorflow.org ↗</a></div>
+    <div class="card"><span class="tag">Read</span><h3>Distill: Why Momentum Really Works</h3><p>Interactive article on what happens after plain gradient descent: momentum. Scroll the sliders; the bowl-valley picture from today is on the first screen.</p><a href="https://distill.pub/2017/momentum/" target="_blank" rel="noopener">distill.pub ↗</a></div>
+    <div class="card"><span class="tag">Course</span><h3>Andrew Ng: Machine Learning Specialization</h3><p>Week 1 is exactly today, with the same notation (J, α, ∂J/∂w). Free to audit on Coursera.</p><a href="https://www.coursera.org/specializations/machine-learning-introduction" target="_blank" rel="noopener">coursera.org ↗</a></div>
+    <div class="card"><span class="tag">Reference</span><h3>sklearn: SGDRegressor</h3><p>The production gradient-descent regressor: learning-rate schedules, early stopping, regularisation. Every parameter name maps to something from today.</p><a href="https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.SGDRegressor.html" target="_blank" rel="noopener">scikit-learn.org ↗</a></div>
+    <div class="card"><span class="tag">Data</span><h3>Kaggle: Salary data (experience → salary)</h3><p>The real version of Riya's dataset: 30 rows of years of experience and salary. Fit your own line for the homework.</p><a href="https://www.kaggle.com/datasets/abhishek14398/salary-dataset-simple-linear-regression" target="_blank" rel="noopener">kaggle.com/datasets ↗</a></div>
+  </div>
+  <h3 class="rv" style="margin-top:34px">Modern tools around gradient descent</h3>
+  <div class="tools rv" style="margin-top:14px">
+    <div class="tool"><b>scikit-learn</b><span><code>LinearRegression</code>, <code>SGDRegressor</code>, <code>StandardScaler</code>: the three you touched today.</span><a href="https://scikit-learn.org/" target="_blank" rel="noopener">scikit-learn.org</a></div>
+    <div class="tool"><b>PyTorch</b><span><code>torch.optim.SGD(params, lr=0.01)</code> is Snippet 2 for millions of parameters; <code>loss.backward()</code> computes the gradients.</span><a href="https://pytorch.org/" target="_blank" rel="noopener">pytorch.org</a></div>
+    <div class="tool"><b>Weights &amp; Biases</b><span>Logs loss curves across runs so you can compare five learning rates on one chart.</span><a href="https://wandb.ai/site" target="_blank" rel="noopener">wandb.ai</a></div>
+    <div class="tool"><b>Optuna</b><span>Automates "try α = 0.001, 0.01, 0.1…" with smart search. You will use it on Day 13.</span><a href="https://optuna.org/" target="_blank" rel="noopener">optuna.org</a></div>
+    <div class="tool"><b>Desmos</b><span>Type <code>y = (x-2)^2</code>, add a slider for a point, and see the tangent slope: the gradient, visually.</span><a href="https://www.desmos.com/calculator" target="_blank" rel="noopener">desmos.com/calculator</a></div>
+    <div class="tool"><b>Claude / ChatGPT</b><span>Ask "derive ∂J/∂w for MSE step by step" and check it against the Deeper section.</span><a href="https://claude.ai/" target="_blank" rel="noopener">claude.ai</a></div>
+  </div>
+</div></section>
+
+<!-- ============ CAREER ============ -->
+<section class="s" id="career" data-nav="Career"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">06 · Career corner</div><h2>"Explain gradient descent" is interview question number one</h2></div><div class="time"><b>3</b>min</div></div>
+  <div class="career rv">
+    <span class="tag">In job descriptions</span>
+    <p><b>Machine Learning Engineer</b>, <b>Data Scientist</b>, <b>Applied Scientist (Junior)</b>. The JD says "solid understanding of ML fundamentals: linear models, loss functions, optimisation". The interviewer's first technical question, in a large fraction of fresher ML interviews, is some form of "explain gradient descent" or "what happens if the learning rate is too high". They are not testing memory; they are checking whether you can explain a mechanism simply, because that is what you will do in every design review.</p>
+    <h4 style="margin-top:18px">Interview questions you can now answer</h4>
+    <ul style="margin-top:8px">
+      <li><b>"What happens if the learning rate is too high / too low?"</b> — Too high: steps overshoot the minimum, loss oscillates or diverges to NaN. Too low: convergence is painfully slow and may stall. Fix: scale features, sweep α on a log scale, watch the loss curve.</li>
+      <li><b>"Why MSE and not mean absolute error?"</b> — MSE is smooth (differentiable everywhere) so the gradient is clean, and it penalises large errors more. MAE is more robust to outliers. Choice depends on whether big misses should hurt disproportionately.</li>
+      <li><b>"Batch vs stochastic vs mini-batch?"</b> — Batch uses all data per update (exact, slow per step); stochastic uses one example (noisy, cheap); mini-batch uses 32–512 (noise averaged, GPU-efficient) and is the default for deep learning.</li>
+    </ul>
+    <h4 style="margin-top:18px">Job-hunt action for today</h4>
+    <p>Write a 4-line LinkedIn post: "Implemented gradient descent from scratch in NumPy today. Learned that the learning rate is a trade-off between speed and stability, and that standardising features made α 50× larger work. Loss curve below." Attach the loss-curve PNG from the notebook and link your repo. Recruiters and hiring managers do read these; a post with a chart and a real insight beats a certificate.</p>
+  </div>
+</div></section>
+
+<!-- ============ QUIZ ============ -->
+<section class="s" id="quiz" data-nav="Quiz"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">07 · Quiz</div><h2>Three quick checks</h2></div><div class="time"><b>3</b>min</div></div>
+  <div class="quiz rv">
+    <div class="q" data-a="1"><p>Your loss curve goes 100 → 40 → 90 → 400 → NaN. Most likely cause?</p><div class="opts"><button type="button">Learning rate too small</button><button type="button">Learning rate too large</button><button type="button">Too few epochs</button></div><div class="why">Each step overshoots to a higher point on the opposite wall of the bowl; the oscillation grows until numbers overflow. Lower α or scale the features.</div></div>
+    <div class="q" data-a="0"><p>∂J/∂b for MSE equals…</p><div class="opts"><button type="button">The mean of the errors (ŷ − y)</button><button type="button">The mean of error × x</button><button type="button">The mean of y</button></div><div class="why">Differentiating (wx + b − y)² with respect to b gives 2(ŷ − y); the 1/(2m) turns the sum into the plain mean of the errors. The error × x version is ∂J/∂w.</div></div>
+    <div class="q" data-a="2"><p>Standardising x before gradient descent mainly…</p><div class="opts"><button type="button">Changes the best line's predictions</button><button type="button">Removes outliers</button><button type="button">Makes the cost bowl round so one α works and convergence is fast</button></div><div class="why">Scaling reshapes the loss surface, not the optimum's predictions (you can map w, b back). It does not remove outliers. It conditions the problem so larger learning rates are stable.</div></div>
+  </div>
+</div></section>
+
+<!-- ============ HOMEWORK ============ -->
+<section class="s" id="homework" data-nav="Homework"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">08 · Homework</div><h2>20–40 minutes, tonight</h2></div><div class="time"><b>2</b>min</div></div>
+  <div class="hw rv">
+    <div class="card"><span class="lvl">Easy · 10 min</span><h3>Learning-rate sweep</h3><p>Run <code>gradient_descent</code> for α in <code>[0.001, 0.003, 0.01, 0.03, 0.05]</code> on the raw x, plot all five loss curves on one labelled chart (log-scale y), and write one sentence per curve. Save as <code>lr_sweep.png</code>; use it in your LinkedIn post.</p></div>
+    <div class="card"><span class="lvl">Medium · 15 min · daily life</span><h3>Predict your commute</h3><p>Record (or estimate) 15 trips: distance in km vs minutes taken (bus, bike, metro, whatever you use). Fit a line with your own gradient descent <em>and</em> sklearn. Compare w and b. What is your "minutes per km"? What does b mean physically (waiting time?).</p></div>
+    <div class="card"><span class="lvl">Stretch · 15 min</span><h3>Two features by hand</h3><p>Extend <code>gradient_descent</code> to <span class="mono">ŷ = w₁x₁ + w₂x₂ + b</span> using a weight vector and <code>X @ w</code>. Generate data with <code>x2 = rng.uniform(0, 1000, 30)</code> (e.g. "monthly hours"). Show that without scaling it diverges for any α that moves w₁ at all, and with <code>StandardScaler</code> it converges. This is tomorrow's opening.</p></div>
+  </div>
+</div></section>
+
+<!-- ============ NEXT ============ -->
+<section class="s" id="next" data-nav="Next"><div class="wrap">
+  <div class="head rv"><div><div class="eyebrow">09 · Next</div><h2>Tomorrow</h2></div><div class="time"><b>2</b>min</div></div>
+  <div class="fin rv">
+    <h2>Day 05 · Regression beyond a line</h2>
+    <p>Many features, curved fits (polynomial regression), and the two ways a model can fail: too simple (underfit) and too flexible (overfit). Ridge and Lasso: how a penalty term keeps a model honest. House prices are the playground.</p>
+    <div style="margin-top:24px;text-align:left;max-width:560px;margin-inline:auto"><div class="callout cy"><b class="t">Before next class</b><p>1. Run the notebook; make sure the animated loss curve plays for you.<br>2. Do the Easy homework and post the sweep chart on LinkedIn with the 4-line summary.<br>3. Optional: read the first screen of the Distill momentum article.</p></div></div>
+  </div>
+</div></section>
+
+<script>
+/* ---------- shared data ---------- */
+const GD_X=[9.4,5.1,9.8,0.8,6.1,3.8,8.0,1.7,8.7,5.4,9.0,4.8,4.3,7.9,9.8,3.7,9.7,9.3,1.8,6.1,7.0,9.4,6.7,1.3,5.0,4.9,5.0,9.6,3.5,2.2];
+const GD_Y=[19.51,12.43,18.86,5.62,14.19,11.05,18.55,4.88,17.7,12.48,20.1,12.66,9.89,16.49,19.68,8.96,20.17,19.58,8.71,13.37,15.25,20.47,13.92,4.9,12.02,12.75,10.42,21.93,8.88,7.16];
+const gdCss=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+function gdMean(a){return a.reduce((s,v)=>s+v,0)/a.length;}
+const GD_MX=gdMean(GD_X),GD_SX=Math.sqrt(gdMean(GD_X.map(v=>(v-GD_MX)**2)));
+
+/* ---------- line-fit demo ---------- */
+(function(){
+  const c=document.getElementById('fit');if(!c)return;const x=c.getContext('2d');const lc=document.getElementById('lossc'),lx=lc.getContext('2d');
+  const lrEl=document.getElementById('gdLr'),lrV=document.getElementById('gdLrV'),scEl=document.getElementById('gdScale'),spEl=document.getElementById('gdSpeed');
+  let mode='batch',w=0,b=0,ep=0,hist=[],playing=false,raf=null,acc=0,dead=false,order=[];
+  function lr(){const v=+lrEl.value/100;return scEl.checked?Math.pow(10,-2+2.4*v):Math.pow(10,-3+2*v);}
+  function xs(){return scEl.checked?GD_X.map(v=>(v-GD_MX)/GD_SX):GD_X;}
+  function cost(){const X=xs();let s=0;for(let i=0;i<X.length;i++){const e=w*X[i]+b-GD_Y[i];s+=e*e;}return s/(2*X.length);}
+  function epoch(){
+    const X=xs(),a=lr(),m=X.length;
+    if(mode==='batch'){let dw=0,db=0;for(let i=0;i<m;i++){const e=w*X[i]+b-GD_Y[i];dw+=e*X[i];db+=e;}w-=a*dw/m;b-=a*db/m;}
+    else{const bs=mode==='sgd'?1:5;order=[...Array(m).keys()].sort(()=>Math.random()-.5);
+      for(let s=0;s<m;s+=bs){const idx=order.slice(s,s+bs);let dw=0,db=0;idx.forEach(i=>{const e=w*X[i]+b-GD_Y[i];dw+=e*X[i];db+=e;});w-=a*dw/idx.length;b-=a*db/idx.length;}}
+    ep++;const J=cost();hist.push(J);
+    if(!isFinite(J)||J>1e6||isNaN(w)){dead=true;playing=false;document.getElementById('gdPlay').textContent='Play ▶';}
+  }
+  function draw(){
+    const W=760,H=440,pl=56,pr=16,pt=20,pb=44;const ink=gdCss('--ink'),ink2=gdCss('--ink2'),cyan=gdCss('--cyan'),amber=gdCss('--amber'),rose=gdCss('--rose'),line=gdCss('--line2');
+    x.clearRect(0,0,W,H);
+    const X=xs();const xmin=scEl.checked?-2.2:0,xmax=scEl.checked?2.2:10.5,ymin=0,ymax=25;
+    const sx=v=>pl+(v-xmin)/(xmax-xmin)*(W-pl-pr),sy=v=>H-pb-(v-ymin)/(ymax-ymin)*(H-pt-pb);
+    x.strokeStyle=line;x.lineWidth=1;x.beginPath();x.moveTo(pl,pt);x.lineTo(pl,H-pb);x.lineTo(W-pr,H-pb);x.stroke();
+    x.fillStyle=ink2;x.font='11px JetBrains Mono,monospace';x.textAlign='center';
+    for(let v=0;v<=25;v+=5){x.fillText(v,pl-20,sy(v)+4);}
+    x.fillText(scEl.checked?'experience (standardised)':'years of experience',(pl+W-pr)/2,H-10);
+    x.save();x.translate(14,(pt+H-pb)/2);x.rotate(-Math.PI/2);x.fillText('salary (LPA)',0,0);x.restore();
+    // residuals
+    x.strokeStyle=rose;x.globalAlpha=.45;x.lineWidth=1;
+    for(let i=0;i<X.length;i++){const yh=w*X[i]+b;if(isFinite(yh)){x.beginPath();x.moveTo(sx(X[i]),sy(GD_Y[i]));x.lineTo(sx(X[i]),sy(Math.max(ymin-5,Math.min(ymax+5,yh))));x.stroke();}}
+    x.globalAlpha=1;
+    // points
+    for(let i=0;i<X.length;i++){x.beginPath();x.arc(sx(X[i]),sy(GD_Y[i]),4.5,0,7);x.fillStyle=cyan;x.fill();}
+    // line
+    if(isFinite(w)&&isFinite(b)){x.strokeStyle=amber;x.lineWidth=3;x.beginPath();x.moveTo(sx(xmin),sy(w*xmin+b));x.lineTo(sx(xmax),sy(w*xmax+b));x.stroke();}
+    x.fillStyle=ink;x.font='12px JetBrains Mono,monospace';x.textAlign='left';x.fillText('ŷ = '+(isFinite(w)?w.toFixed(2):'∞')+'·x + '+(isFinite(b)?b.toFixed(2):'∞'),pl+10,pt+14);
+    if(dead){x.fillStyle=rose;x.font='bold 14px JetBrains Mono,monospace';x.fillText('DIVERGED: α too large for this data. Reset, lower α, or tick standardise.',pl+10,pt+36);}
+    // loss curve
+    const LW=420,LH=200;lx.clearRect(0,0,LW,LH);lx.strokeStyle=line;lx.beginPath();lx.moveTo(40,10);lx.lineTo(40,LH-26);lx.lineTo(LW-10,LH-26);lx.stroke();
+    lx.fillStyle=ink2;lx.font='11px JetBrains Mono,monospace';lx.textAlign='left';lx.fillText('MSE (log scale) vs epoch',46,18);
+    const n=Math.max(hist.length,50);const vals=hist.map(v=>Math.log10(Math.max(1e-3,Math.min(1e4,v))));const lo=-1,hi=4;
+    if(hist.length>1){lx.strokeStyle=amber;lx.lineWidth=2;lx.beginPath();vals.forEach((v,i)=>{const px=40+i/(n-1)*(LW-50),py=LH-26-(v-lo)/(hi-lo)*(LH-40);if(i===0)lx.moveTo(px,py);else lx.lineTo(px,py);});lx.stroke();}
+    lx.fillStyle=ink2;lx.fillText('0',36,LH-12);lx.fillText(String(n),LW-30,LH-12);
+    document.getElementById('gdEp').textContent=ep;const J=hist.length?hist[hist.length-1]:null;document.getElementById('gdJ').textContent=J===null?'–':(isFinite(J)?(J>1e4?J.toExponential(1):J.toFixed(3)):'∞');
+    document.getElementById('gdW').textContent=isFinite(w)?w.toFixed(3):'∞';document.getElementById('gdB').textContent=isFinite(b)?b.toFixed(3):'∞';
+    const msg=document.getElementById('gdMsg');msg.textContent=dead?'diverged ✗':ep===0?'not started':(J<0.6?'converged ✓ (floor ≈ 0.47)':J<5?'getting close…':'descending');
+    lrV.textContent=lr().toPrecision(2);
+  }
+  function reset(){cancelAnimationFrame(raf);playing=false;w=0;b=0;ep=0;hist=[];dead=false;document.getElementById('gdPlay').textContent='Play ▶';draw();}
+  function tick(){if(!playing)return;const per=+spEl.value;for(let i=0;i<per&&!dead;i++)epoch();draw();if(playing&&!dead)raf=requestAnimationFrame(tick);}
+  document.getElementById('gdPlay').onclick=()=>{if(dead)reset();playing=!playing;document.getElementById('gdPlay').textContent=playing?'Pause':'Play ▶';if(playing)raf=requestAnimationFrame(tick);};
+  document.getElementById('gdStep').onclick=()=>{if(!dead){epoch();draw();}};
+  document.getElementById('gdReset').onclick=reset;
+  lrEl.addEventListener('input',()=>{lrV.textContent=lr().toPrecision(2);});
+  scEl.addEventListener('change',reset);
+  document.querySelectorAll('#gdMode button').forEach(bt=>bt.onclick=()=>{document.querySelectorAll('#gdMode button').forEach(q=>q.classList.remove('on'));bt.classList.add('on');mode=bt.dataset.m;reset();});
+  reset();
+})();
+
+/* ---------- bowl ---------- */
+(function(){
+  const c=document.getElementById('bowl');if(!c)return;const x=c.getContext('2d');
+  const lrEl=document.getElementById('bowlLr'),lrV=document.getElementById('bowlLrV'),msg=document.getElementById('bowlMsg');
+  // J(w) with b fixed at closed-form optimum for the demo data: J = 0.5*mean((w x + b* - y)^2) => quadratic a w^2 + ...
+  const bstar=3.345;const m=GD_X.length;let A=0,B=0,C=0;for(let i=0;i<m;i++){const xi=GD_X[i],r=bstar-GD_Y[i];A+=xi*xi;B+=2*xi*r;C+=r*r;}A/=2*m;B/=2*m;C/=2*m;
+  const J=w=>A*w*w+B*w+C,dJ=w=>2*A*w+B;const wopt=-B/(2*A);
+  let w=-3,path=[],raf=null,steps=0,t0=null;
+  function lr(){return Math.pow(10,-3+2.2*(+lrEl.value/100));} // 0.001 .. ~0.16
+  function draw(){
+    const W=900,H=300,pl=50,pr=20,pt=16,pb=36;const ink=gdCss('--ink'),ink2=gdCss('--ink2'),cyan=gdCss('--cyan'),amber=gdCss('--amber'),rose=gdCss('--rose'),line=gdCss('--line2');
+    x.clearRect(0,0,W,H);const wmin=-4,wmax=7.5,jmax=J(wmin)*1.05;
+    const sx=v=>pl+(v-wmin)/(wmax-wmin)*(W-pl-pr),sy=v=>H-pb-Math.max(0,Math.min(1,v/jmax))*(H-pt-pb);
+    x.strokeStyle=line;x.beginPath();x.moveTo(pl,pt);x.lineTo(pl,H-pb);x.lineTo(W-pr,H-pb);x.stroke();
+    x.strokeStyle=cyan;x.lineWidth=2;x.beginPath();for(let i=0;i<=200;i++){const wv=wmin+(wmax-wmin)*i/200;const px=sx(wv),py=sy(J(wv));if(i===0)x.moveTo(px,py);else x.lineTo(px,py);}x.stroke();
+    x.fillStyle=ink2;x.font='11px JetBrains Mono,monospace';x.textAlign='center';for(let v=-4;v<=7;v+=1)x.fillText(v,sx(v),H-14);x.fillText('w (slope)   ·   minimum at w* = '+wopt.toFixed(2),(pl+W-pr)/2,H-2);
+    x.save();x.translate(14,(pt+H-pb)/2);x.rotate(-Math.PI/2);x.fillText('J(w)',0,0);x.restore();
+    // path
+    x.strokeStyle=amber;x.lineWidth=1.5;x.setLineDash([3,3]);x.beginPath();path.forEach((p,i)=>{const px=sx(Math.max(wmin-1,Math.min(wmax+1,p))),py=sy(J(p));if(i===0)x.moveTo(px,py);else x.lineTo(px,py);});x.stroke();x.setLineDash([]);
+    path.forEach(p=>{if(p>=wmin&&p<=wmax){x.beginPath();x.arc(sx(p),sy(J(p)),3,0,7);x.fillStyle=amber;x.globalAlpha=.5;x.fill();x.globalAlpha=1;}});
+    // ball + gradient arrow
+    if(w>=wmin-0.5&&w<=wmax+0.5){const px=sx(Math.max(wmin,Math.min(wmax,w))),py=sy(J(w));x.beginPath();x.arc(px,py,8,0,7);x.fillStyle=amber;x.fill();
+      const g=dJ(w);const len=Math.max(-160,Math.min(160,g*6));x.strokeStyle=rose;x.lineWidth=2;x.setLineDash([4,4]);x.beginPath();x.moveTo(px,py-14);x.lineTo(px+len,py-14);x.stroke();x.setLineDash([]);
+      x.fillStyle=rose;x.textAlign='left';x.fillText('∂J/∂w = '+g.toFixed(2)+'  → step = −α·grad = '+(-lr()*g).toFixed(3),Math.min(px+12,W-260),py-24);}
+    lrV.textContent=lr().toPrecision(2);
+  }
+  function reset(){cancelAnimationFrame(raf);w=-3;path=[w];steps=0;t0=null;msg.textContent='';draw();}
+  function roll(){reset();function step(ts){if(!t0)t0=ts;if(ts-t0>260){t0=ts;w=w-lr()*dJ(w);path.push(w);steps++;
+      if(Math.abs(w)>1e3){msg.textContent='diverged after '+steps+' steps: each step overshoots to a HIGHER point';draw();return;}
+      if(Math.abs(dJ(w))<0.01){msg.textContent='converged in '+steps+' steps at w = '+w.toFixed(3);draw();return;}
+      if(steps>=80){msg.textContent='80 steps, still creeping: α too small (w = '+w.toFixed(2)+')';draw();return;}}
+    draw();raf=requestAnimationFrame(step);}raf=requestAnimationFrame(step);}
+  document.getElementById('bowlPlay').onclick=roll;document.getElementById('bowlReset').onclick=reset;lrEl.addEventListener('input',()=>{lrV.textContent=lr().toPrecision(2);});
+  reset();
+})();
+
+/* ---------- LR chart (computed live) ---------- */
+(function(){
+  const el=document.getElementById('lrChart');if(!el||!window.Chart)return;
+  function run(a,E){let w=0,b=0;const h=[];const m=GD_X.length;for(let e=0;e<E;e++){let dw=0,db=0,J=0;for(let i=0;i<m;i++){const er=w*GD_X[i]+b-GD_Y[i];dw+=er*GD_X[i];db+=er;}w-=a*dw/m;b-=a*db/m;for(let i=0;i<m;i++){const er=w*GD_X[i]+b-GD_Y[i];J+=er*er;}J/=2*m;h.push(Math.min(J,1000));}return h;}
+  const E=100,labels=[...Array(E).keys()].map(i=>i+1);
+  new Chart(el,{type:'line',data:{labels,datasets:[{label:'α = 0.002 (too small)',data:run(0.002,E),borderColor:gdCss('--cyan'),pointRadius:0,borderWidth:2},{label:'α = 0.02 (good)',data:run(0.02,E),borderColor:gdCss('--lime'),pointRadius:0,borderWidth:2},{label:'α = 0.05 (diverges)',data:run(0.05,E),borderColor:gdCss('--rose'),pointRadius:0,borderWidth:2}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{title:{display:true,text:'MSE vs epoch for three learning rates (same data, raw x)'}},scales:{y:{type:'logarithmic',min:0.1,max:1000,title:{display:true,text:'MSE (log)'}},x:{title:{display:true,text:'epoch'},ticks:{maxTicksLimit:10}}}}});
+})();
+</script>
+
+<script>
+document.documentElement.classList.add('js');
+/* nav from sections */
+(function(){const nav=document.getElementById('nav');document.querySelectorAll('section.s[data-nav]').forEach((s,i)=>{const a=document.createElement('a');a.href='#'+s.id;a.innerHTML='<i>'+String(i+1).padStart(2,'0')+'</i>'+s.dataset.nav;nav.appendChild(a);});
+const links=[...nav.querySelectorAll('a')];const secs=[...document.querySelectorAll('section.s[data-nav]')];
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){links.forEach(l=>l.classList.toggle('on',l.getAttribute('href')==='#'+e.target.id));}})},{rootMargin:'-40% 0px -55% 0px'});secs.forEach(s=>io.observe(s));
+window.addEventListener('scroll',()=>{const h=document.documentElement;document.getElementById('track').style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';},{passive:true});})();
+/* reveal */
+(function(){const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:.1});document.querySelectorAll('.rv').forEach(el=>io.observe(el));})();
+/* class timer */
+(function(){let t=0,id=null;const el=document.getElementById('clk'),b=document.getElementById('clkbtn');b.onclick=()=>{if(id){clearInterval(id);id=null;b.textContent='Resume';return;}b.textContent='Pause';id=setInterval(()=>{t++;el.textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0');if(t>=3600){clearInterval(id);el.textContent='60:00';b.textContent='Done';}},1000);};})();
+/* hero particles */
+(function(){const c=document.getElementById('bgc');if(!c)return;const x=c.getContext('2d');let w,h,P=[];function rs(){w=c.width=c.offsetWidth;h=c.height=c.offsetHeight;P=Array.from({length:Math.min(70,w/14)},()=>({x:Math.random()*w,y:Math.random()*h,vx:(Math.random()-.5)*.4,vy:(Math.random()-.5)*.4}));}rs();window.addEventListener('resize',rs);const col=()=>getComputedStyle(document.documentElement).getPropertyValue('--cyan').trim();function f(){x.clearRect(0,0,w,h);const cc=col();for(const p of P){p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>w)p.vx*=-1;if(p.y<0||p.y>h)p.vy*=-1;}for(let i=0;i<P.length;i++){for(let j=i+1;j<P.length;j++){const d=Math.hypot(P[i].x-P[j].x,P[i].y-P[j].y);if(d<120){x.strokeStyle=cc;x.globalAlpha=(1-d/120)*.35;x.beginPath();x.moveTo(P[i].x,P[i].y);x.lineTo(P[j].x,P[j].y);x.stroke();}}}x.globalAlpha=1;x.fillStyle=cc;for(const p of P){x.beginPath();x.arc(p.x,p.y,1.8,0,7);x.fill();}requestAnimationFrame(f);}if(!matchMedia('(prefers-reduced-motion:reduce)').matches)f();})();
+/* tabs */
+document.querySelectorAll('.tabs').forEach(t=>{const bs=t.querySelectorAll('.tb button'),ps=t.querySelectorAll('.tp');bs.forEach((b,i)=>b.onclick=()=>{bs.forEach(x=>x.classList.remove('on'));ps.forEach(x=>x.classList.remove('on'));b.classList.add('on');ps[i].classList.add('on');});});
+/* quiz: <div class="q" data-a="1"> with .opts buttons; index of correct answer in data-a */
+document.querySelectorAll('.q').forEach(q=>{const a=+q.dataset.a;q.querySelectorAll('.opts button').forEach((b,i)=>b.onclick=()=>{if(q.classList.contains('done'))return;q.classList.add('done');b.classList.add(i===a?'ok':'bad');if(i!==a)q.querySelectorAll('.opts button')[a].classList.add('ok');});});
+/* Chart.js theme defaults */
+if(window.Chart){const cs=getComputedStyle(document.documentElement);Chart.defaults.color=cs.getPropertyValue('--ink2').trim();Chart.defaults.borderColor=cs.getPropertyValue('--line').trim();Chart.defaults.font.family=cs.getPropertyValue('--mono').trim();}
+</script>
+</body></html>
