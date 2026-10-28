@@ -5,4 +5,3 @@ runs/
 .env
 __pycache__/
 .ipynb_checkpoints/
-app/*.pt
