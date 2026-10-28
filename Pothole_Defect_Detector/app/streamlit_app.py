@@ -4,6 +4,7 @@ import numpy as np
 from PIL import Image
 import os
 import cv2
+from huggingface_hub import hf_hub_download
 
 st.set_page_config(page_title="Pothole & Defect Detector", layout="centered")
 
@@ -70,3 +71,15 @@ if uploaded is not None:
             st.text(d)
     else:
         st.write("No potholes detected.")
+
+
+
+@st.cache_resource
+def load_model():
+    model_path = hf_hub_download(
+        repo_id="your-hf-username/pothole-detector-weights",
+        filename="best.pt"
+    )
+    return YOLO(model_path)
+
+model = load_model()
