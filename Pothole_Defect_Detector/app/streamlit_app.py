@@ -2,12 +2,15 @@ import streamlit as st
 from ultralytics import YOLO
 import numpy as np
 from PIL import Image
+import os
 
 st.set_page_config(page_title="Pothole & Defect Detector", layout="centered")
 
 @st.cache_resource
 def load_model():
-    return YOLO("best.pt")
+    MODEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "best.pt")
+    model = YOLO(MODEL_PATH)
+    return model
 
 model = load_model()
 
