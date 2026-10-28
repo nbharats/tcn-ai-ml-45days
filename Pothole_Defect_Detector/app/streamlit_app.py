@@ -3,6 +3,7 @@ from ultralytics import YOLO
 import numpy as np
 from PIL import Image
 import os
+import cv2
 
 st.set_page_config(page_title="Pothole & Defect Detector", layout="centered")
 
@@ -34,9 +35,11 @@ uploaded = st.file_uploader("Upload road photo", type=["jpg", "jpeg", "png", "we
 if uploaded is not None:
     image = Image.open(uploaded).convert("RGB")
     image_np = np.array(image)
+    image_bgr = cv2.cvtColor(image_np, cv2.COLOR_RGB2BGR)
 
-    results = model.predict(image_np, conf=0.45)[0]
+    results = model.predict(image_bgr, conf=0.45)[0]
     annotated = results.plot()
+    annotated = cv2.cvtColor(annotated, cv2.COLOR_BGR2RGB) 
 
     h, w = image_np.shape[:2]
     total_area = h * w
